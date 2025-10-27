@@ -224,3 +224,22 @@
 	color: #6b7280; /* text-gray-500 */
 	margin-top: 0.25rem;
 }
+
+/* Comparison Slider Interaction */
+/* يتم إضافتها لـ div الفاصل (Separator) عند السحب */
+.comparison-separator.resizing {
+	background-color: #dc2626; /* red-700 for visual feedback */
+	opacity: 0.9;
+	box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+/* Expandable List Interaction */
+/* لأيقونة السهم في القائمة القابلة للتوسيع */
+.fa-chevron-down {
+	transition: transform 0.3s ease;
+}
+
+/* يُضاف هذا الكلاس بواسطة JS لتدوير الأيقونة */
+.rotate-180 {
+	transform: rotate(180deg);
+}

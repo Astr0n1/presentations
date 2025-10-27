@@ -20,6 +20,7 @@ let lessons = [
                 id: 2,
                 title: 'شرح الفيديو',
                 type: 'video',
+                subtype: 'video',
                 content: {
                     title: 'كيفية تركيب المرحل',
                     videoUrl: 'https://example.com/video1',
@@ -345,55 +346,375 @@ function loadSlideEditContent(slideId) {
     // Update preview first
     updateSlidePreview(slide);
 
-    // Then load edit content
-    if (slide.type === 'title') {
-        editContent.innerHTML = `
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">إعدادات سلايد العنوان</h3>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">العنوان الرئيسي</label>
-                            <input type="text" value="${slide.content.title || ''}" class="slide-edit-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-field="title">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">العنوان الفرعي</label>
-                            <input type="text" value="${slide.content.subtitle || ''}" class="slide-edit-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-field="subtitle">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">نص الزر</label>
-                            <input type="text" value="${slide.content.buttonText || ''}" class="slide-edit-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-field="buttonText">
-                        </div>
+    // 1. Common Fields (Slide Name, Title, Subtitle)
+    let html = `
+            <div class="space-y-6">
+                <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+                    <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات الشريحة الأساسية</h4>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">اسم الشريحة (الشريط الجانبي)</label>
+                        <input type="text" id="edit-slide-name" 
+                            value="${slide.title || ''}"
+                            oninput="updateSlideContent(${slideId}, 'slideTitle', this.value)"
+                            placeholder="اسم الشريحة"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
                     </div>
-                `;
-    } else if (slide.type === 'video') {
-        editContent.innerHTML = `
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">إعدادات سلايد الفيديو</h3>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">عنوان الفيديو</label>
-                            <input type="text" value="${slide.content.title || ''}" class="slide-edit-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-field="title">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">رابط الفيديو</label>
-                            <input type="url" value="${slide.content.videoUrl || ''}" class="slide-edit-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-field="videoUrl">
-                        </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">العنوان الرئيسي للشريحة</label>
+                        <input type="text" id="edit-main-title" 
+                            value="${slide.content.title || ''}"
+                            oninput="updateSlideContent(${slideId}, 'title', this.value)"
+                            placeholder="العنوان"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
                     </div>
-                `;
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">العنوان الفرعي للشريحة (اختياري)</label>
+                        <input type="text" id="edit-subtitle" 
+                            value="${slide.content.subtitle || ''}"
+                            oninput="updateSlideContent(${slideId}, 'subtitle', this.value)"
+                            placeholder="العنوان الفرعي"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                </div>
+            `;
+
+    // 2. Subtype Specific Fields
+    switch (`${slide.type}-${slide.subtype}`) {
+        case 'text-bulleted-list':
+            html += renderBulletedListEditor(slide);
+            break;
+        case 'text-comparison':
+            html += renderComparisonTextEditor(slide);
+            break;
+        case 'text-expandable-list':
+            html += renderExpandableListEditor(slide);
+            break;
+
+        // ... (ستتم إضافة باقي أنواع الشرائح لاحقاً)
+
+        default:
+            // Fallback for other types
+            html += `<div class="text-center text-gray-500 py-12">
+                            <i class="fas fa-tools text-4xl mb-4"></i>
+                            <p>لا توجد واجهة تحرير مخصصة لهذا النوع حتى الآن.</p>
+                    </div>`;
+    }
+
+    document.getElementById('slide-edit-content').innerHTML = html + '</div>';
+}
+
+// Load slide content into the preview area
+function loadSlidePreview(slideId) {
+    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+    const slide = currentLesson ? currentLesson.slides.find(s => s.id === slideId) : null;
+
+    if (slide) {
+        // تحديث إعدادات المعاينة الافتراضية
+        document.getElementById('slide-preview-container').className = 'slide-preview rounded-t-xl';
+
+        // العنوان المشترك (العنوان الرئيسي والفرعي)
+        let html = `
+            <div class="max-w-4xl mx-auto p-8">
+                ${slide.content.title ? `<h2 class="text-3xl font-bold mb-2 text-white">${slide.content.title}</h2>` : ''}
+                ${slide.content.subtitle ? `<p class="text-xl opacity-90 text-white mb-6">${slide.content.subtitle}</p>` : ''}
+                <div class="slide-content-body">
+        `;
+
+        switch (`${slide.type}-${slide.subtype}`) {
+            case 'text-bulleted-list':
+                html += renderBulletedListPreview(slide);
+                break;
+            case 'text-comparison':
+                html += renderComparisonTextPreview(slide);
+                break;
+            case 'text-expandable-list':
+                html += renderExpandableListPreview(slide);
+                break;
+
+            // سيتم إضافة الأنواع الأخرى هنا لاحقاً
+
+            default:
+                html += `<div class="text-white text-center py-10">
+                            <i class="fas fa-magic text-5xl mb-4"></i>
+                            <p>هذا النوع من الشرائح لا يحتوي على معاينة مصممة حتى الآن.</p>
+                         </div>`;
+        }
+
+        html += `</div></div>`;
+        document.getElementById('slide-preview-content').innerHTML = html;
+
+        // **تهيئة المقارنة (إذا كانت الشريحة من نوع مقارنة)**
+        if (slide.subtype === 'comparison') {
+            initializeComparisonSlider(slideId);
+        }
+
     } else {
-        editContent.innerHTML = `
-                    <div class="space-y-6">
-                        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">إعدادات ${getSlideTypeText(slide.type)}</h3>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">عنوان السلايد</label>
-                            <input type="text" value="${slide.title}" class="slide-edit-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-field="slideTitle">
-                        </div>
-                    </div>
-                `;
+        // إعادة تعيين المعاينة عند عدم اختيار شريحة
+        document.getElementById('slide-preview-container').className = 'slide-preview rounded-t-xl';
+        document.getElementById('slide-preview-content').innerHTML = `
+            <div class="max-w-2xl mx-auto text-center">
+                <i class="fas fa-sliders-h text-6xl mb-6 opacity-50"></i>
+                <h2 class="text-3xl font-bold mb-4">اختر سلايداً للمعاينة</h2>
+                <p class="text-xl opacity-90">انقر على أي سلايد من القائمة لرؤية محتواه هنا</p>
+            </div>
+        `;
+    }
+}
+
+// Helper function to render bulleted list item HTML
+function renderBulletedListItem(slideId, item, index) {
+    return `
+        <div class="flex items-center space-x-2 space-x-reverse mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <input type="text" 
+                value="${item}"
+                oninput="updateBulletedListItem(${slideId}, ${index}, this.value)"
+                placeholder="محتوى النقطة"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            <button onclick="deleteBulletedListItem(${slideId}, ${index})"
+                class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150"
+                title="حذف النقطة">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+}
+
+// Editor for 'text-bulleted-list'
+function renderBulletedListEditor(slide) {
+    const itemsHtml = slide.content.items.map((item, index) =>
+        renderBulletedListItem(slide.id, item, index)
+    ).join('');
+
+    return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
+            <h4 class="text-lg font-semibold mb-3 text-gray-800">محتوى القائمة النقطية</h4>
+            <div id="bulleted-list-items-container-${slide.id}">
+                ${itemsHtml}
+            </div>
+            <button onclick="addBulletedListItem(${slide.id})"
+                class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150 mt-3">
+                <i class="fas fa-plus"></i>
+                <span>أضف نقطة جديدة</span>
+            </button>
+        </div>
+    `;
+}
+
+// Editor for 'text-comparison'
+function renderComparisonTextEditor(slide) {
+    const content = slide.content;
+    return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
+            <h4 class="text-lg font-semibold mb-3 text-gray-800">محتوى المقارنة</h4>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 border border-gray-300 rounded-lg bg-gray-50">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">عنوان الجانب الأول</label>
+                    <input type="text" value="${content.blockA_title || ''}"
+                        oninput="updateSlideContent(${slide.id}, 'blockA_title', this.value)"
+                        placeholder="العنوان الأول"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3" />
+                    
+                    <label class="block text-sm font-medium text-gray-700 mb-1">نص الجانب الأول</label>
+                    <textarea rows="4"
+                        oninput="updateSlideContent(${slide.id}, 'blockA_text', this.value)"
+                        placeholder="أدخل محتوى المقارنة الأول"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg">${content.blockA_text || ''}</textarea>
+                </div>
+
+                <div class="p-3 border border-gray-300 rounded-lg bg-gray-50">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">عنوان الجانب الثاني</label>
+                    <input type="text" value="${content.blockB_title || ''}"
+                        oninput="updateSlideContent(${slide.id}, 'blockB_title', this.value)"
+                        placeholder="العنوان الثاني"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3" />
+                    
+                    <label class="block text-sm font-medium text-gray-700 mb-1">نص الجانب الثاني</label>
+                    <textarea rows="4"
+                        oninput="updateSlideContent(${slide.id}, 'blockB_text', this.value)"
+                        placeholder="أدخل محتوى المقارنة الثاني"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg">${content.blockB_text || ''}</textarea>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Helper function to render expandable list item HTML
+function renderExpandableListItem(slideId, item, index) {
+    return `
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-3">
+                <label class="block text-sm font-medium text-gray-700">العنصر ${index + 1}</label>
+                <button onclick="deleteExpandableListItem(${slideId}, ${index})"
+                    class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150"
+                    title="حذف العنصر">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+            
+            <input type="text" 
+                value="${item.title || ''}"
+                oninput="updateExpandableListItem(${slideId}, ${index}, 'title', this.value)"
+                placeholder="عنوان المفهوم/الرأس"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-2" />
+            
+            <textarea rows="3"
+                oninput="updateExpandableListItem(${slideId}, ${index}, 'text', this.value)"
+                placeholder="المحتوى القابل للتوسيع"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg">${item.text || ''}</textarea>
+        </div>
+    `;
+}
+
+// Editor for 'text-expandable-list'
+function renderExpandableListEditor(slide) {
+    const itemsHtml = slide.content.items.map((item, index) =>
+        renderExpandableListItem(slide.id, item, index)
+    ).join('');
+
+    return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
+            <h4 class="text-lg font-semibold mb-3 text-gray-800">محتوى القائمة القابلة للتوسيع</h4>
+            <div id="expandable-list-items-container-${slide.id}">
+                ${itemsHtml}
+            </div>
+            <button onclick="addExpandableListItem(${slide.id})"
+                class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150 mt-3">
+                <i class="fas fa-plus"></i>
+                <span>أضف عنصراً قابلاً للتوسيع</span>
+            </button>
+        </div>
+    `;
+}
+
+
+// Editor for 'video-video'
+function renderVideoEditor(slide) {
+    const content = slide.content;
+    return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
+            <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات محتوى الفيديو</h4>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">رابط الفيديو (URL)</label>
+                <input type="url" id="edit-video-url" 
+                    value="${content.videoUrl || ''}"
+                    oninput="updateSlideContent(${slide.id}, 'videoUrl', this.value)"
+                    placeholder="https://example.com/your-video.mp4"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">مدة الفيديو (مثال: 10:30)</label>
+                <input type="text" id="edit-video-duration" 
+                    value="${content.duration || ''}"
+                    oninput="updateSlideContent(${slide.id}, 'duration', this.value)"
+                    placeholder="00:00"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                <textarea rows="4" id="edit-video-description"
+                    oninput="updateSlideContent(${slide.id}, 'description', this.value)"
+                    placeholder="أدخل وصفًا تفصيليًا للفيديو"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">${content.description || ''}</textarea>
+            </div>
+        </div>
+    `;
+}
+// --- DYNAMIC CONTENT MANIPULATION FUNCTIONS ---
+
+// Function to update nested content (e.g., items in a list)
+function updateNestedContent(slideId, contentKey, index, key, value) {
+    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+    const slide = currentLesson.slides.find(s => s.id === slideId);
+
+    if (slide && slide.content && slide.content[contentKey] && slide.content[contentKey][index] !== undefined) {
+        if (key === null) { // For simple string arrays (like bulleted list)
+            slide.content[contentKey][index] = value;
+        } else { // For object arrays (like expandable list)
+            slide.content[contentKey][index][key] = value;
+        }
+
+        // Update local storage and preview after change
+        saveLessonsToLocalStorage();
+        loadSlidePreview(slideId);
+    }
+}
+
+// ------------------------------------------------------------------
+// 1. Bulleted List Functions
+// ------------------------------------------------------------------
+
+function updateBulletedListItem(slideId, index, value) {
+    updateNestedContent(slideId, 'items', index, null, value);
+}
+
+function addBulletedListItem(slideId) {
+    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+    const slide = currentLesson.slides.find(s => s.id === slideId);
+
+    if (slide && slide.content.items) {
+        slide.content.items.push('نقطة جديدة');
+        saveLessonsToLocalStorage();
+
+        // Re-render the editor to show the new item
+        loadSlideEditContent(slideId);
+        loadSlidePreview(slideId);
+    }
+}
+
+function deleteBulletedListItem(slideId, index) {
+    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+    const slide = currentLesson.slides.find(s => s.id === slideId);
+
+    if (slide && slide.content.items && slide.content.items.length > 1) {
+        slide.content.items.splice(index, 1);
+        saveLessonsToLocalStorage();
+
+        // Re-render the editor to remove the item
+        loadSlideEditContent(slideId);
+        loadSlidePreview(slideId);
+    } else {
+        Swal.fire('تنبيه', 'يجب أن تحتوي القائمة على نقطة واحدة على الأقل.', 'warning');
+    }
+}
+
+
+// ------------------------------------------------------------------
+// 2. Expandable List Functions
+// ------------------------------------------------------------------
+
+function updateExpandableListItem(slideId, index, key, value) {
+    updateNestedContent(slideId, 'items', index, key, value);
+}
+
+function addExpandableListItem(slideId) {
+    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+    const slide = currentLesson.slides.find(s => s.id === slideId);
+
+    if (slide && slide.content.items) {
+        slide.content.items.push({ title: 'مفهوم جديد', text: 'محتوى المفهوم.' });
+        saveLessonsToLocalStorage();
+
+        // Re-render the editor
+        loadSlideEditContent(slideId);
+        loadSlidePreview(slideId);
+    }
+}
+
+function deleteExpandableListItem(slideId, index) {
+    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+    const slide = currentLesson.slides.find(s => s.id === slideId);
+
+    if (slide && slide.content.items && slide.content.items.length > 0) {
+        slide.content.items.splice(index, 1);
+        saveLessonsToLocalStorage();
+
+        // Re-render the editor
+        loadSlideEditContent(slideId);
+        loadSlidePreview(slideId);
     }
 }
 
@@ -749,6 +1070,52 @@ function renderSlideTemplates(category) {
     `;
 }
 
+// Preview for 'video-video'
+function renderVideoPreview(slide) {
+    const content = slide.content;
+    const videoUrl = content.videoUrl;
+    let videoHtml = '';
+
+    if (videoUrl) {
+        // Simple heuristic: if it's YouTube, use the embed URL for better support
+        let embedUrl = videoUrl;
+        if (videoUrl.includes('youtube.com/watch?v=')) {
+            const videoId = videoUrl.split('v=')[1].split('&')[0];
+            embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
+        } else if (videoUrl.includes('youtu.be/')) {
+            const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+            embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
+        }
+
+        videoHtml = `
+            <div class="relative w-full overflow-hidden rounded-xl shadow-2xl" style="padding-top: 56.25%;">
+                <iframe 
+                    class="absolute top-0 left-0 w-full h-full" 
+                    src="${embedUrl}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                ></iframe>
+            </div>
+        `;
+    } else {
+        videoHtml = `
+            <div class="text-white text-center py-20 bg-gray-600/30 rounded-xl border border-dashed border-white/50">
+                <i class="fas fa-video text-6xl mb-4 opacity-70"></i>
+                <p class="text-xl font-medium">الرجاء إدخال رابط الفيديو للمعاينة</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="space-y-6">
+            ${videoHtml}
+            ${content.description ? `<p class="text-white mt-4 text-center text-lg">${content.description}</p>` : ''}
+            ${content.duration ? `<p class="text-white/80 text-center text-sm"><i class="fas fa-clock ml-1"></i> المدة: ${content.duration}</p>` : ''}
+        </div>
+    `;
+}
+
 // Add new slide with a specific type and subtype
 function createNewSlide(type, subtype) {
     const template = slideTemplates[type]?.find((t) => t.subtype === subtype);
@@ -824,6 +1191,9 @@ function createNewSlide(type, subtype) {
                 options: ['خيار 1', 'خيار 2'],
                 correctAnswer: 'خيار 1',
             };
+            break;
+        case 'video-video': // ADDED
+            html += renderVideoEditor(slide); // ADDED
             break;
         default:
             content = { title: template.title };
