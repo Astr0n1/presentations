@@ -102,6 +102,78 @@ let lessons = [
     }
 ];
 
+// Data for all available slide templates
+const slideTemplates = {
+    text: [
+        {
+            subtype: 'bulleted-list',
+            title: 'قائمة نقطية',
+            description: 'عرض قائمة من النقاط',
+            icon: 'fa-list-ul',
+        },
+        {
+            subtype: 'comparison',
+            title: 'مقارنة',
+            description: 'مقارنة بين كتلتين نصيتين',
+            icon: 'fa-columns',
+        },
+        {
+            subtype: 'expandable-list',
+            title: 'قائمة قابلة للتوسيع',
+            description: 'عرض قائمة من المفاهيم',
+            icon: 'fa-layer-group',
+        },
+    ],
+    image: [
+        {
+            subtype: 'comparison',
+            title: 'مقارنة صور',
+            description: 'مقارنة بين صورتين',
+            icon: 'fa-image',
+        },
+    ],
+    video: [
+        {
+            subtype: 'video',
+            title: 'فيديو',
+            description: 'شريحة فيديو كاملة',
+            icon: 'fa-video',
+        },
+    ],
+    quiz: [
+        {
+            subtype: 'multiple-choice-carousel',
+            title: 'اختبار دوّار (Carousel)',
+            description: 'أسئلة اختيار من متعدد',
+            icon: 'fa-layer-group',
+        },
+        {
+            subtype: 'multiple-choice-categorize',
+            title: 'تصنيف',
+            description: 'تصنيف العناصر في مجموعات',
+            icon: 'fa-sitemap',
+        },
+        {
+            subtype: 'multiple-choice-chat',
+            title: 'محادثة',
+            description: 'سؤال كتابي',
+            icon: 'fa-comments',
+        },
+        {
+            subtype: 'match-connect',
+            title: 'توصيل',
+            description: 'توصيل العناصر المتطابقة',
+            icon: 'fa-link',
+        },
+        {
+            subtype: 'match-drag-drop',
+            title: 'سحب وإفلات',
+            description: 'سحب وإفلات الإجابات',
+            icon: 'fa-hand-pointer',
+        },
+    ],
+};
+
 let currentLessonId = 1;
 let currentSlideId = null;
 let draggedSlide = null;
@@ -480,7 +552,11 @@ function setupEventListeners() {
 
     // Save changes button
     document.getElementById('save-changes').addEventListener('click', function () {
-        alert('تم حفظ التغييرات بنجاح!');
+        // alert('تم حفظ التغييرات بنجاح!');
+        Swal.fire({
+            icon: 'success',
+            text: 'تم حفظ التغييرات بنجاح!'
+        })
     });
 
     // Add lesson button
@@ -488,7 +564,25 @@ function setupEventListeners() {
 
     // Add slide buttons
     document.getElementById('cancel-add-slide').addEventListener('click', hideAddSlideModal);
-    document.getElementById('confirm-add-slide').addEventListener('click', addNewSlide);
+
+    // Listen for clicks on category buttons in the slide library
+    document.getElementById('slide-category-nav').addEventListener('click', (e) => {
+        e.preventDefault();
+        const categoryBtn = e.target.closest('.slide-category-btn');
+        if (categoryBtn) {
+            renderSlideTemplates(categoryBtn.dataset.category);
+        }
+    });
+
+    // Listen for clicks on template cards to create a new slide
+    document.getElementById('slide-templates-container').addEventListener('click', (e) => {
+        const templateCard = e.target.closest('.template-card');
+        if (templateCard) {
+            const type = templateCard.dataset.type;
+            const subtype = templateCard.dataset.subtype;
+            createNewSlide(type, subtype);
+        }
+    });
 
     // Lesson title editing
     document.getElementById('edit-lesson-title').addEventListener('click', showLessonEditForm);
@@ -578,9 +672,36 @@ function setupEventListeners() {
         // Delete slide button
         if (e.target.closest('.delete-slide')) {
             const slideId = parseInt(e.target.closest('.delete-slide').dataset.slideId);
-            if (confirm('هل أنت متأكد من حذف هذا السلايد؟')) {
-                deleteSlide(slideId);
-            }
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: "لن تتمكن من التراجع عن هذا!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'نعم، قم بالحذف!',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
+                    currentLesson.slides = currentLesson.slides.filter(s => s.id !== slideId);
+
+                    // If the deleted slide was the currently selected one, deselect it
+                    if (currentSlideId === slideId) {
+                        currentSlideId = null;
+                        loadSlideEditContent(null);
+                    }
+
+                    renderLessonsSidebar();
+
+                    // Show success message
+                    Swal.fire(
+                        'تم الحذف!',
+                        'تم حذف الشريحة بنجاح.',
+                        'success'
+                    );
+                }
+            });
         }
     });
 
@@ -590,6 +711,142 @@ function setupEventListeners() {
             updateSlideContent(currentSlideId, e.target.dataset.field, e.target.value);
         }
     });
+}
+
+// Function to render templates based on the selected category
+function renderSlideTemplates(category) {
+    const container = document.getElementById('slide-templates-container');
+    const templates = slideTemplates[category] || [];
+
+    // Update active button style
+    document.querySelectorAll('.slide-category-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.category === category);
+    });
+
+    if (templates.length === 0) {
+        container.innerHTML = `<p class="text-gray-500">لا توجد قوالب متاحة لهذا القسم.</p>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="template-grid">
+            ${templates
+            .map(
+                (template) => `
+                <div class="template-card" data-type="${category}" data-subtype="${template.subtype}">
+                    <div class="template-preview">
+                        <i class="fas ${template.icon} template-preview-icon"></i>
+                    </div>
+                    <div class="template-info">
+                        <h4 class="template-title">${template.title}</h4>
+                        <p class="template-description">${template.description}</p>
+                    </div>
+                </div>
+            `
+            )
+            .join('')}
+        </div>
+    `;
+}
+
+// Add new slide with a specific type and subtype
+function createNewSlide(type, subtype) {
+    const template = slideTemplates[type]?.find((t) => t.subtype === subtype);
+    if (!template) return;
+
+    let content = {};
+    // Customize default content based on subtype
+    switch (`${type}-${subtype}`) {
+        case 'text-bulleted-list':
+            content = {
+                title: 'قائمة نقطية',
+                items: ['نقطة 1', 'نقطة 2', 'نقطة 3'],
+            };
+            break;
+        case 'text-comparison':
+            content = {
+                title: 'مقارنة',
+                blockA_title: 'عنصر أ',
+                blockA_text: 'وصف للعنصر أ.',
+                blockB_title: 'عنصر ب',
+                blockB_text: 'وصف للعنصر ب.',
+            };
+            break;
+        case 'text-expandable-list':
+            content = {
+                title: 'قائمة قابلة للتوسيع',
+                items: [{ title: 'مفهوم 1', text: 'تفاصيل حول المفهوم 1.' }],
+            };
+            break;
+        case 'image-comparison':
+            content = {
+                title: 'مقارنة صور',
+                imageA: 'path/to/imageA.jpg',
+                imageB: 'path/to/imageB.jpg',
+            };
+            break;
+        case 'video-video':
+            content = {
+                title: 'شريحة فيديو',
+                videoUrl: 'https://example.com/video',
+            };
+            break;
+        case 'quiz-multiple-choice-carousel':
+            content = {
+                title: 'اختبار دوّار',
+                questions: [{ question: 'سؤال تجريبي؟', options: ['أ', 'ب'], answer: 'أ' }],
+            };
+            break;
+        case 'quiz-multiple-choice-categorize':
+            content = {
+                title: 'تصنيف العناصر',
+                categories: ['تصنيف 1', 'تصنيف 2'],
+                items: [{ item: 'عنصر أ', category: 'تصنيف 1' }],
+            };
+            break;
+        case 'quiz-multiple-choice-chat':
+            content = {
+                title: 'سؤال محادثة',
+                question: 'ما هي عاصمة مصر؟',
+                answer: 'القاهرة',
+            };
+            break;
+        case 'quiz-match-connect':
+            content = {
+                title: 'توصيل متطابق',
+                pairs: [{ item1: 'مصطلح أ', item2: 'تعريف أ' }],
+            };
+            break;
+        case 'quiz-match-drag-drop':
+            content = {
+                title: 'سحب وإفلات',
+                question: 'اسحب الإجابة الصحيحة إلى المربع.',
+                options: ['خيار 1', 'خيار 2'],
+                correctAnswer: 'خيار 1',
+            };
+            break;
+        default:
+            content = { title: template.title };
+    }
+
+    const newSlide = {
+        id: Date.now(),
+        title: template.title,
+        type: type,
+        subtype: subtype, // Store the subtype
+        content: content,
+    };
+
+    const currentLesson = lessons.find((lesson) => lesson.id === currentLessonId);
+    currentLesson.slides.push(newSlide);
+
+    hideAddSlideModal();
+    renderLessonsSidebar();
+
+    // Auto-select the new slide
+    currentSlideId = newSlide.id;
+    loadSlideEditContent(newSlide.id);
+    document.body.classList.remove('edit-sidebar-collapsed');
 }
 
 // Show lesson edit form
@@ -637,93 +894,18 @@ function addNewLesson() {
 // Show add slide modal
 function showAddSlideModal() {
     document.getElementById('add-slide-modal').classList.remove('hidden');
+    // Render the default 'text' category templates when the modal opens
+    renderSlideTemplates('text');
 }
 
 // Hide add slide modal
+// Hide add slide modal
 function hideAddSlideModal() {
     document.getElementById('add-slide-modal').classList.add('hidden');
-    // Reset form
-    document.getElementById('slide-title').value = '';
-    document.getElementById('slide-type').value = 'title';
 }
 
 // Add new slide
-function addNewSlide() {
-    const title = document.getElementById('slide-title').value || 'سلايد جديد';
-    const type = document.getElementById('slide-type').value;
 
-    // Default content based on slide type
-    let content = {};
-    switch (type) {
-        case 'title':
-            content = {
-                title: title,
-                subtitle: 'وصف اختياري',
-                buttonText: 'ابدأ التعلم',
-                description: 'وصف تفصيلي للسلايد'
-            };
-            break;
-        case 'video':
-            content = {
-                title: title,
-                videoUrl: 'https://example.com/video',
-                duration: '10:00',
-                description: 'شاهد هذا الفيديو التعليمي'
-            };
-            break;
-        case 'image':
-            content = {
-                title: title,
-                images: [],
-                description: 'معرض الصور التعليمي'
-            };
-            break;
-        case 'quiz':
-            content = {
-                title: title,
-                questions: [{
-                    question: 'سؤال الاختبار',
-                    options: ['الخيار الأول', 'الخيار الثاني', 'الخيار الثالث', 'الخيار الرابع'],
-                    correctAnswer: 0
-                }],
-                description: 'اختبر معرفتك'
-            };
-            break;
-        case 'interactive':
-            content = {
-                title: title,
-                simulation: 'interactive-sim',
-                instructions: 'اتبع التعليمات للتفاعل مع المحتوى',
-                description: 'نشاط تفاعلي'
-            };
-            break;
-        case 'content':
-            content = {
-                title: title,
-                text: 'المحتوى النصي للدرس يظهر هنا...',
-                description: 'محتوى تعليمي مفصل'
-            };
-            break;
-    }
-
-    const newSlide = {
-        id: Date.now(),
-        title: title,
-        type: type,
-        content: content
-    };
-
-    const currentLesson = lessons.find(lesson => lesson.id === currentLessonId);
-    currentLesson.slides.push(newSlide);
-
-    hideAddSlideModal();
-    renderLessonsSidebar();
-
-    // Auto-select the new slide
-    currentSlideId = newSlide.id;
-    loadSlideEditContent(newSlide.id);
-    document.body.classList.remove('edit-sidebar-collapsed');
-}
 
 // Delete slide
 function deleteSlide(slideId) {

@@ -11,7 +11,11 @@
 		<link rel="stylesheet" href="css/styles.css" />
 		<link rel="stylesheet" href="css/edit.css" />
 
-		<script src="https://cdn.tailwindcss.com"></script>
+		<script defer src="https://cdn.tailwindcss.com"></script>
+		<script
+			defer
+			src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
+		></script>
 		<script defer src="js/auth.js"></script>
 		<script defer src="js/edit.js"></script>
 	</head>
@@ -240,59 +244,69 @@
 			id="add-slide-modal"
 			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
 		>
-			<div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-				<h3 class="text-xl font-bold text-gray-900 mb-4">
-					إضافة سلايد جديد
-				</h3>
-
-				<div class="space-y-4">
-					<div>
-						<label
-							class="block text-sm font-medium text-gray-700 mb-2"
-							>نوع السلايد</label
-						>
-						<select
-							id="slide-type"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-						>
-							<option value="title">سلايد عنوان</option>
-							<option value="content">سلايد محتوى</option>
-							<option value="video">فيديو</option>
-							<option value="quiz">اختبار</option>
-							<option value="interactive">تفاعلي</option>
-							<option value="image">صورة</option>
-						</select>
-					</div>
-
-					<div>
-						<label
-							class="block text-sm font-medium text-gray-700 mb-2"
-							>عنوان السلايد</label
-						>
-						<input
-							type="text"
-							id="slide-title"
-							placeholder="أدخل عنوان السلايد"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-						/>
-					</div>
-				</div>
-
+			<div
+				class="bg-white rounded-xl shadow-lg w-full max-w-4xl h-[70vh] flex flex-col"
+			>
 				<div
-					class="flex items-center justify-end space-x-3 space-x-reverse mt-6"
+					class="flex items-center justify-between p-4 border-b border-gray-200"
 				>
 					<button
 						id="cancel-add-slide"
-						class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+						class="p-2 rounded-full hover:bg-gray-100"
 					>
-						إلغاء
+						<i class="fas fa-times text-gray-600"></i>
 					</button>
-					<button
-						id="confirm-add-slide"
-						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+					<h3 class="text-xl font-bold text-gray-900">
+						مكتبة الشرائح
+					</h3>
+				</div>
+
+				<div class="flex flex-1 overflow-hidden">
+					<div
+						class="w-1/4 bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto"
 					>
-						إضافة
-					</button>
+						<nav id="slide-category-nav" class="space-y-2">
+							<a
+								href="#"
+								class="slide-category-btn flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-200"
+								data-category="text"
+							>
+								<i class="fas fa-font w-5 text-center"></i>
+								<span>نص</span>
+							</a>
+							<a
+								href="#"
+								class="slide-category-btn flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-200"
+								data-category="image"
+							>
+								<i class="fas fa-image w-5 text-center"></i>
+								<span>صورة</span>
+							</a>
+							<a
+								href="#"
+								class="slide-category-btn flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-200"
+								data-category="video"
+							>
+								<i class="fas fa-video w-5 text-center"></i>
+								<span>فيديو</span>
+							</a>
+							<a
+								href="#"
+								class="slide-category-btn flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-200"
+								data-category="quiz"
+							>
+								<i
+									class="fas fa-question-circle w-5 text-center"
+								></i>
+								<span>اختبار</span>
+							</a>
+						</nav>
+					</div>
+
+					<div
+						id="slide-templates-container"
+						class="flex-1 p-6 overflow-y-auto"
+					></div>
 				</div>
 			</div>
 		</div>

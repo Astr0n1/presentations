@@ -1,171 +1,226 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap");
 
 * {
-    font-family: 'Tajawal', sans-serif;
-    user-select: none;
+	font-family: "Tajawal", sans-serif;
+	user-select: none;
 }
 
 .sidebar {
-    width: 380px;
-    min-width: 300px;
-    max-width: 600px;
-    transition: all 0.3s ease;
-    position: relative;
+	width: 380px;
+	min-width: 300px;
+	max-width: 600px;
+	transition: all 0.3s ease;
+	position: relative;
 }
 
 .edit-sidebar {
-    width: 400px;
-    min-width: 300px;
-    max-width: 600px;
-    transition: all 0.3s ease;
-    position: relative;
+	width: 400px;
+	min-width: 300px;
+	max-width: 600px;
+	transition: all 0.3s ease;
+	position: relative;
 }
 
 .main-content {
-    margin-right: 380px;
-    margin-left: 400px;
-    transition: all 0.3s ease;
+	margin-right: 380px;
+	margin-left: 400px;
+	transition: all 0.3s ease;
 }
 
 /* Resize Handles */
 .resize-handle {
-    position: absolute;
-    top: 0;
-    width: 6px;
-    height: 100%;
-    background: transparent;
-    cursor: col-resize;
-    z-index: 30;
-    transition: background-color 0.2s ease;
+	position: absolute;
+	top: 0;
+	width: 6px;
+	height: 100%;
+	background: transparent;
+	cursor: col-resize;
+	z-index: 30;
+	transition: background-color 0.2s ease;
 }
 
 .resize-handle:hover,
 .resize-handle.resizing {
-    background-color: #3b82f6;
+	background-color: #3b82f6;
 }
 
 .resize-handle-left {
-    left: -3px;
+	left: -3px;
 }
 
 .resize-handle-right {
-    right: -3px;
+	right: -3px;
 }
 
 .sidebar-collapsed .sidebar {
-    transform: translateX(100%);
-    opacity: 0;
+	transform: translateX(100%);
+	opacity: 0;
 }
 
 .edit-sidebar-collapsed .edit-sidebar {
-    transform: translateX(-100%);
-    opacity: 0;
+	transform: translateX(-100%);
+	opacity: 0;
 }
 
 .sidebar-collapsed .main-content {
-    margin-right: 0;
+	margin-right: 0;
 }
 
 .edit-sidebar-collapsed .main-content {
-    margin-left: 0;
+	margin-left: 0;
 }
 
 .slide-item {
-    transition: all 0.2s ease;
+	transition: all 0.2s ease;
 }
 
 .slide-item.dragging {
-    opacity: 0.5;
-    transform: scale(1.02);
+	opacity: 0.5;
+	transform: scale(1.02);
 }
 
 .slide-item:hover .slide-actions {
-    opacity: 1;
+	opacity: 1;
 }
 
 .slide-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease;
+	opacity: 0;
+	transition: opacity 0.2s ease;
 }
 
 .slide-item.active {
-    background-color: #f0f9ff;
-    border-right: 3px solid #3b82f6;
+	background-color: #f0f9ff;
+	border-right: 3px solid #3b82f6;
 }
 
 .lesson-slides {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.3s ease;
 }
 
 .lesson-expanded .lesson-slides {
-    max-height: 1000px;
+	max-height: 1000px;
 }
 
 /* Scrollbar Styling */
 .sidebar::-webkit-scrollbar,
 .edit-sidebar::-webkit-scrollbar {
-    width: 6px;
+	width: 6px;
 }
 
 .sidebar::-webkit-scrollbar-track,
 .edit-sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1;
+	background: #f1f1f1;
 }
 
 .sidebar::-webkit-scrollbar-thumb,
 .edit-sidebar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+	background: #c1c1c1;
+	border-radius: 3px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover,
 .edit-sidebar::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+	background: #a8a8a8;
 }
 
 /* Resize Indicator */
 .resize-indicator {
-    position: fixed;
-    background: #3b82f6;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+	position: fixed;
+	background: #3b82f6;
+	color: white;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 12px;
+	pointer-events: none;
+	z-index: 1000;
+	opacity: 0;
+	transition: opacity 0.2s ease;
 }
 
 /* Slide Preview */
 .slide-preview {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 500px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	min-height: 500px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 12px;
 }
 
 /* Different slide type backgrounds */
 .slide-type-video {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+	background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
 }
 
 .slide-type-image {
-    background: linear-gradient(135deg, #a8e6cf 0%, #56ab2f 100%);
+	background: linear-gradient(135deg, #a8e6cf 0%, #56ab2f 100%);
 }
 
 .slide-type-quiz {
-    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+	background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
 }
 
 .slide-type-interactive {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+	background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
 }
 
 .slide-type-content {
-    background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+	background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+}
+
+/* Slide Library Modal */
+.slide-category-btn.active {
+	background-color: #e0e7ff; /* bg-indigo-100 */
+	color: #4f46e5; /* text-indigo-700 */
+}
+
+.template-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 1.5rem;
+}
+
+.template-card {
+	cursor: pointer;
+	border: 1px solid #e5e7eb; /* border-gray-200 */
+	border-radius: 0.5rem; /* rounded-lg */
+	overflow: hidden;
+	transition: all 0.2s ease-in-out;
+}
+
+.template-card:hover {
+	border-color: #3b82f6; /* border-blue-500 */
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+	transform: translateY(-2px);
+}
+
+.template-preview {
+	height: 120px;
+	background-color: #f3f4f6; /* bg-gray-100 */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
+}
+
+.template-preview-icon {
+	font-size: 2rem;
+	color: #9ca3af; /* text-gray-400 */
+}
+
+.template-info {
+	padding: 1rem;
+}
+
+.template-title {
+	font-weight: 600; /* font-semibold */
+	color: #111827; /* text-gray-900 */
+}
+
+.template-description {
+	font-size: 0.875rem; /* text-sm */
+	color: #6b7280; /* text-gray-500 */
+	margin-top: 0.25rem;
 }
