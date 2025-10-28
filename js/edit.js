@@ -300,6 +300,8 @@ class CourseEditor {
         previewContent.innerHTML = headerHtml + bodyHtml + '</div>';
     }
 
+
+
     renderComparisonPreview(slide) {
         const c = slide.content || {};
         return `
@@ -771,10 +773,30 @@ class CourseEditor {
     setupEventListeners() {
         // toggles and static buttons
         const toggleSidebar = document.getElementById('toggle-sidebar');
-        if (toggleSidebar) toggleSidebar.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
+        if (toggleSidebar) toggleSidebar.addEventListener('click', () => {
+            document.body.classList.toggle('sidebar-collapsed')
+            if (document.body.classList.contains('sidebar-collapsed')) {
+                document.querySelector('.main-content').style.marginRight = '1rem';
+            } else {
+                // keep simple: read computed widths
+                const rightSidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+
+                if (!mainContent) return;
+
+                const rightWidth = rightSidebar ? window.getComputedStyle(rightSidebar).width : '1rem';
+
+                mainContent.style.marginRight = rightWidth;
+            }
+        });
 
         const toggleEditSidebar = document.getElementById('toggle-edit-sidebar');
-        if (toggleEditSidebar) toggleEditSidebar.addEventListener('click', () => document.body.classList.toggle('edit-sidebar-collapsed'));
+        if (toggleEditSidebar) toggleEditSidebar.addEventListener('click', () => {
+            document.body.classList.toggle('edit-sidebar-collapsed')
+            if (document.body.classList.contains('edit-sidebar-collapsed')) {
+                document.querySelector('.main-content').style.marginLeft = '1rem';
+            }
+        });
 
         const saveBtn = document.getElementById('save-changes');
         if (saveBtn) saveBtn.addEventListener('click', () => {
@@ -940,6 +962,16 @@ class CourseEditor {
             this.currentSlideId = slideId;
             this.loadSlideEditContent(slideId);
             document.body.classList.remove('edit-sidebar-collapsed');
+            // keep simple: read computed widths
+            const leftSidebar = document.querySelector('.edit-sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            if (!mainContent) return;
+
+            const leftWidth = leftSidebar ? window.getComputedStyle(leftSidebar).width : '0px';
+
+            mainContent.style.marginLeft = leftWidth;
+
             return;
         }
 
@@ -1077,15 +1109,16 @@ class CourseEditor {
         let targetSide = null;
 
         function onMouseMove(e) {
+            const viewportWidth = window.innerWidth;
             if (!isResizing || !targetSide) return;
             const deltaX = e.clientX - startX;
             let newWidth = startWidth;
 
             if (targetSide === 'left') {
-                newWidth = Math.max(300, Math.min(800, startWidth + deltaX));
+                newWidth = Math.max(250, Math.min(viewportWidth * 0.4, startWidth + deltaX));
                 leftSidebar.style.width = newWidth + 'px';
             } else if (targetSide === 'right') {
-                newWidth = Math.max(300, Math.min(800, startWidth - deltaX));
+                newWidth = Math.max(200, Math.min(viewportWidth * 0.3, startWidth - deltaX));
                 rightSidebar.style.width = newWidth + 'px';
             }
             // update margins live:

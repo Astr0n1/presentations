@@ -142,7 +142,8 @@
 /* Slide Preview */
 .slide-preview {
 	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	min-height: 500px;
+	aspect-ratio: 3 / 2;
+	overflow: hidden;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -246,9 +247,10 @@
 
 /* Fix 2: Set default background and ensure text is white */
 .slide-preview {
+	position: relative;
 	background-color: #1f2937; /* A dark background (e.g., gray-800) for contrast */
 	color: #ffffff; /* Default text color is white */
-	min-height: 500px;
+	aspect-ratio: 3 / 2;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -262,4 +264,10 @@
 .slide-preview-content div {
 	/* Use !important cautiously, but sometimes necessary for Tailwind overrides */
 	color: #ffffff !important;
+}
+
+#edit-section,
+#lessons-sidebar,
+.main-content {
+	transition: width 0.3s ease, margin 0.3s ease;
 }
