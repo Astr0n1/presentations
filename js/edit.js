@@ -263,6 +263,7 @@ class CourseEditor {
         let bodyHtml = '';
 
         const key = `${slide.type}-${slide.subtype}`;
+        console.log(key)
         switch (key) {
             case 'text-bulleted-list':
                 bodyHtml += `<ul class="space-y-3 text-lg text-white list-disc list-inside mt-6">`;
@@ -289,6 +290,86 @@ class CourseEditor {
                                 </button>
                             </div>`;
                 break;
+            case 'image-comparison':
+                bodyHtml += `
+                    <div class="relative w-full mt-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-black/30 rounded-xl overflow-hidden flex items-center justify-center relative">
+                                ${slide.content.imageA
+                        ? `<img src="${this.escapeHTML(slide.content.imageA)}"
+                                                alt="الصورة الأولى"
+                                                class="w-full h-auto object-contain"
+                                                onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center text-red-400 py-10&quot;>تعذر تحميل الصورة الأولى 🚫</div>';">`
+                        : `<div class="text-white/70 text-center py-16">الصورة الأولى غير محددة</div>`
+                    }
+                            </div>
+                            <div class="bg-black/30 rounded-xl overflow-hidden flex items-center justify-center relative">
+                                ${slide.content.imageB
+                        ? `<img src="${this.escapeHTML(slide.content.imageB)}"
+                                                alt="الصورة الثانية"
+                                                class="w-full h-auto object-contain"
+                                                onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center text-red-400 py-10&quot;>تعذر تحميل الصورة الثانية 🚫</div>';">`
+                        : `<div class="text-white/70 text-center py-16">الصورة الثانية غير محددة</div>`
+                    }
+                            </div>
+                        </div>
+                    </div>`;
+                break;
+
+            case 'quiz-multiple-choice-carousel': {
+                const c = slide.content || {};
+                const answers = c.answers || [];
+                const question = c.question || 'لم يتم إدخال السؤال بعد';
+                const chosen = slide.userChoice ?? null; // store user’s pick
+                const submitted = slide.submitted ?? false;
+                const correctIndex = (c.correct ?? 1) - 1; // convert 1-based to 0-based
+
+                // question
+                bodyHtml += `
+                    <div class="mt-6 relative overflow-hidden">
+                        <h2 class="text-2xl font-bold text-center mb-6 text-white">${this.escapeHTML(question)}</h2>
+
+                        <div class="space-y-3 max-w-md mx-auto" id="quiz-${slide.id}-answers">
+                            ${answers.map((a, i) => {
+                    const isChosen = chosen === i;
+                    const isCorrect = submitted && i === correctIndex;
+                    const isWrong = submitted && isChosen && i !== correctIndex;
+
+                    let classes = "w-full flex items-center gap-2 px-4 py-3 rounded-lg border transition ";
+                    if (submitted) {
+                        if (isCorrect) classes += "border-green-500 bg-green-600/30 text-white";
+                        else if (isWrong) classes += "border-red-500 bg-red-600/30 text-white";
+                        else classes += "border-gray-300 bg-white/10 text-gray-300";
+                    } else {
+                        classes += isChosen
+                            ? "border-blue-500 bg-blue-600/30 text-white"
+                            : "border-gray-300 bg-white/10 text-white hover:bg-white/20";
+                    }
+
+                    const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400'></i>` : "";
+
+                    return `
+                                    <button data-index="${i}" class="${classes}">
+                                        <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full">
+                                            ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
+                                        </span>
+                                        <span class="flex-1 text-right">${i + 1}. ${this.escapeHTML(a || '—')}</span>
+                                        ${mark}
+                                    </button>
+                                `;
+                }).join('')}
+                        </div>
+
+                        ${submitted ? "" : `
+                            <div class="text-center mt-6">
+                                <button class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition" id="quiz-${slide.id}-submit">تأكيد</button>
+                            </div>`}
+                        <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-5xl opacity-0 transition-transform duration-700 ease-out"></div>
+                    </div>
+                `;
+                break;
+            }
+
             default:
                 if (slide.content.text) {
                     bodyHtml += `<div class="prose max-w-none text-lg text-white mt-6">${this.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
@@ -321,18 +402,24 @@ class CourseEditor {
     renderExpandableListPreview(slide) {
         const items = slide.content.items || [];
         let html = `<div class="space-y-4 mt-6">`;
-        items.forEach(item => {
+
+        items.forEach((item, idx) => {
             html += `
-                <div class="bg-black/40 p-4 rounded-lg shadow cursor-pointer text-white">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-semibold text-white">${this.escapeHTML(item.title || 'العنوان')}</h3>
-                        <i class="fas fa-chevron-down text-gray-200"></i>
-                    </div>
-                </div>`;
+            <div class="expandable-item bg-black/40 p-4 rounded-lg shadow cursor-pointer text-white" data-index="${idx}">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold text-white">${this.escapeHTML(item.title || 'العنوان')}</h3>
+                    <i class="fas fa-chevron-down text-gray-200 transition-transform duration-300"></i>
+                </div>
+                <div class="expandable-content mt-3 text-gray-200 hidden">
+                    <p class="text-lg leading-relaxed">${this.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
+                </div>
+            </div>`;
         });
+
         html += `</div>`;
         return html;
     }
+
 
     renderVideoPreview(slide) {
         const content = slide.content || {};
@@ -360,10 +447,23 @@ class CourseEditor {
 
         return `
             <div class="relative w-full overflow-hidden rounded-xl shadow-2xl" style="padding-top: 56.25%;">
-                <iframe class="absolute top-0 left-0 w-full h-full" src="${this.escapeHTML(embed)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe
+                    class="absolute top-0 left-0 w-full h-full"
+                    src="${this.escapeHTML(embed)}"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center text-red-400 py-20&quot;>تعذر تحميل الفيديو 🚫</div>';">
+                </iframe>
             </div>
-            ${content.description ? `<p class="text-white mt-4 text-center text-lg">${this.escapeHTML(content.description)}</p>` : ''}
-            ${content.duration ? `<p class="text-white/80 text-center text-sm"><i class="fas fa-clock ml-1"></i> المدة: ${this.escapeHTML(content.duration)}</p>` : ''}
+            ${content.description
+                ? `<p class="text-white mt-4 text-center text-lg">${this.escapeHTML(content.description)}</p>`
+                : ''
+            }
+            ${content.duration
+                ? `<p class="text-white/80 text-center text-sm"><i class="fas fa-clock ml-1"></i> المدة: ${this.escapeHTML(content.duration)}</p>`
+                : ''
+            }
         `;
     }
 
@@ -487,21 +587,32 @@ class CourseEditor {
     updateSlideContent(slideId, field, value) {
         const slide = this.findSlide(this.currentLessonId, slideId);
         if (!slide) return;
+
         if (field === 'slideTitle') {
             slide.title = value;
-            // update sidebar text quickly
-            const slideItem = document.querySelector(`.slide-item[data-slide-id="${slideId}"]`);
+
+            // Try updating sidebar directly (fast update)
+            const slideItem = document.querySelector(`.slide-item[data-slide-id="${slideId}"] h5`);
             if (slideItem) {
-                const h5 = slideItem.querySelector('h5');
-                if (h5) h5.textContent = value;
+                slideItem.textContent = value;
+            } else {
+                // Fallback if not found — re-render sidebar safely
+                this.renderLessonsSidebar();
             }
+
         } else {
             slide.content = slide.content || {};
             slide.content[field] = value;
         }
+
         this.saveToLocalStorage();
-        this.loadSlidePreview(slideId); // live preview update
+
+        // Update preview only (no form re-render)
+        if (document.hasFocus()) {
+            this.renderSlidePreview(slide);
+        }
     }
+
 
     // Generic nested updater for lists
     updateNestedContent(slideId, contentKey, index, key, value) {
@@ -519,7 +630,6 @@ class CourseEditor {
         }
         this.saveToLocalStorage();
         this.loadSlidePreview(slideId);
-        this.loadSlideEditContent(slideId);
     }
 
     addBulletedListItem(slideId) {
@@ -624,6 +734,12 @@ class CourseEditor {
             case 'video-video':
                 html += this.renderVideoEditor(slide);
                 break;
+            case 'image-comparison':
+                html += this.renderImageComparisonEditor(slide);
+                break;
+            case 'quiz-multiple-choice-carousel':
+                html += this.renderQuizCarouselEditor(slide);
+                break;
             default:
                 // fallback: simple content editor if text present
                 if (slide.content.text !== undefined) {
@@ -659,7 +775,85 @@ class CourseEditor {
         const genericText = document.getElementById('edit-generic-text');
         if (genericText) genericText.addEventListener('input', (e) => this.updateSlideContent(slideId, 'text', e.target.value));
 
-        // also wire dynamic fields (bullets, expandable) via delegated input handler globally (handleInput)
+        // Comparison fields (left/right)
+        const compLeftTitle = document.getElementById('comp-left-title');
+        if (compLeftTitle) compLeftTitle.addEventListener('input', (e) => this.updateSlideContent(slideId, 'leftTitle', e.target.value));
+
+        const compLeftText = document.getElementById('comp-left-text');
+        if (compLeftText) compLeftText.addEventListener('input', (e) => this.updateSlideContent(slideId, 'leftText', e.target.value));
+
+        const compRightTitle = document.getElementById('comp-right-title');
+        if (compRightTitle) compRightTitle.addEventListener('input', (e) => this.updateSlideContent(slideId, 'rightTitle', e.target.value));
+
+        const compRightText = document.getElementById('comp-right-text');
+        if (compRightText) compRightText.addEventListener('input', (e) => this.updateSlideContent(slideId, 'rightText', e.target.value));
+
+        // Image comparison fields
+        const imgA = document.getElementById('edit-imageA');
+        if (imgA) imgA.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            this.updateSlideContent(slideId, 'imageA', val);
+            e.target.classList.toggle('border-red-400', val && !val.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i));
+        });
+
+        const imgB = document.getElementById('edit-imageB');
+        if (imgB) imgB.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            this.updateSlideContent(slideId, 'imageB', val);
+            e.target.classList.toggle('border-red-400', val && !val.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i));
+        });
+
+        // Video slide field
+        const videoUrl = document.getElementById('edit-video-url');
+        if (videoUrl) {
+            videoUrl.addEventListener('input', (e) => {
+                const val = e.target.value.trim();
+                this.updateSlideContent(slideId, 'videoUrl', val);
+
+                // Validate YouTube / Vimeo style URLs
+                const isValidVideo = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be|vimeo\.com)\//i.test(val);
+                e.target.classList.toggle('border-red-400', val && !isValidVideo);
+            });
+        }
+
+        // Quiz fields
+        const quizQuestion = document.getElementById('quiz-question');
+        if (quizQuestion) quizQuestion.addEventListener('input', (e) => this.updateSlideContent(slideId, 'question', e.target.value));
+
+        const quizCorrect = document.getElementById('quiz-correct');
+        if (quizCorrect) quizCorrect.addEventListener('input', (e) => this.updateSlideContent(slideId, 'correct', parseInt(e.target.value) || 1));
+
+        const quizAnswersList = document.getElementById('quiz-answers');
+        if (quizAnswersList) {
+            quizAnswersList.addEventListener('input', (e) => {
+                if (e.target.classList.contains('quiz-answer-input')) {
+                    const idx = parseInt(e.target.dataset.index);
+                    this.updateNestedContent(slideId, 'answers', idx, null, e.target.value);
+                }
+            });
+
+            quizAnswersList.addEventListener('click', (e) => {
+                if (e.target.closest('.remove-answer')) {
+                    const idx = parseInt(e.target.closest('.remove-answer').dataset.index);
+                    const slide = this.findSlide(this.currentLessonId, slideId);
+                    if (slide && slide.content.answers) {
+                        slide.content.answers.splice(idx, 1);
+                        this.saveToLocalStorage();
+                        this.loadSlideEditContent(slideId);
+                    }
+                }
+            });
+        }
+
+        const addAnswerBtn = document.getElementById('add-answer');
+        if (addAnswerBtn) addAnswerBtn.addEventListener('click', () => {
+            const slide = this.findSlide(this.currentLessonId, slideId);
+            if (!slide.content.answers) slide.content.answers = [];
+            slide.content.answers.push('');
+            this.saveToLocalStorage();
+            this.loadSlideEditContent(slideId);
+        });
+
     }
 
     getChooseSlidePlaceholder() {
@@ -698,7 +892,7 @@ class CourseEditor {
         return `
             <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
                 <h4 class="text-lg font-semibold mb-3 text-gray-800">محتوى المقارنة</h4>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4">
                     <div class="p-3 border border-gray-300 rounded-lg bg-gray-50">
                         <label class="block text-sm font-medium text-gray-700 mb-1">عنوان الجانب الأول</label>
                         <input type="text" id="comp-left-title" value="${this.escapeHTML(c.leftTitle || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3" />
@@ -762,6 +956,64 @@ class CourseEditor {
             </div>
         `;
     }
+
+    renderQuizCarouselEditor(slide) {
+        const c = slide.content || {};
+        const answers = c.answers || [];
+        const question = c.question || '';
+        const correct = c.correct || 1;
+
+        let html = `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
+            <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات الاختبار</h4>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">السؤال</label>
+                <input type="text" id="quiz-question" value="${this.escapeHTML(question)}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="أدخل نص السؤال هنا" />
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">الإجابات</label>
+                <ul id="quiz-answers" class="space-y-2">
+                    ${answers.map((a, i) => `
+                        <li class="flex items-center gap-2">
+                            <span class="w-6 text-gray-500 text-center">${i + 1}.</span>
+                            <input type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg quiz-answer-input" data-index="${i}" value="${this.escapeHTML(a)}" placeholder="الإجابة ${i + 1}" />
+                            <button class="text-red-500 hover:text-red-700 remove-answer" data-index="${i}"><i class="fas fa-trash"></i></button>
+                        </li>
+                    `).join('')}
+                </ul>
+                <button id="add-answer" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus mr-1"></i> إضافة إجابة</button>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">رقم الإجابة الصحيحة</label>
+                <input type="number" id="quiz-correct" min="1" max="${answers.length || 1}" value="${correct}" class="w-24 px-3 py-2 border border-gray-300 rounded-lg" />
+            </div>
+        </div>
+    `;
+        return html;
+    }
+
+    renderImageComparisonEditor(slide) {
+        const c = slide.content || {};
+        return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-6">
+            <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات مقارنة الصور</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الأولى (A)</label>
+                    <input type="url" id="edit-imageA" value="${this.escapeHTML(c.imageA || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="https://example.com/imageA.jpg" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الثانية (B)</label>
+                    <input type="url" id="edit-imageB" value="${this.escapeHTML(c.imageB || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="https://example.com/imageB.jpg" />
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
 
     // ---------- Preview / load ----------
     loadSlidePreview(slideId) {
@@ -903,6 +1155,51 @@ class CourseEditor {
             return;
         }
 
+        // --- Quiz: select answer ---
+        const quizBtn = target.closest('[id^="quiz-"][id$="-answers"] button');
+        if (quizBtn) {
+            const slideEl = quizBtn.closest('[id^="quiz-"][id$="-answers"]');
+            const slideId = parseInt(slideEl.id.split('-')[1]);
+            const slide = this.findSlide(this.currentLessonId, slideId);
+            if (!slide.submitted) {
+                slide.userChoice = parseInt(quizBtn.dataset.index);
+                this.saveToLocalStorage();
+                this.loadSlidePreview(slideId);
+            }
+            return;
+        }
+
+        // --- Quiz: submit answer ---
+        const submitBtn = target.closest('[id^="quiz-"][id$="-submit"]');
+        if (submitBtn) {
+            const slideId = parseInt(submitBtn.id.split('-')[1]);
+            const slide = this.findSlide(this.currentLessonId, slideId);
+            if (!slide || slide.submitted) return;
+
+            slide.submitted = true;
+            this.saveToLocalStorage();
+            this.loadSlidePreview(slideId);
+
+            // After reload, trigger animation
+            setTimeout(() => {
+                const iconEl = document.getElementById(`quiz-${slideId}-icon`);
+                const correct = slide.userChoice === (slide.content.correct - 1);
+                if (iconEl) {
+                    iconEl.innerHTML = correct
+                        ? `<i class="fas fa-star text-yellow-400"></i>`
+                        : `<i class="fas fa-times-circle text-red-500"></i>`;
+                    iconEl.style.opacity = '1';
+                    iconEl.style.transform = 'translate(-100%, 50%) rotate(-15deg)';
+                    setTimeout(() => {
+                        iconEl.style.opacity = '0';
+                    }, 1200);
+                }
+            }, 300);
+
+            return;
+        }
+
+
         // Header toggle (lesson header)
         const lessonHeader = target.closest('.lesson-header');
         if (lessonHeader) {
@@ -1027,8 +1324,17 @@ class CourseEditor {
             return;
         }
 
-        // Save lesson title from edit form
-        // handled via explicit buttons already wired in setupEventListeners
+        // Expandable list preview toggle
+        const expandableItem = target.closest('.expandable-item');
+        if (expandableItem) {
+            const content = expandableItem.querySelector('.expandable-content');
+            const icon = expandableItem.querySelector('.fa-chevron-down');
+            if (content) {
+                content.classList.toggle('hidden');
+                if (icon) icon.classList.toggle('rotate-180');
+            }
+            return;
+        }
     }
 
     // ---------- Lesson edit form ----------
