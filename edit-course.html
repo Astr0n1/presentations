@@ -10,12 +10,10 @@
 		/>
 		<link rel="stylesheet" href="css/styles.css" />
 		<link rel="stylesheet" href="css/edit.css" />
+		<link rel="stylesheet" href="css/mobile-nav.css" />
 
-		<script defer src="https://cdn.tailwindcss.com"></script>
-		<script
-			defer
-			src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
-		></script>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 		<script defer src="js/auth.js"></script>
 		<script defer src="js/edit.js"></script>
 	</head>
@@ -50,8 +48,9 @@
 
 		<div class="flex">
 			<!-- Edit Sidebar (Left) -->
+			<!-- Left Edit Sidebar -->
 			<div
-				class="edit-sidebar fixed left-0 top-0 h-full bg-white border-r border-gray-200 overflow-y-auto z-20"
+				class="edit-sidebar fixed left-0 top-0 h-full bg-white border-r border-gray-200 overflow-y-auto z-20 flex-shrink-0 min-w-[250px] max-w-[50vw] md:min-w-[250px] md:max-w-[50vw] sm:min-w-[40vw] sm:max-w-[100vw] transition-transform duration-300 ease-in-out"
 			>
 				<!-- Resize Handle for Left Sidebar -->
 				<div
@@ -85,7 +84,7 @@
 			<!-- Main Content -->
 			<div class="main-content flex-1 p-6">
 				<!-- Current Lesson Header -->
-				<div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+				<div class="bg-white rounded-xl shadow-sm px-6 py-4 mb-6">
 					<div class="flex items-center justify-between">
 						<div
 							class="flex items-center space-x-4 space-x-reverse"
@@ -172,36 +171,38 @@
 				</div>
 
 				<!-- Slide Preview Area -->
-				<div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+				<div
+					class="overflow-hidden mb-6 flex justify-center items-center"
+				>
 					<div
 						id="slide-preview-container"
-						class="slide-preview rounded-t-xl"
+						class="slide-preview rounded-t-xl fixed-slide-size mx-auto flex items-center justify-center"
 					>
 						<!-- Preview content will be dynamically loaded here -->
 						<div
 							id="slide-preview-content"
-							class="slide-content text-center text-white p-8 w-full"
+							class="w-full h-full overflow-hidden"
 						>
-							<div class="max-w-2xl mx-auto">
-								<i
-									class="fas fa-sliders-h text-6xl mb-6 opacity-50"
-								></i>
-								<h2 class="text-3xl font-bold mb-4">
+							<div
+								class="flex flex-col items-center justify-center text-center h-full text-white opacity-80"
+							>
+								<i class="fas fa-sliders-h text-6xl mb-6"></i>
+								<h2 class="text-2xl font-bold mb-3">
 									اختر سلايداً للمعاينة
 								</h2>
-								<p class="text-xl opacity-90">
-									انقر على أي سلايد من القائمة لرؤية محتواه
-									هنا
+								<p class="text-lg">
+									انقر على أي سلايد لرؤية محتواه هنا
 								</p>
 							</div>
+							`;
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<!-- Right Sidebar -->
+			<!-- Right Lessons Sidebar -->
 			<div
-				class="sidebar fixed right-0 top-0 h-full bg-white border-l border-gray-200 overflow-y-auto z-10"
+				class="sidebar fixed right-0 top-0 h-full bg-white border-l border-gray-200 overflow-y-auto z-10 flex-shrink-0 min-w-[250px] max-w-[50vw] md:min-w-[250px] md:max-w-[50vw] hidden sm:hidden md:block transition-transform duration-300 ease-in-out"
 			>
 				<!-- Resize Handle for Right Sidebar -->
 				<div
@@ -308,6 +309,50 @@
 						class="flex-1 p-6 overflow-y-auto"
 					></div>
 				</div>
+			</div>
+		</div>
+		<!-- 🌐 Mobile Bottom Slide Navigator -->
+		<div
+			id="mobile-slide-nav"
+			class="mobile-lessons-bar fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg md:hidden flex flex-col z-40 transition-transform duration-300 translate-y-0"
+		>
+			<!-- Collapse Handle -->
+			<div
+				id="mobile-lessons-handle"
+				class="cursor-pointer bg-gray-100 py-2 flex items-center justify-center border-b border-gray-200"
+			>
+				<i class="fas fa-chevron-up text-gray-600 text-lg"></i>
+			</div>
+			<!-- Top: Lessons Tabs -->
+			<div
+				id="mobile-lessons-tabs"
+				class="flex overflow-x-auto border-b border-gray-100 no-scrollbar"
+			>
+				<!-- dynamically rendered -->
+			</div>
+
+			<!-- Bottom: Slides Row -->
+			<div class="relative flex items-center">
+				<button
+					id="mobile-slide-prev"
+					class="nav-arrow-left absolute left-0 ml-1 z-10 bg-white rounded-full shadow p-2"
+				>
+					<i class="fas fa-chevron-left text-gray-600"></i>
+				</button>
+
+				<div
+					id="mobile-slides-scroll"
+					class="slides-scroll flex-1 overflow-x-auto flex space-x-2 py-3 px-10 justify-center no-scrollbar"
+				>
+					<!-- slides squares will render here -->
+				</div>
+
+				<button
+					id="mobile-slide-next"
+					class="nav-arrow-right absolute right-0 mr-1 z-10 bg-white rounded-full shadow p-2"
+				>
+					<i class="fas fa-chevron-right text-gray-600"></i>
+				</button>
 			</div>
 		</div>
 	</body>

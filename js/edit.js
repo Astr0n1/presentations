@@ -1,4 +1,4 @@
-
+slidePositions = {};
 class Slide {
     constructor({ id, title = 'سلايد جديد', type = 'content', subtype = 'undefined', content = {} } = {}) {
         this.id = id;
@@ -64,8 +64,9 @@ class CourseEditor {
         this.setupEventListeners();
         this.renderLessonsSidebar();
         this.updateLessonHeader();
-        this.updateMainContentMargins();
 
+        this.renderMobileSlidesBar();
+        this.attachMobileSlidesEvents();
         // run smoke tests to check basic invariants
         this.runSmokeTests();
     }
@@ -241,24 +242,28 @@ class CourseEditor {
 
         if (!slide) {
             previewContent.innerHTML = `
-                <div class="max-w-2xl mx-auto text-center">
-                    <i class="fas fa-sliders-h text-6xl mb-6 opacity-50"></i>
-                    <h2 class="text-3xl font-bold mb-4">اختر سلايداً للمعاينة</h2>
-                    <p class="text-xl opacity-90">انقر على أي سلايد من القائمة لرؤية محتواه هنا</p>
-                </div>`;
-            previewContainer.className = 'slide-preview rounded-t-xl';
+        <div class="flex flex-col items-center justify-center text-center h-full text-white opacity-80">
+            <i class="fas fa-sliders-h text-6xl mb-6"></i>
+            <h2 class="text-2xl font-bold mb-3">اختر سلايداً للمعاينة</h2>
+            <p class="text-lg">انقر على أي سلايد لرؤية محتواه هنا</p>
+        </div>`;
+            previewContainer.className = 'slide-preview rounded-t-xl fixed-slide-size mx-auto flex items-center justify-center';
             return;
         }
 
         // safe clear then render once
         previewContent.innerHTML = '';
-        previewContainer.className = `slide-preview rounded-t-xl slide-${slide.type}`;
+        previewContainer.className = `slide-preview rounded-t-xl fixed-slide-size mx-auto slide-${slide.type} `;
 
         const headerHtml = `
-            <div class="max-w-4xl mx-auto py-12 px-6">
-                <h1 class="text-4xl font-extrabold mb-2 text-white">${this.escapeHTML(slide.content.title || slide.title)}</h1>
-                ${slide.content.subtitle ? `<h2 class="text-xl text-gray-200 mb-8 text-white">${this.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+            <div class="slide-header w-full">
+                <h1 class="font-extrabold mb-3">${this.escapeHTML(slide.content.title || slide.title)}</h1>
+                ${slide.content.subtitle ? `<h2 class="mb-6">${this.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+            </div>
         `;
+
+
+
 
         let bodyHtml = '';
 
@@ -266,7 +271,7 @@ class CourseEditor {
         console.log(key)
         switch (key) {
             case 'text-bulleted-list':
-                bodyHtml += `<ul class="space-y-3 text-lg text-white list-disc list-inside mt-6">`;
+                bodyHtml += `<ul class="space-y-2 mt-4">`;
                 if (Array.isArray(slide.content.items)) {
                     slide.content.items.forEach(it => {
                         bodyHtml += `<li class="text-white">${this.escapeHTML(it)}</li>`;
@@ -285,7 +290,7 @@ class CourseEditor {
                 break;
             case 'title-undefined':
                 bodyHtml += `<div class="mt-12 text-center">
-                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg">
                                     ${this.escapeHTML(slide.content.buttonText || 'البدء')}
                                 </button>
                             </div>`;
@@ -293,7 +298,7 @@ class CourseEditor {
             case 'image-comparison':
                 bodyHtml += `
                     <div class="relative w-full mt-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="bg-black/30 rounded-xl overflow-hidden flex items-center justify-center relative">
                                 ${slide.content.imageA
                         ? `<img src="${this.escapeHTML(slide.content.imageA)}"
@@ -335,7 +340,7 @@ class CourseEditor {
                     const isCorrect = submitted && i === correctIndex;
                     const isWrong = submitted && isChosen && i !== correctIndex;
 
-                    let classes = "w-full flex items-center gap-2 px-4 py-3 rounded-lg border transition ";
+                    let classes = "quiz-option w-full flex items-center gap-2 rounded-lg border transition ";
                     if (submitted) {
                         if (isCorrect) classes += "border-green-500 bg-green-600/30 text-white";
                         else if (isWrong) classes += "border-red-500 bg-red-600/30 text-white";
@@ -378,10 +383,14 @@ class CourseEditor {
                 }
         }
 
-        previewContent.innerHTML = headerHtml + bodyHtml + '</div>';
+        previewContent.innerHTML = `
+            <div class="slide-content">
+                ${headerHtml + bodyHtml}
+            </div>
+            `;
+        const preview = document.getElementById("slide-preview-container");
+        preview.classList.add("fixed-slide-size");
     }
-
-
 
     renderComparisonPreview(slide) {
         const c = slide.content || {};
@@ -401,7 +410,7 @@ class CourseEditor {
 
     renderExpandableListPreview(slide) {
         const items = slide.content.items || [];
-        let html = `<div class="space-y-4 mt-6">`;
+        let html = `<div class="space-y-4 mt-6 w-full">`;
 
         items.forEach((item, idx) => {
             html += `
@@ -419,7 +428,6 @@ class CourseEditor {
         html += `</div>`;
         return html;
     }
-
 
     renderVideoPreview(slide) {
         const content = slide.content || {};
@@ -490,19 +498,54 @@ class CourseEditor {
         return types[type] || type;
     }
 
-    updateMainContentMargins() {
-        // keep simple: read computed widths
-        const leftSidebar = document.querySelector('.edit-sidebar');
-        const rightSidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
+    // ---------- Sidebar state persistence (per-lesson) ----------
+    saveSidebarStateForLesson(lessonId, side, collapsed) {
+        if (!lessonId) return;
+        try {
+            const key = `sidebarState_${lessonId}_${side}`;
+            localStorage.setItem(key, collapsed ? '1' : '0');
+        } catch (err) {
+            console.warn('Failed saving sidebar state', err);
+        }
+    }
 
-        if (!mainContent) return;
+    getSidebarStateForLesson(lessonId, side) {
+        if (!lessonId) return false;
+        try {
+            const key = `sidebarState_${lessonId}_${side}`;
+            return localStorage.getItem(key) === '1';
+        } catch (err) {
+            return false;
+        }
+    }
 
-        const leftWidth = leftSidebar ? window.getComputedStyle(leftSidebar).width : '0px';
-        const rightWidth = rightSidebar ? window.getComputedStyle(rightSidebar).width : '0px';
+    applySidebarStateForLesson(lessonId) {
+        // Apply saved left/right collapsed state for the given lesson (called on page load)
+        try {
+            const leftCollapsed = this.getSidebarStateForLesson(lessonId, 'left');
+            const rightCollapsed = this.getSidebarStateForLesson(lessonId, 'right');
 
-        mainContent.style.marginLeft = leftWidth;
-        mainContent.style.marginRight = rightWidth;
+            const leftEl = document.querySelector('.edit-sidebar');
+            const rightEl = document.querySelector('.sidebar');
+
+            if (leftEl) {
+                if (leftCollapsed) {
+                    leftEl.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                } else {
+                    leftEl.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                }
+            }
+
+            if (rightEl) {
+                if (rightCollapsed) {
+                    rightEl.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+                } else {
+                    rightEl.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
+                }
+            }
+        } catch (err) {
+            console.warn('Failed applying sidebar state', err);
+        }
     }
 
     // ---------- Actions ----------
@@ -612,9 +655,6 @@ class CourseEditor {
             this.renderSlidePreview(slide);
         }
     }
-
-
-    // Generic nested updater for lists
     updateNestedContent(slideId, contentKey, index, key, value) {
         const slide = this.findSlide(this.currentLessonId, slideId);
         if (!slide) return;
@@ -1026,29 +1066,46 @@ class CourseEditor {
         // toggles and static buttons
         const toggleSidebar = document.getElementById('toggle-sidebar');
         if (toggleSidebar) toggleSidebar.addEventListener('click', () => {
-            document.body.classList.toggle('sidebar-collapsed')
-            if (document.body.classList.contains('sidebar-collapsed')) {
-                document.querySelector('.main-content').style.marginRight = '1rem';
+            const rightSidebar = document.querySelector('.sidebar');
+            if (!rightSidebar) return;
+
+            // Determine current state (presence of translate-x-full means collapsed)
+            const currentlyCollapsed = rightSidebar.classList.contains('translate-x-full') && rightSidebar.classList.contains('opacity-0');
+
+            if (currentlyCollapsed) {
+                // open
+                rightSidebar.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
+                this.saveSidebarStateForLesson(this.currentLessonId, 'right', false);
             } else {
-                // keep simple: read computed widths
-                const rightSidebar = document.querySelector('.sidebar');
-                const mainContent = document.querySelector('.main-content');
-
-                if (!mainContent) return;
-
-                const rightWidth = rightSidebar ? window.getComputedStyle(rightSidebar).width : '1rem';
-
-                mainContent.style.marginRight = rightWidth;
+                // collapse
+                rightSidebar.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+                this.saveSidebarStateForLesson(this.currentLessonId, 'right', true);
             }
+
+            // keep main-content layout unchanged (L3); do not adjust margins here
         });
 
         const toggleEditSidebar = document.getElementById('toggle-edit-sidebar');
         if (toggleEditSidebar) toggleEditSidebar.addEventListener('click', () => {
-            document.body.classList.toggle('edit-sidebar-collapsed')
-            if (document.body.classList.contains('edit-sidebar-collapsed')) {
-                document.querySelector('.main-content').style.marginLeft = '1rem';
+            const leftSidebar = document.querySelector('.edit-sidebar');
+            if (!leftSidebar) return;
+
+            // negative translate class indicates left-side collapse
+            const currentlyCollapsed = leftSidebar.classList.contains('-translate-x-full') && leftSidebar.classList.contains('opacity-0');
+
+            if (currentlyCollapsed) {
+                // open
+                leftSidebar.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                this.saveSidebarStateForLesson(this.currentLessonId, 'left', false);
+            } else {
+                // collapse
+                leftSidebar.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                this.saveSidebarStateForLesson(this.currentLessonId, 'left', true);
             }
+
+            // leave main-content as-is (L3)
         });
+
 
         const saveBtn = document.getElementById('save-changes');
         if (saveBtn) saveBtn.addEventListener('click', () => {
@@ -1108,8 +1165,22 @@ class CourseEditor {
         document.addEventListener('click', this.handleDocumentClick);
         document.addEventListener('input', this.handleInput);
 
+        // Mobile slide nav toggle
+        const mobileHandle = document.getElementById('mobile-lessons-handle');
+        const mobileNav = document.getElementById('mobile-slide-nav');
+        if (mobileHandle && mobileNav) {
+            mobileHandle.addEventListener('click', () => {
+                mobileNav.classList.toggle('collapsed');
+                const icon = mobileHandle.querySelector('i');
+                if (icon) icon.classList.toggle('fa-chevron-up');
+                if (icon) icon.classList.toggle('fa-chevron-down');
+            });
+        }
+
+
         // resize handles
         this.setupResizeHandles();
+        this.applySidebarStateForLesson(this.currentLessonId);
     }
 
     handleInput(e) {
@@ -1258,16 +1329,12 @@ class CourseEditor {
             }
             this.currentSlideId = slideId;
             this.loadSlideEditContent(slideId);
-            document.body.classList.remove('edit-sidebar-collapsed');
-            // keep simple: read computed widths
+            // Force open left sidebar when editing a slide
             const leftSidebar = document.querySelector('.edit-sidebar');
-            const mainContent = document.querySelector('.main-content');
-
-            if (!mainContent) return;
-
-            const leftWidth = leftSidebar ? window.getComputedStyle(leftSidebar).width : '0px';
-
-            mainContent.style.marginLeft = leftWidth;
+            if (leftSidebar) {
+                leftSidebar.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                this.saveSidebarStateForLesson(this.currentLessonId, 'left', false);
+            }
 
             return;
         }
@@ -1289,7 +1356,6 @@ class CourseEditor {
 
             this.currentSlideId = slideId;
             this.loadSlideEditContent(slideId);
-            document.body.classList.remove('edit-sidebar-collapsed');
             return;
         }
 
@@ -1364,8 +1430,6 @@ class CourseEditor {
         this.renderLessonsSidebar();
         this.hideLessonEditForm();
     }
-
-    // ---------- Slide library modal ----------
     showAddSlideModal() {
         if (this.dom.addSlideModal) this.dom.addSlideModal.classList.remove('hidden');
         // render default category
@@ -1399,6 +1463,125 @@ class CourseEditor {
             </div>
         `;
     }
+
+    // ---------- Mobile Slides Bar ----------
+    renderMobileSlidesBar() {
+        const lessonsTabs = document.getElementById('mobile-lessons-tabs');
+        const slidesScroll = document.getElementById('mobile-slides-scroll');
+        if (!lessonsTabs || !slidesScroll) return;
+
+        // render lessons tabs
+        lessonsTabs.innerHTML = this.lessons.map(l =>
+            `<button class="lesson-tab ${l.id === this.currentLessonId ? 'active' : ''}" data-lesson-id="${l.id}">
+      ${this.escapeHTML(l.title)}
+    </button>`
+        ).join('');
+
+        // render slides of current lesson
+        const lesson = this.findLessonById(this.currentLessonId);
+        if (!lesson) return;
+        slidesScroll.innerHTML = lesson.slides.map((s, i) =>
+            `<div class="slide-square ${s.id === this.currentSlideId ? 'active' : ''}"
+                data-slide-id="${s.id}" data-lesson-id="${lesson.id}">
+            ${i + 1}
+            </div>`
+        ).join('');
+
+        // ✅ NEW — smoothly center the active slide
+        const activeSlide = slidesScroll.querySelector('.active');
+        if (activeSlide) {
+            activeSlide.scrollIntoView({
+                behavior: 'smooth',
+                inline: 'center',
+                block: 'nearest'
+            });
+        }
+
+    }
+
+    syncMobileActiveSlide() {
+        const slides = document.querySelectorAll('#mobile-slides-scroll .slide-square');
+        slides.forEach(btn => {
+            const sid = parseInt(btn.dataset.slideId, 10);
+            btn.classList.toggle('active', sid === this.currentSlideId);
+        });
+        const lessonTabs = document.querySelectorAll('#mobile-lessons-tabs .lesson-tab');
+        lessonTabs.forEach(tab => {
+            const lid = parseInt(tab.dataset.lessonId, 10);
+            tab.classList.toggle('active', lid === this.currentLessonId);
+        });
+    }
+
+    attachMobileSlidesEvents() {
+        const slidesScroll = document.getElementById('mobile-slides-scroll');
+        const lessonsTabs = document.getElementById('mobile-lessons-tabs');
+        const prevBtn = document.getElementById('mobile-slide-prev');
+        const nextBtn = document.getElementById('mobile-slide-next');
+        if (!slidesScroll || !lessonsTabs) return;
+
+        // tap slide square
+        slidesScroll.addEventListener('click', (e) => {
+            const slideBtn = e.target.closest('.slide-square');
+            if (!slideBtn) return;
+            const sid = parseInt(slideBtn.dataset.slideId);
+            const lid = parseInt(slideBtn.dataset.lessonId);
+            if (!isNaN(lid)) this.currentLessonId = lid;
+            if (!isNaN(sid)) {
+                this.currentSlideId = sid;
+                this.loadSlideEditContent(sid);
+                this.syncMobileActiveSlide();
+            }
+        });
+
+        // tap lesson tab
+        lessonsTabs.addEventListener('click', (e) => {
+            const tab = e.target.closest('.lesson-tab');
+            if (!tab) return;
+            const lid = parseInt(tab.dataset.lessonId);
+            if (isNaN(lid)) return;
+            this.currentLessonId = lid;
+            const lesson = this.findLessonById(lid);
+            this.currentSlideId = lesson.slides[0]?.id || null;
+            this.renderMobileSlidesBar();
+            this.loadSlideEditContent(this.currentSlideId);
+        });
+
+        // arrows navigation
+        prevBtn.addEventListener('click', () => this.navigateMobileSlide(-1));
+        nextBtn.addEventListener('click', () => this.navigateMobileSlide(1));
+    }
+
+    navigateMobileSlide(direction) {
+        const lesson = this.findLessonById(this.currentLessonId);
+        if (!lesson) return;
+        const slides = lesson.slides;
+        const idx = slides.findIndex(s => s.id === this.currentSlideId);
+        let nextIndex = idx + direction;
+
+        // go to next/prev lesson if out of range
+        if (nextIndex < 0) {
+            const currIdx = this.lessons.findIndex(l => l.id === this.currentLessonId);
+            if (currIdx > 0) {
+                this.currentLessonId = this.lessons[currIdx - 1].id;
+                const prevLesson = this.findLessonById(this.currentLessonId);
+                this.currentSlideId = prevLesson.slides[prevLesson.slides.length - 1].id;
+            } else return;
+        } else if (nextIndex >= slides.length) {
+            const currIdx = this.lessons.findIndex(l => l.id === this.currentLessonId);
+            if (currIdx < this.lessons.length - 1) {
+                this.currentLessonId = this.lessons[currIdx + 1].id;
+                const nextLesson = this.findLessonById(this.currentLessonId);
+                this.currentSlideId = nextLesson.slides[0].id;
+            } else return;
+        } else {
+            this.currentSlideId = slides[nextIndex].id;
+        }
+
+        this.renderMobileSlidesBar();
+        this.loadSlideEditContent(this.currentSlideId);
+        this.syncMobileActiveSlide();
+    }
+
 
     // ---------- Resize Handles ----------
     setupResizeHandles() {

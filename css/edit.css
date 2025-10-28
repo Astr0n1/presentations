@@ -5,26 +5,10 @@
 	user-select: none;
 }
 
-.sidebar {
-	width: 380px;
-	min-width: 300px;
-	max-width: 600px;
-	transition: all 0.3s ease;
-	position: relative;
-}
-
+.sidebar,
 .edit-sidebar {
-	width: 400px;
-	min-width: 300px;
-	max-width: 600px;
-	transition: all 0.3s ease;
 	position: relative;
-}
-
-.main-content {
-	margin-right: 380px;
-	margin-left: 400px;
-	transition: all 0.3s ease;
+	transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 /* Resize Handles */
@@ -50,24 +34,6 @@
 
 .resize-handle-right {
 	right: -3px;
-}
-
-.sidebar-collapsed .sidebar {
-	transform: translateX(100%);
-	opacity: 0;
-}
-
-.edit-sidebar-collapsed .edit-sidebar {
-	transform: translateX(-100%);
-	opacity: 0;
-}
-
-.sidebar-collapsed .main-content {
-	margin-right: 0;
-}
-
-.edit-sidebar-collapsed .main-content {
-	margin-left: 0;
 }
 
 .slide-item {
@@ -141,11 +107,12 @@
 
 /* Slide Preview */
 .slide-preview {
+	color: #ffffff;
 	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	aspect-ratio: 3 / 2;
+	aspect-ratio: 2/3;
 	overflow: hidden;
 	display: flex;
-	align-items: center;
+	align-items: start;
 	justify-content: center;
 	border-radius: 12px;
 }
@@ -245,18 +212,6 @@
 	transform: rotate(180deg);
 }
 
-/* Fix 2: Set default background and ensure text is white */
-.slide-preview {
-	position: relative;
-	background-color: #1f2937; /* A dark background (e.g., gray-800) for contrast */
-	color: #ffffff; /* Default text color is white */
-	aspect-ratio: 3 / 2;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	overflow-y: auto; /* Allow scrolling for content */
-}
-
 /* Ensure the titles and paragraphs inside the preview are white if not explicitly styled */
 .slide-preview-content h1,
 .slide-preview-content h2,
@@ -271,6 +226,9 @@
 .main-content {
 	transition: width 0.3s ease, margin 0.3s ease;
 }
+.main-content {
+	margin: auto;
+}
 
 [id^="quiz-"][id$="-icon"] i {
 	position: absolute;
@@ -278,4 +236,149 @@
 	right: 0;
 	transform: translate(0, 0);
 	transition: all 0.8s cubic-bezier(0.55, 0.08, 0.68, 0.53);
+}
+/* ----------------------------------------
+   Responsive Slide Preview Based on Height
+-----------------------------------------*/
+.fixed-slide-size {
+	/* maintain 2:3 ratio using height as base */
+	height: calc(90vh - 120px); /* leave room for header/margins */
+	aspect-ratio: 2 / 3;
+	max-height: 800px; /* never exceed this even on large monitors */
+	max-width: calc((2 / 3) * 90vh); /* keep ratio synced */
+	width: auto;
+	margin: 0 auto;
+	border-radius: 12px;
+	overflow: hidden;
+	flex-shrink: 0;
+	position: relative;
+}
+
+/* Make sure it scales nicely across devices */
+@media (max-width: 1024px) {
+	.fixed-slide-size {
+		height: 80vh;
+		max-height: 680px;
+	}
+}
+
+@media (max-width: 768px) {
+	.fixed-slide-size {
+		height: 70vh;
+		max-height: none;
+	}
+}
+
+@media (max-width: 480px) {
+	.fixed-slide-size {
+		height: 65vh;
+	}
+}
+/* -------------------------------------------------
+   🔧 Unified Slide Content Layout (Clean + Responsive)
+--------------------------------------------------*/
+.slide-content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center; /* ✅ vertically center content */
+	align-items: start; /* ✅ horizontally center for cleaner look */
+	height: 100%;
+	padding: 1rem 1.25rem;
+	text-align: right;
+	direction: rtl;
+	overflow-y: auto;
+	box-sizing: border-box;
+}
+
+/* ---------------------------------------
+   Header inside slide preview
+---------------------------------------- */
+.slide-header {
+	width: 100%;
+	padding: 0 1rem;
+	text-align: right;
+}
+
+/* Smaller, balanced typography */
+.slide-content h1 {
+	text-align: center;
+	font-size: clamp(1rem, 2vw, 1.75rem); /* ↓ ~70% smaller */
+	line-height: 1.3;
+	font-weight: 800;
+	color: #fff;
+	margin-bottom: 0.75rem;
+}
+
+.slide-content h2 {
+	font-size: clamp(0.9rem, 1.6vw, 1.3rem);
+	line-height: 1.4;
+	color: #e5e7eb;
+	margin-bottom: 1rem;
+}
+
+.slide-content h3 {
+	font-size: clamp(0.8rem, 1.45vw, 1.1rem);
+	line-height: 1.2;
+	color: #e5e7eb;
+}
+
+.slide-content p,
+.slide-content li {
+	font-size: clamp(0.8rem, 1.1vw, 1rem);
+	line-height: 1.7;
+	color: #fff;
+}
+
+/* ✅ Keep bullets visible and aligned correctly in RTL */
+.slide-content ul {
+	padding-inline-start: 1.25rem;
+	list-style-type: disc;
+	list-style-position: outside;
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	align-self: stretch; /* ensures list uses full width */
+}
+
+.slide-content li {
+	margin-bottom: 0.25rem;
+}
+
+/* ✅ Center elements like images, videos, or quiz blocks neatly */
+.slide-content > *:not(:last-child) {
+	margin-bottom: 1rem;
+}
+
+/* ✅ Buttons / call-to-action */
+.slide-content button {
+	align-self: center;
+	padding: 0.75rem 1.5rem;
+	font-size: clamp(0.9rem, 1.2vw, 1rem);
+	font-weight: 600;
+	border-radius: 0.75rem;
+	background: #2563eb;
+	color: white;
+	transition: background 0.2s ease;
+}
+.slide-content button:hover {
+	background: #1d4ed8;
+}
+
+/* ✅ Keep embedded media responsive */
+.slide-content iframe,
+.slide-content img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 8px;
+}
+
+/* Smooth scrolling inside slide preview */
+.slide-content::-webkit-scrollbar {
+	width: 6px;
+}
+.slide-content::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 3px;
+}
+.slide-content::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.5);
 }
