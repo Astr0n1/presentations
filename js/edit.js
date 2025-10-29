@@ -1592,6 +1592,15 @@ export default class CourseEditor {
         const slide = this.findSlide(this.currentLessonId, slideId);
         return this.renderSlidePreview(slide);
     }
+    showAddSlideModal() {
+        if (this.dom.addSlideModal) this.dom.addSlideModal.classList.remove('hidden');
+        // render default category
+        this.renderSlideTemplates('text');
+    }
+
+    hideAddSlideModal() {
+        if (this.dom.addSlideModal) this.dom.addSlideModal.classList.add('hidden');
+    }
 
     // finders
     findLessonById(id) { return this.lessons.find(l => l.id === id); }
