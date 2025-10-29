@@ -129,6 +129,53 @@ class SlideManager {
         this.editor.updateLessonHeader();
     }
 
+    /**
+ * Delete an entire lesson by its id, update current pointers, re-number remaining lessons,
+ * persist and re-render.
+ */
+    deleteLessonById(lessonId) {
+        const idx = this.editor.lessons.findIndex(l => l.id === lessonId);
+        if (idx === -1) return;
+
+        // Remove lesson
+        this.editor.lessons.splice(idx, 1);
+
+        // If no lessons left, ensure initial state
+        if (!this.editor.lessons.length) {
+            this.ensureInitialState();
+            this.saveToLocalStorage();
+            this.editor.renderLessonsSidebar();
+            this.editor.renderSlidePreview(null);
+            if (this.editor.dom.slideEditContent) this.editor.dom.slideEditContent.innerHTML = this.editor.ui.getChooseSlidePlaceholder();
+            this.editor.renderMobileSlidesBar();
+            return;
+        }
+
+        // Re-number lesson titles to keep a simple sequential naming (optional - keep consistent)
+        this.editor.lessons.forEach((l, i) => {
+            // Only rename if it follows your numbering convention; adjust if you prefer preserving custom titles
+            if (l.title && /^الدرس\s+\d+/.test(l.title)) {
+                l.title = `الدرس ${i + 1}`;
+            }
+        });
+
+        // Fix currentLessonId/currentSlideId if needed
+        if (this.editor.currentLessonId === lessonId) {
+            // prefer the previous lesson if exists, otherwise the first lesson
+            const newIndex = Math.max(0, idx - 1);
+            const newLesson = this.editor.lessons[newIndex];
+            this.editor.currentLessonId = newLesson.id;
+            this.editor.currentSlideId = newLesson.slides[0]?.id ?? null;
+        }
+
+        // Persist and re-render
+        this.saveToLocalStorage();
+        this.editor.renderLessonsSidebar();
+        this.editor.updateLessonHeader();
+        this.editor.renderMobileSlidesBar();
+    }
+
+
     createNewSlide(type, subtype) {
         const lesson = this.editor.findLessonById(this.editor.currentLessonId);
         if (!lesson) return;
@@ -449,60 +496,68 @@ class UIRenderer {
 
     renderQuizCategorize(slide) {
         const c = slide.content || {};
-        const categories = c.answers || [];
-        const question = c.question || 'ضع العنصر في التصنيف الصحيح';
-        const correctIndex = (c.correct ?? 1) - 1;
+        const question = c.question || 'لم يتم إدخال السؤال بعد';
+        const categories = c.categories || [];
+        const correctIndex = (c.correct ?? 0);
+        const chosen = slide.userChoice ?? null;
+        const submitted = slide.submitted ?? false;
 
-        const categoriesHTML = categories.map((cat, i) => `
-        <div 
-            data-index="${i}" 
-            id="quiz-${slide.id}-cat-${i}" 
-            class="category-dropzone border-2 border-dashed border-gray-300 rounded-xl py-8 flex items-center justify-center text-white text-lg font-medium transition">
-            ${Utils.escapeHTML(cat || '—')}
+        // Prevent overflow cutoffs for animations
+        const containerId = `quiz-${slide.id}-categorize`;
+
+        // Each category becomes a drop zone
+        const dropZones = categories.map((cat, i) => {
+            let bg = 'bg-white/10 border-gray-300';
+            if (submitted) {
+                if (i === correctIndex && chosen === i) bg = 'bg-green-600/30 border-green-500';
+                else if (chosen === i && i !== correctIndex) bg = 'bg-red-600/30 border-red-500';
+                else bg = 'bg-white/10 border-gray-400 opacity-50';
+            } else if (chosen === i) {
+                bg = 'bg-black/30 border-blue-500';
+            }
+
+            return `
+            <div class="quiz-category-zone border ${bg} rounded-lg flex items-center justify-center text-white font-semibold p-4 text-center transition cursor-pointer"
+                 data-index="${i}" 
+                 ondragover="event.preventDefault()"
+                 ondrop="window.handleCategorizeDrop(event, '${containerId}')">
+                ${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}
+            </div>
+        `;
+        }).join('');
+
+        // Build the question as draggable element
+        const draggableHtml = `
+        <div id="${containerId}-question" 
+             class="quiz-draggable bg-blue-500/40 text-white font-bold px-4 py-3 rounded-lg shadow-md cursor-move inline-block transition select-none"
+             draggable="${!submitted}"
+             ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
+             ${Utils.escapeHTML(question)}
         </div>
-    `).join('');
+    `;
 
-        setTimeout(() => {
-            const dragEl = document.getElementById(`quiz-${slide.id}-draggable`);
-            const zones = document.querySelectorAll(`[id^="quiz-${slide.id}-cat-"]`);
-            if (dragEl) dragEl.draggable = true;
-            let placedZone = null;
-
-            dragEl?.addEventListener('dragstart', e => {
-                e.dataTransfer.setData('text/plain', slide.id);
-                setTimeout(() => dragEl.classList.add('opacity-50'), 0);
-            });
-            dragEl?.addEventListener('dragend', () => {
-                dragEl.classList.remove('opacity-50');
-            });
-
-            zones.forEach(zone => {
-                zone.addEventListener('dragover', e => e.preventDefault());
-                zone.addEventListener('drop', e => {
-                    e.preventDefault();
-                    if (placedZone) placedZone.innerHTML = Utils.escapeHTML(placedZone.dataset.label);
-                    placedZone = zone;
-                    zone.appendChild(dragEl);
-                });
-            });
-        }, 100);
+        // Arrange categories in responsive grid (max 2 per row)
+        const gridClass = categories.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 gap-3';
 
         return `
-        <div class="quiz-categorize-container mt-4 relative overflow-visible w-full">
-            <h2 class="text-lg font-bold text-center mb-6 text-white">${Utils.escapeHTML(question)}</h2>
-            <div id="quiz-${slide.id}-draggable" class="draggable-item mx-auto bg-blue-600/80 text-white font-semibold px-6 py-3 rounded-lg shadow-md cursor-grab select-none w-fit active:cursor-grabbing">
-                ${Utils.escapeHTML(question)}
+        <div id="${containerId}" class="mt-6 relative w-full flex flex-col items-center text-center">
+            <h2 class="text-lg font-bold mb-4 text-white">${Utils.escapeHTML(question)}</h2>
+
+            <div class="quiz-categorize-container grid ${gridClass} gap-4 w-full max-w-md mx-auto mb-4">
+                ${dropZones}
             </div>
-            <div class="categories-grid grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-xl mx-auto">
-                ${categoriesHTML}
-            </div>
-            <div class="text-center mt-6">
-                <button id="quiz-${slide.id}-submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">تأكيد</button>
-            </div>
+
+            ${!submitted ? `
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                        id="quiz-${slide.id}-submit">
+                    تأكيد
+                </button>
+            ` : ''}
             <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out pointer-events-none"></div>
         </div>
     `;
     }
+
 
 
     renderUniversalComparison(slide, type = 'text') {
@@ -719,6 +774,53 @@ class UIRenderer {
         return html;
     }
 
+    renderQuizCategorizeEditor(slide) {
+        const c = slide.content || {};
+        const question = c.question || '';
+        const categories = Array.isArray(c.categories) ? c.categories : [];
+        const correct = c.correct ?? 0;
+
+        return `
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">نص السؤال</label>
+                <textarea id="quiz-question-input" rows="2"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none">${Utils.escapeHTML(question)}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
+                <div id="quiz-categories-list" class="space-y-2">
+                    ${categories.map((cat, i) => `
+                        <div class="flex items-center space-x-2 space-x-reverse">
+                            <input type="text" value="${Utils.escapeHTML(cat)}"
+                                   data-index="${i}"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 quiz-category-input" />
+                            <button data-index="${i}" class="remove-category-btn p-2 text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button id="add-category-btn" class="mt-2 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">
+                    <i class="fas fa-plus ml-1"></i> إضافة تصنيف
+                </button>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">التصنيف الصحيح</label>
+                <select id="correct-category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    ${categories.map((cat, i) => `
+                        <option value="${i}" ${i === correct ? 'selected' : ''}>${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</option>
+                    `).join('')}
+                </select>
+            </div>
+        </div>
+    `;
+    }
+
+
+
     renderImageComparisonEditor(slide) {
         const c = slide.content || {};
         return `
@@ -755,14 +857,14 @@ class UIRenderer {
 
             const inner = document.createElement('div');
             inner.innerHTML = `
-                <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 lesson-header">
+                <div class="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 lesson-header">
                     <div class="flex-1">
                         <h4 class="font-medium text-gray-900">${Utils.escapeHTML(lesson.title)}</h4>
-                        <p class="text-sm text-gray-500 mt-1">${slidesCount} سلايد</p>
+                        <p class="text-xs text-gray-500 ">${slidesCount} سلايد</p>
                     </div>
                     <div class="flex items-center space-x-2 space-x-reverse">
-                        <button class="add-slide-to-lesson p-2 text-gray-400 hover:text-green-600" data-lesson-id="${lesson.id}">
-                            <i class="fas fa-plus"></i>
+                        <button class="delete-lesson p-2 text-gray-500 hover:text-gray-700" data-lesson-id="${lesson.id}" title="حذف الدرس">
+                            <i class="fas fa-minus"></i>
                         </button>
                         <button class="expand-lesson p-2 text-gray-400 hover:text-blue-600">
                             <i class="fas fa-chevron-down ${isCurrent ? 'rotate-180' : ''} transition-transform"></i>
@@ -877,6 +979,9 @@ class UIRenderer {
                 break;
             case 'quiz-multiple-choice-carousel':
                 html += this.renderQuizCarouselEditor(slide);
+                break;
+            case 'quiz-categorize':
+                html += this.renderQuizCategorizeEditor(slide);
                 break;
             default:
                 if (slide.content.text !== undefined) {
@@ -1215,7 +1320,7 @@ class UIInteractions {
         if (cancelLessonEditBtn) cancelLessonEditBtn.addEventListener('click', () => this.editor.hideLessonEditForm());
 
         // add slide buttons
-        document.querySelectorAll('.add-slide-to-lesson, .add-slide-inside-lesson').forEach(btn => {
+        document.querySelectorAll(' .add-slide-inside-lesson').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const lessonId = parseInt(btn.dataset.lessonId);
@@ -1276,12 +1381,32 @@ class UIInteractions {
         if (target.id === 'edit-video-description') {
             if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'description', target.value);
         }
+
+        if (target.id === 'quiz-question-input') {
+            if (this.editor.currentSlideId != null) {
+                this.editor.updateSlideContent(this.editor.currentSlideId, 'question', target.value);
+            }
+        }
+
+        if (target.classList.contains('quiz-category-input')) {
+            const idx = parseInt(target.dataset.index, 10);
+            if (!isNaN(idx) && this.editor.currentSlideId != null) {
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'categories', idx, null, target.value);
+            }
+        }
+
+        if (target.id === 'correct-category-select') {
+            if (this.editor.currentSlideId != null) {
+                this.editor.updateSlideContent(this.editor.currentSlideId, 'correct', parseInt(target.value, 10));
+            }
+        }
+
     }
 
     handleDocumentClick(e) {
         const target = e.target;
 
-        const addSlideBtn = target.closest('.add-slide-to-lesson, .add-slide-inside-lesson');
+        const addSlideBtn = target.closest('.add-slide-inside-lesson');
         if (addSlideBtn) {
             const lessonId = parseInt(addSlideBtn.dataset.lessonId, 10);
             if (!isNaN(lessonId)) this.editor.currentLessonId = lessonId;
@@ -1289,7 +1414,65 @@ class UIInteractions {
             return;
         }
 
-        // quiz select
+        // delete lesson (header trash button)
+        const delLessonBtn = target.closest('.delete-lesson');
+        if (delLessonBtn) {
+            const lessonId = parseInt(delLessonBtn.dataset.lessonId, 10);
+            if (isNaN(lessonId)) return;
+            // prevent the header click from toggling the accordion
+            e.stopPropagation();
+
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: "سيؤدي ذلك إلى حذف الدرس وجميع شرائحه نهائياً!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'نعم، احذف',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // delegate to slideManager to perform deletion safely
+                    this.editor.slideManager.deleteLessonById(lessonId);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تم الحذف',
+                        text: 'تم حذف الدرس بنجاح.',
+                        timer: 1400,
+                        showConfirmButton: false
+                    });
+                }
+            });
+            return;
+        }
+
+
+        // Add category
+        if (target.id === 'add-category-btn') {
+            const slide = this.editor.getCurrentSlide();
+            if (!slide) return;
+
+            slide.content.categories = slide.content.categories || [];
+            slide.content.categories.push('');
+            this.editor.saveToLocalStorage();
+            this.editor.loadSlideEditContent(slide.id);
+            return;
+        }
+
+        // Remove category
+        if (target.classList.contains('remove-category-btn')) {
+            const slide = this.editor.getCurrentSlide();
+            const index = parseInt(target.dataset.index);
+            if (!slide || isNaN(index)) return;
+
+            slide.content.categories.splice(index, 1);
+            this.editor.saveToLocalStorage();
+            this.editor.loadSlideEditContent(slide.id);
+            return;
+        }
+
+        // quiz  multiple choice 
         const quizBtn = target.closest('[id^="quiz-"][id$="-answers"] button');
         if (quizBtn) {
             const slideEl = quizBtn.closest('[id^="quiz-"][id$="-answers"]');
@@ -1529,7 +1712,10 @@ export default class CourseEditor {
             ],
             image: [{ subtype: 'comparison', title: 'مقارنة صور', description: '', icon: 'fa-image' }],
             video: [{ subtype: 'video', title: 'فيديو', description: '', icon: 'fa-video' }],
-            quiz: [{ subtype: 'multiple-choice-carousel', title: 'اختبار دوّار', description: '', icon: 'fa-layer-group' }]
+            quiz: [
+                { subtype: 'multiple-choice-carousel', title: 'اختبار من متعدد', description: 'قم باختيار الاجابة الصحيحة', icon: 'fa-layer-group' },
+                { subtype: 'categorize', title: 'اختبار تصنيفي', description: 'صنف العبارة التالية', icon: 'fa-layer-group' }
+            ]
         };
 
         // create helpers

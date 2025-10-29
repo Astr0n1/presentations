@@ -238,8 +238,8 @@
 	transition: all 0.8s cubic-bezier(0.55, 0.08, 0.68, 0.53);
 }
 /* ----------------------------------------
-   Responsive Slide Preview Based on Height
------------------------------------------*/
+		Responsive Slide Preview Based on Height
+	-----------------------------------------*/
 .fixed-slide-size {
 	/* maintain 2:3 ratio using height as base */
 	height: calc(90vh - 120px); /* leave room for header/margins */
@@ -275,8 +275,8 @@
 	}
 }
 /* -------------------------------------------------
-   🔧 Unified Slide Content Layout (Clean + Responsive)
---------------------------------------------------*/
+		🔧 Unified Slide Content Layout (Clean + Responsive)
+	--------------------------------------------------*/
 .slide-content {
 	display: flex;
 	flex-direction: column;
@@ -291,8 +291,8 @@
 }
 
 /* ---------------------------------------
-   Header inside slide preview
----------------------------------------- */
+		Header inside slide preview
+	---------------------------------------- */
 .slide-header {
 	width: 100%;
 	padding: 0 1rem;
@@ -384,8 +384,8 @@
 	background: rgba(255, 255, 255, 0.5);
 }
 /* ----------------------------------------
-   🧩 Universal Comparison Slider Component
------------------------------------------ */
+		🧩 Universal Comparison Slider Component
+	----------------------------------------- */
 .comparison-wrapper {
 	position: relative;
 	width: 100%;
@@ -466,8 +466,8 @@
 }
 
 /* -------------------------------
-   🧩 Fix: prevent slide cutoff behind mobile nav
---------------------------------*/
+		🧩 Fix: prevent slide cutoff behind mobile nav
+	--------------------------------*/
 @media (max-width: 768px) {
 	.fixed-slide-size {
 		margin-bottom: 4rem; /* enough room so slide isn't covered */
