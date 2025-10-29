@@ -5,12 +5,23 @@
 	user-select: none;
 }
 
+:root {
+	--header-height: 72px; /* desktop header height — tweak if your header is taller/shorter */
+	--header-height-mobile: 64px; /* optional alternative for small screens */
+}
+body {
+	padding-top: var(--header-height);
+}
+/* Sidebars should sit below the fixed header and fill remaining viewport height */
 .sidebar,
 .edit-sidebar {
-	position: relative;
+	/* keep fixed positioning but ensure it starts below header */
+	position: fixed !important;
+	top: var(--header-height) !important;
+	height: calc(100vh - var(--header-height)) !important;
 	transition: transform 0.3s ease, opacity 0.3s ease;
+	overflow-y: auto; /* ensure sidebars scroll independently */
 }
-
 /* Resize Handles */
 .resize-handle {
 	position: absolute;
@@ -21,6 +32,26 @@
 	cursor: col-resize;
 	z-index: 30;
 	transition: background-color 0.2s ease;
+}
+/* Sidebars should sit below the fixed header and fill remaining viewport height */
+.sidebar,
+.edit-sidebar {
+	/* keep fixed positioning but ensure it starts below header */
+	position: fixed !important;
+	top: var(--header-height) !important;
+	height: calc(100vh - var(--header-height)) !important;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+	overflow-y: auto; /* ensure sidebars scroll independently */
+}
+
+/* Also ensure the resize handles stay aligned with the sidebar edges */
+.resize-handle-left {
+	top: var(--header-height) !important;
+	height: calc(100vh - var(--header-height)) !important;
+}
+.resize-handle-right {
+	top: var(--header-height) !important;
+	height: calc(100vh - var(--header-height)) !important;
 }
 
 .resize-handle:hover,
@@ -227,6 +258,7 @@
 	transition: width 0.3s ease, margin 0.3s ease;
 }
 .main-content {
+	margin-top: var(--header-height);
 	margin: auto;
 }
 
@@ -519,4 +551,191 @@
 }
 .quiz-draggable.dropped {
 	box-shadow: 0 0 20px rgba(37, 99, 235, 0.6);
+}
+
+/* ----------------------------------------
+   🧭 Fixed Header Styling
+---------------------------------------- */
+.main-header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 100; /* ensures it stays above sidebars and content */
+	background: #ffffff;
+	border-bottom: 1px solid #e5e7eb;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* subtle elevation */
+}
+
+/* Maintain space below the fixed header */
+body {
+	padding-top: 72px; /* approximate header height; adjust if needed */
+}
+
+@media (max-width: 768px) {
+	:root {
+		--header-height: var(--header-height-mobile);
+	}
+	/* mobile: sidebars are often hidden — keep safe heights if visible */
+	.sidebar,
+	.edit-sidebar {
+		top: var(--header-height) !important;
+		height: calc(100vh - var(--header-height)) !important;
+	}
+}
+
+/* ----------------------------------------
+   🎨 Lesson Header Layout Adjustments
+---------------------------------------- */
+
+/* Limit the lesson header card to match slide width */
+.bg-white.rounded-xl.shadow-sm.px-6.py-4.mb-6 {
+	max-width: min(700px, 100%);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Title and ID horizontal layout */
+#lesson-title-display {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+/* Style the ID inline in parentheses */
+#current-lesson-code {
+	font-size: 0.95rem;
+	color: #6b7280;
+	margin-top: 0 !important;
+}
+
+/* Space the edit button away from title */
+#edit-lesson-title {
+	margin-right: 1rem;
+}
+
+/* Center all header content neatly above the slide */
+.main-content > .bg-white {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* -------------------------------
+   🧭 Lesson Header Layout Fix
+-------------------------------- */
+.bg-white.rounded-xl.shadow-sm.px-6.py-4.mb-6 {
+	max-width: min(700px, 100%);
+	margin-inline: auto;
+}
+
+/* Inline layout for title and code */
+#lesson-title-display {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	direction: rtl;
+}
+
+/* Lesson code style */
+#current-lesson-code {
+	font-size: 0.95rem;
+	color: #6b7280;
+}
+
+/* Space edit button */
+#edit-lesson-title {
+	margin-inline-start: 1rem;
+}
+
+/* ----------------------------------------
+   🧭 Sidebar Collapse/Expand Buttons (Fixed + dynamic positioning)
+---------------------------------------- */
+.sidebar-toggle-btn {
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	background-color: #ffffff;
+	border-radius: 50%;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+	transition: background 0.2s ease, transform 0.3s ease, left 0.22s ease,
+		top 0.22s ease;
+	border: 1px solid #e5e7eb;
+	position: fixed;
+	top: 50%; /* will be corrected by JS (kept centered vertically) */
+	transform: translateY(-50%);
+	z-index: 60;
+}
+
+.sidebar-toggle-btn:hover {
+	background-color: #eff6ff;
+}
+
+/* small visual tweak when sidebar is collapsed (JS toggles class) */
+.sidebar-toggle-btn.collapsed {
+	background-color: #ffffff;
+	opacity: 1;
+	transform: translateY(-50%) scale(1);
+}
+
+/* ------------------------------------
+   🧭 Sidebar Collapse Button (Refined)
+------------------------------------- */
+.collapse-btn {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 38px;
+	height: 38px;
+	border-radius: 50%;
+	background-color: #ffffff;
+	border: 1.5px solid #d1d5db;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	z-index: 50;
+	transition: all 0.3s ease; /* syncs with sidebar */
+}
+
+.collapse-btn i {
+	font-size: 1rem;
+	color: #374151;
+	transition: transform 0.3s ease;
+}
+
+/* Expanded — half inside, half outside */
+.edit-sidebar.expanded .collapse-btn.left-btn {
+	right: -19px;
+}
+.sidebar.expanded .collapse-btn.right-btn {
+	left: -19px;
+}
+
+/* Collapsed — fully visible outside */
+.edit-sidebar.collapsed .collapse-btn.left-btn {
+	right: -40px;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+}
+.sidebar.collapsed .collapse-btn.right-btn {
+	left: -40px;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+}
+
+/* Optional hover flair for expanded state */
+.collapse-btn:hover {
+	background-color: #f3f4f6;
+}
+
+/* Flip arrow icons for RTL/LTR auto logic */
+.collapse-btn i.rotate {
+	transform: rotate(180deg);
 }

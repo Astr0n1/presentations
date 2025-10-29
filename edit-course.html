@@ -24,7 +24,7 @@
 		<div id="resize-indicator" class="resize-indicator"></div>
 
 		<!-- Header -->
-		<header class="bg-white border-b border-gray-200">
+		<header class="main-header bg-white border-b border-gray-200">
 			<div class="flex items-center justify-between px-6 py-4">
 				<div class="flex items-center space-x-4 space-x-reverse">
 					<button class="p-2 rounded-lg hover:bg-gray-100">
@@ -80,46 +80,59 @@
 					</div>
 				</div>
 			</div>
+			<!-- Collapse / Expand Button -->
+			<button
+				id="collapse-edit-sidebar"
+				class="sidebar-toggle-btn absolute right-[-14px] top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-colors z-50"
+				title="إخفاء / إظهار قائمة التعديل"
+			>
+				<i class="fas fa-chevron-left text-gray-600"></i>
+			</button>
 
 			<!-- Main Content -->
 			<div class="main-content flex-1 p-6">
 				<!-- Current Lesson Header -->
 				<div class="bg-white rounded-xl shadow-sm px-6 py-4 mb-6">
-					<div class="flex items-center justify-between">
-						<div
-							class="flex items-center space-x-4 space-x-reverse"
+					<div
+						class="flex items-center justify-between mx-auto max-w-[min(100%,700px)]"
+						dir="rtl"
+					>
+						<!-- Right side: Menu toggle -->
+						<button
+							id="toggle-sidebar"
+							class="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+							title="عرض قائمة الدروس"
 						>
-							<div id="lesson-title-display">
-								<h2
-									class="text-2xl font-bold text-gray-900"
-									id="current-lesson-title"
-								>
-									الدرس الأول
-								</h2>
-								<p
-									class="text-gray-600 mt-1"
-									id="current-lesson-code"
-								>
-									400 014
-								</p>
-							</div>
-							<button
-								id="edit-lesson-title"
-								class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-							>
-								<i class="fas fa-edit"></i>
-							</button>
-						</div>
+							<i class="fas fa-bars"></i>
+						</button>
+
+						<!-- Center: Lesson title + code -->
 						<div
-							class="flex items-center space-x-3 space-x-reverse"
+							id="lesson-title-display"
+							class="flex items-center gap-3 text-right ml-auto mr-2"
 						>
-							<button
-								id="toggle-sidebar"
-								class="p-2 rounded-lg hover:bg-gray-100"
+							<h2
+								id="current-lesson-title"
+								class="text-2xl font-bold text-gray-900"
 							>
-								<i class="fas fa-bars text-gray-600"></i>
-							</button>
+								الدرس الأول
+							</h2>
+							<span
+								id="current-lesson-code"
+								class="text-gray-500 text-sm font-medium"
+							>
+								(الكود: 014400)
+							</span>
 						</div>
+
+						<!-- Left side: Edit button -->
+						<button
+							id="edit-lesson-title"
+							class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+							title="تعديل اسم الدرس"
+						>
+							<i class="fas fa-edit"></i>
+						</button>
 					</div>
 
 					<!-- Edit Lesson Title Form (Hidden by default) -->
@@ -211,13 +224,6 @@
 				></div>
 
 				<div class="p-6">
-					<!-- Course Header -->
-					<div class="mb-8">
-						<h2 class="text-2xl font-bold text-gray-900 mb-2">
-							الدروس
-						</h2>
-					</div>
-
 					<!-- Lessons List -->
 					<div class="mb-6">
 						<h3 class="text-lg font-semibold text-gray-900 mb-4">
@@ -238,6 +244,14 @@
 					</button>
 				</div>
 			</div>
+			<!-- Collapse / Expand Button -->
+			<button
+				id="collapse-lessons-sidebar"
+				class="sidebar-toggle-btn absolute left-[-14px] top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-colors z-50"
+				title="إخفاء / إظهار قائمة الدروس"
+			>
+				<i class="fas fa-chevron-right text-gray-600"></i>
+			</button>
 		</div>
 
 		<!-- Add Slide Modal -->
@@ -249,17 +263,45 @@
 				class="bg-white rounded-xl shadow-lg w-full max-w-4xl h-[70vh] flex flex-col"
 			>
 				<div
-					class="flex items-center justify-between p-4 border-b border-gray-200"
+					class="flex items-center justify-between max-w-[min(100%,700px)] mx-auto"
 				>
-					<button
-						id="cancel-add-slide"
-						class="p-2 rounded-full hover:bg-gray-100"
+					<!-- Left: Menu button (moved here) -->
+					<div class="flex items-center space-x-3 space-x-reverse">
+						<button
+							id="toggle-sidebar"
+							class="p-2 rounded-lg hover:bg-gray-100"
+						>
+							<i class="fas fa-bars text-gray-600"></i>
+						</button>
+					</div>
+
+					<!-- Center: Lesson Title + ID -->
+					<div
+						class="flex items-center space-x-3 space-x-reverse text-center sm:text-right"
 					>
-						<i class="fas fa-times text-gray-600"></i>
-					</button>
-					<h3 class="text-xl font-bold text-gray-900">
-						مكتبة الشرائح
-					</h3>
+						<h2
+							id="current-lesson-title"
+							class="text-2xl font-bold text-gray-900"
+						>
+							الدرس الأول
+						</h2>
+						<span
+							id="current-lesson-code"
+							class="text-gray-600 text-sm"
+						>
+							(الكود: 400014)
+						</span>
+					</div>
+
+					<!-- Right: Edit button -->
+					<div>
+						<button
+							id="edit-lesson-title"
+							class="p-2 ml-3 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+						>
+							<i class="fas fa-edit"></i>
+						</button>
+					</div>
 				</div>
 
 				<div class="flex flex-1 overflow-hidden">
