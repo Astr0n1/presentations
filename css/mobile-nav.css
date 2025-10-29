@@ -11,13 +11,6 @@
 	transition: transform 0.35s ease-in-out;
 }
 
-/* Collapsed State (C2) */
-.mobile-lessons-bar.collapsed {
-	transform: translateY(
-		calc(100% - 48px)
-	); /* will be adjusted later if needed */
-}
-
 /* Expanded State */
 .mobile-lessons-bar.expanded {
 	transform: translateY(0);
@@ -84,7 +77,8 @@
 }
 
 .mobile-lessons-bar.collapsed .mobile-lessons-container {
-	opacity: 0.7;
+	opacity: 0.4; /* more subtle background visuals */
+	pointer-events: none; /* prevent accidental clicks while collapsed */
 }
 
 /* Keep edit-sidebar toggle visible when sidebar is translated off-screen (V2) */
@@ -196,12 +190,61 @@
 	align-items: center;
 }
 
-/* Collapsed peek: slightly increased to account for the shadow and larger buttons */
 .mobile-lessons-bar.collapsed {
-	transform: translateY(calc(100% - 56px));
+	transform: translateY(calc(100% - 42px)); /* smaller visible strip */
+	background: rgba(255, 255, 255, 0.7); /* translucent strip */
+	backdrop-filter: blur(6px); /* subtle glass effect */
+	box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
 }
 
 /* Small utility to ensure active slide buttons center nicely */
 #mobile-slides-scroll .slide-square {
 	flex: 0 0 auto;
+}
+
+.mobile-lessons-bar.collapsed .mobile-lessons-arrow {
+	opacity: 1;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------------------------------------------------
+   🧩 Mobile Slide Navigation Fixes (override Tailwind)
+--------------------------------------------------- */
+
+/* 1️⃣ Add safe bottom space under slide previews */
+@media (max-width: 768px) {
+	#slide-preview-container {
+		margin-bottom: 4.5rem !important; /* prevent overlap with mobile bar */
+	}
+}
+
+/* 2️⃣ Collapsed strip refinement */
+#mobile-slide-nav.mobile-lessons-bar.collapsed {
+	transform: translateY(calc(100% - 42px)) !important; /* smaller strip */
+	background: rgba(255, 255, 255, 0.7) !important; /* translucent bg */
+	backdrop-filter: blur(8px) !important;
+	border-top: 1px solid rgba(229, 231, 235, 0.4) !important;
+	box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 3️⃣ Make its handle area lighter + smaller */
+#mobile-lessons-handle {
+	background: rgba(255, 255, 255, 0.5) !important;
+	backdrop-filter: blur(6px);
+	padding: 0.3rem 0 !important; /* smaller height */
+	border-top: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+/* keep the arrow fully visible and prominent */
+#mobile-lessons-handle i {
+	color: #374151 !important;
+	opacity: 1 !important;
+}
+
+/* reduce inner section visibility when collapsed */
+#mobile-slide-nav.collapsed .slides-scroll,
+#mobile-slide-nav.collapsed #mobile-lessons-tabs {
+	opacity: 0.4 !important;
+	pointer-events: none;
 }

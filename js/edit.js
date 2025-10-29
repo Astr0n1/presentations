@@ -350,55 +350,12 @@ class UIRenderer {
                 break;
 
             case 'quiz-multiple-choice-carousel': {
-                const c = slide.content || {};
-                const answers = c.answers || [];
-                const question = c.question || 'لم يتم إدخال السؤال بعد';
-                const chosen = slide.userChoice ?? null;
-                const submitted = slide.submitted ?? false;
-                const correctIndex = (c.correct ?? 1) - 1;
-
-                bodyHtml += `
-                    <div class="mt-4 relative overflow-hidden w-full">
-                        <h2 class="text-lg font-bold text-center mb-3 text-white">${Utils.escapeHTML(question)}</h2>
-                        <div class="space-y-2 max-w-md mx-auto" id="quiz-${slide.id}-answers">
-                            ${answers.map((a, i) => {
-                    const isChosen = chosen === i;
-                    const isCorrect = submitted && i === correctIndex;
-                    const isWrong = submitted && isChosen && i !== correctIndex;
-
-                    let classes = "quiz-option w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition ";
-                    if (submitted) {
-                        if (isCorrect) classes += "border-green-500 bg-green-600/30 text-white";
-                        else if (isWrong) classes += "border-red-500 bg-red-600/30 text-white";
-                        else classes += "border-gray-300 bg-white/10 text-gray-300";
-                    } else {
-                        classes += isChosen
-                            ? "border-blue-500 bg-blue-600/30 text-white"
-                            : "border-gray-300 bg-white/10 text-white hover:bg-white/20";
-                    }
-
-                    const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400'></i>` : "";
-
-                    return `
-                                    <button data-index="${i}" class="${classes}">
-                                        <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full">
-                                            ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
-                                        </span>
-                                        <span class="flex-1 text-right">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
-                                        ${mark}
-                                    </button>
-                                `;
-                }).join('')}
-                        </div>
-                        ${submitted ? "" : `
-                            <div class="text-center mt-4">
-                                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" id="quiz-${slide.id}-submit">تأكيد</button>
-                            </div>`}
-                        <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out"></div>
-                    </div>
-                `;
+                bodyHtml += this.renderQuizCarousel(slide);
                 break;
             }
+            case 'quiz-categorize':
+                bodyHtml += this.renderQuizCategorize(slide);
+                break;
 
             default:
                 if (slide.content.text) {
@@ -415,36 +372,6 @@ class UIRenderer {
         `;
         const preview = document.getElementById("slide-preview-container");
         if (preview) preview.classList.add("fixed-slide-size");
-    }
-
-    // Comparison render — uses universal comparison HTML structure
-    renderUniversalComparison(slide, type = 'text') {
-        const c = slide.content || {};
-
-        const contentA =
-            type === 'image'
-                ? (c.imageA
-                    ? `<img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="w-full h-auto object-contain rounded-lg">`
-                    : `<div class="text-white/70 text-center py-8">الصورة الأولى غير محددة</div>`)
-                : `<div class="comparison-text"><h3>${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p>${Utils.escapeHTML(c.leftText || '')}</p></div>`;
-
-        const contentB =
-            type === 'image'
-                ? (c.imageB
-                    ? `<img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="w-full h-auto object-contain rounded-lg">`
-                    : `<div class="text-white/70 text-center py-8">الصورة الثانية غير محددة</div>`)
-                : `<div class="comparison-text"><h3>${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p>${Utils.escapeHTML(c.rightText || '')}</p></div>`;
-
-        const id = `comparison-${slide.id}`;
-        return `
-        <div id="${id}" class="comparison-wrapper mt-4">
-            <div class="comparison-layer bottom">${contentB}</div>
-            <div class="comparison-layer top" style="clip-path: inset(0 50% 0 0);">
-                ${contentA}
-            </div>
-            <div class="comparison-separator" style="left: 50%;"></div>
-        </div>
-    `;
     }
 
     renderExpandableListPreview(slide) {
@@ -468,13 +395,166 @@ class UIRenderer {
         return html;
     }
 
+
+    renderQuizCarousel(slide) {
+        const c = slide.content || {};
+        const answers = c.answers || [];
+        const question = c.question || 'لم يتم إدخال السؤال بعد';
+        const chosen = slide.userChoice ?? null;
+        const submitted = slide.submitted ?? false;
+        const correctIndex = (c.correct ?? 1) - 1;
+
+        const answersHTML = answers.map((a, i) => {
+            const isChosen = chosen === i;
+            const isCorrect = submitted && i === correctIndex;
+            const isWrong = submitted && isChosen && i !== correctIndex;
+
+            let classes = "quiz-option w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition ";
+            if (submitted) {
+                if (isCorrect) classes += "border-green-500 bg-green-600/30 text-white";
+                else if (isWrong) classes += "border-red-500 bg-red-600/30 text-white";
+                else classes += "border-gray-300 bg-white/10 text-gray-300";
+            } else {
+                classes += isChosen
+                    ? "border-blue-500 quiz-option-selected text-white"
+                    : "border-gray-300 bg-white/10 text-white hover:bg-white/20";
+            }
+
+            const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400'></i>` : "";
+            return `
+            <button data-index="${i}" class="${classes}">
+                <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full">
+                    ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
+                </span>
+                <span class="flex-1 text-right">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
+                ${mark}
+            </button>
+        `;
+        }).join('');
+
+        return `
+        <div class="mt-4 relative overflow-visible w-full">
+            <h2 class="text-lg font-bold text-center mb-3 text-white">${Utils.escapeHTML(question)}</h2>
+            <div class="space-y-2 max-w-md mx-auto" id="quiz-${slide.id}-answers">
+                ${answersHTML}
+            </div>
+            ${submitted ? "" : `
+                <div class="text-center mt-4">
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" id="quiz-${slide.id}-submit">تأكيد</button>
+                </div>`}
+            <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out"></div>
+        </div>
+    `;
+    }
+
+    renderQuizCategorize(slide) {
+        const c = slide.content || {};
+        const categories = c.answers || [];
+        const question = c.question || 'ضع العنصر في التصنيف الصحيح';
+        const correctIndex = (c.correct ?? 1) - 1;
+
+        const categoriesHTML = categories.map((cat, i) => `
+        <div 
+            data-index="${i}" 
+            id="quiz-${slide.id}-cat-${i}" 
+            class="category-dropzone border-2 border-dashed border-gray-300 rounded-xl py-8 flex items-center justify-center text-white text-lg font-medium transition">
+            ${Utils.escapeHTML(cat || '—')}
+        </div>
+    `).join('');
+
+        setTimeout(() => {
+            const dragEl = document.getElementById(`quiz-${slide.id}-draggable`);
+            const zones = document.querySelectorAll(`[id^="quiz-${slide.id}-cat-"]`);
+            if (dragEl) dragEl.draggable = true;
+            let placedZone = null;
+
+            dragEl?.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', slide.id);
+                setTimeout(() => dragEl.classList.add('opacity-50'), 0);
+            });
+            dragEl?.addEventListener('dragend', () => {
+                dragEl.classList.remove('opacity-50');
+            });
+
+            zones.forEach(zone => {
+                zone.addEventListener('dragover', e => e.preventDefault());
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    if (placedZone) placedZone.innerHTML = Utils.escapeHTML(placedZone.dataset.label);
+                    placedZone = zone;
+                    zone.appendChild(dragEl);
+                });
+            });
+        }, 100);
+
+        return `
+        <div class="quiz-categorize-container mt-4 relative overflow-visible w-full">
+            <h2 class="text-lg font-bold text-center mb-6 text-white">${Utils.escapeHTML(question)}</h2>
+            <div id="quiz-${slide.id}-draggable" class="draggable-item mx-auto bg-blue-600/80 text-white font-semibold px-6 py-3 rounded-lg shadow-md cursor-grab select-none w-fit active:cursor-grabbing">
+                ${Utils.escapeHTML(question)}
+            </div>
+            <div class="categories-grid grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-xl mx-auto">
+                ${categoriesHTML}
+            </div>
+            <div class="text-center mt-6">
+                <button id="quiz-${slide.id}-submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">تأكيد</button>
+            </div>
+            <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out pointer-events-none"></div>
+        </div>
+    `;
+    }
+
+
+    renderUniversalComparison(slide, type = 'text') {
+        const c = slide.content || {};
+        const id = `comparison-${slide.id}`;
+
+        // Build content per type
+        const leftHtml = (type === 'image')
+            ? (c.imageA
+                ? `<img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="w-full h-full object-contain rounded-lg">`
+                : `<div class="text-white/70 text-center py-8">الصورة الأولى غير محددة</div>`)
+            : `<div class="text-white text-center p-6"><h3 class="text-xl font-bold mb-3">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
+
+        const rightHtml = (type === 'image')
+            ? (c.imageB
+                ? `<img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="w-full h-full object-contain rounded-lg">`
+                : `<div class="text-white/70 text-center py-8">الصورة الثانية غير محددة</div>`)
+            : `<div class="text-white text-center p-6"><h3 class="text-xl font-bold mb-3">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
+
+        // unified background + fully opaque top layer
+        return `
+    <div id="${id}" class="comparison-wrapper relative w-full rounded-lg overflow-hidden bg-gray-700 text-white" style="min-height:250px;">
+        <!-- Unified background already on wrapper -->
+
+        <!-- Bottom (right) layer -->
+        <div class="comparison-layer bottom absolute inset-0 z-0">
+            ${rightHtml}
+        </div>
+
+        <!-- Top (left) layer, completely opaque -->
+        <div class="comparison-layer top absolute inset-0 z-10 bg-gray-700" 
+             style="clip-path: inset(0 50% 0 0); transition: clip-path 0.12s linear;">
+            ${leftHtml}
+        </div>
+
+        <!-- Draggable separator -->
+        <div class="comparison-separator absolute top-0 bottom-0 z-20 cursor-ew-resize" style="left:50%; width:6px;">
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:999px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.15);">
+                <i class="fas fa-arrows-left-right text-sm text-blue-600"></i>
+            </div>
+        </div>
+    </div>`;
+    }
+
+
     // Video render (kept same heuristics)
     renderVideoPreview(slide) {
         const content = slide.content || {};
         const videoUrl = content.videoUrl || '';
         if (!videoUrl) {
             return `
-                <div class="text-white text-center py-10 bg-gray-600/30 rounded-xl border border-dashed border-white/50">
+                <div class="self-center w-full text-white text-center py-10 bg-gray-600/30 rounded-xl border border-dashed border-white/50">
                     <i class="fas fa-video text-4xl mb-3 opacity-70"></i>
                     <p class="text-base font-medium">الرجاء إدخال رابط الفيديو للمعاينة</p>
                 </div>
@@ -1238,16 +1318,18 @@ class UIInteractions {
                 const iconEl = document.getElementById(`quiz-${slideId}-icon`);
                 const correct = (slide.userChoice === (slide.content.correct - 1));
                 if (iconEl) {
+                    // Set icon type and color
                     iconEl.innerHTML = correct
                         ? `<i class="fas fa-star text-yellow-400"></i>`
                         : `<i class="fas fa-times-circle text-red-500"></i>`;
-                    iconEl.style.opacity = '1';
-                    iconEl.style.transform = 'translate(-100%, 50%) rotate(-15deg)';
-                    setTimeout(() => {
-                        iconEl.style.opacity = '0';
-                    }, 1200);
+
+                    // ✅ Trigger the new fly-over animation
+                    iconEl.classList.remove("quiz-icon-animate"); // reset if it played before
+                    void iconEl.offsetWidth; // reflow to restart animation cleanly
+                    iconEl.classList.add("quiz-icon-animate");
                 }
             }, 300);
+
 
             return;
         }
@@ -1267,7 +1349,7 @@ class UIInteractions {
                     this.editor.currentSlideId = null;
                     this.editor.renderLessonsSidebar();
                     this.editor.updateLessonHeader();
-                    if (this.editor.dom.slideEditContent) this.editor.dom.slideEditContent.innerHTML = this.editor.getChooseSlidePlaceholder();
+                    if (this.editor.dom.slideEditContent) this.editor.dom.slideEditContent.innerHTML = this.editor.ui.getChooseSlidePlaceholder();
                     this.editor.renderSlidePreview(null);
                 }
                 return;
@@ -1362,16 +1444,57 @@ class UIInteractions {
         }
 
         // expandable preview toggle
+        // ✅ Expandable list preview toggle (one open at a time, perfectly smooth)
         const expandableItem = target.closest('.expandable-item');
         if (expandableItem) {
+            const listContainer = expandableItem.parentElement;
             const content = expandableItem.querySelector('.expandable-content');
             const icon = expandableItem.querySelector('.fa-chevron-down');
+
+            // Smooth toggle helper
+            const toggleSection = (el, expand) => {
+                el.style.overflow = 'hidden';
+                el.style.transition = 'max-height 0.4s ease, opacity 0.4s ease';
+                if (expand) {
+                    el.style.display = 'block';
+                    requestAnimationFrame(() => {
+                        el.style.maxHeight = el.scrollHeight + 'px';
+                        el.style.opacity = '1';
+                    });
+                } else {
+                    el.style.maxHeight = el.scrollHeight + 'px'; // set current height first
+                    requestAnimationFrame(() => {
+                        el.style.maxHeight = '0';
+                        el.style.opacity = '0';
+                    });
+                    // hide completely after transition ends
+                    setTimeout(() => {
+                        el.style.display = 'none';
+                    }, 400);
+                }
+            };
+
+            // Collapse all others smoothly
+            listContainer.querySelectorAll('.expandable-item').forEach((item) => {
+                if (item !== expandableItem) {
+                    const otherContent = item.querySelector('.expandable-content');
+                    const otherIcon = item.querySelector('.fa-chevron-down');
+                    if (otherContent && otherContent.style.display !== 'none') {
+                        toggleSection(otherContent, false);
+                        if (otherIcon) otherIcon.classList.remove('rotate-180');
+                    }
+                }
+            });
+
+            // Toggle current
             if (content) {
-                content.classList.toggle('hidden');
-                if (icon) icon.classList.toggle('rotate-180');
+                const isCollapsed = content.style.display === 'none' || !content.style.display;
+                toggleSection(content, isCollapsed);
+                if (icon) icon.classList.toggle('rotate-180', isCollapsed);
             }
             return;
         }
+
     }
 }
 
@@ -1453,6 +1576,8 @@ export default class CourseEditor {
     renderLessonsSidebar() { return this.ui.renderLessonsSidebar(); }
     renderSlidePreview(slide) { return this.ui.renderSlidePreview(slide); }
     renderUniversalComparison(slide, type) { return this.ui.renderUniversalComparison(slide, type); }
+    renderQuizCarousel(slide) { return this.ui.renderQuizCarousel(slide); }
+    renderQuizCategorize(slide) { return this.ui.renderQuizCategorize(slide); }
     renderExpandableListPreview(slide) { return this.ui.renderExpandableListPreview(slide); }
     renderVideoPreview(slide) { return this.ui.renderVideoPreview(slide); }
     renderBulletedListEditor(slide) { return this.ui.renderBulletedListEditor(slide); }

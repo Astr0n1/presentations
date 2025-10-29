@@ -348,8 +348,8 @@
 	margin-bottom: 1rem;
 }
 
-/* ✅ Buttons / call-to-action */
-.slide-content button {
+/* ✅ Buttons / call-to-action (exclude quiz-option buttons) */
+.slide-content button:not(.quiz-option) {
 	align-self: center;
 	padding: 0.75rem 1.5rem;
 	font-size: clamp(0.9rem, 1.2vw, 1rem);
@@ -359,7 +359,8 @@
 	color: white;
 	transition: background 0.2s ease;
 }
-.slide-content button:hover {
+
+.slide-content button:not(.quiz-option):hover {
 	background: #1d4ed8;
 }
 
@@ -411,7 +412,7 @@
 /* Top (A) layer visible initially */
 .comparison-layer.top {
 	z-index: 2;
-	background: rgba(0, 0, 0, 0.2);
+	/* background: rgba(0, 0, 0, 0.2); */
 }
 
 /* Bottom (B) layer always under */
@@ -462,4 +463,53 @@
 	.comparison-wrapper {
 		height: auto;
 	}
+}
+
+/* -------------------------------
+   🧩 Fix: prevent slide cutoff behind mobile nav
+--------------------------------*/
+@media (max-width: 768px) {
+	.fixed-slide-size {
+		margin-bottom: 4rem; /* enough room so slide isn't covered */
+	}
+}
+
+/* ✅ Selected (but not submitted) quiz option */
+.quiz-option-selected {
+	background-color: rgba(0, 0, 0, 0.25); /* soft translucent black */
+	border-color: rgba(255, 255, 255, 0.3);
+}
+
+.quiz-option-selected:hover {
+	background-color: rgba(0, 0, 0, 0.35); /* slightly darker on hover */
+}
+
+/* ✅ Animated quiz feedback icon fly-over */
+@keyframes quiz-icon-fly {
+	0% {
+		transform: translate(-100%, -50%) scale(0.3) rotate(0deg);
+		opacity: 0;
+	}
+	25% {
+		transform: translate(-50%, 0%) scale(1.2) rotate(90deg);
+		opacity: 1;
+	}
+	50% {
+		transform: translate(0%, 25%) scale(1.6) rotate(180deg);
+		opacity: 1;
+	}
+	75% {
+		transform: translate(50%, 0%) scale(1.2) rotate(270deg);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(100%, -50%) scale(0.4) rotate(360deg);
+		opacity: 0;
+	}
+}
+
+.quiz-icon-animate {
+	animation: quiz-icon-fly 1.4s cubic-bezier(0.55, 0.05, 0.45, 0.9);
+	transform-origin: center;
+	pointer-events: none;
 }
