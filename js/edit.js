@@ -501,11 +501,9 @@ class UIRenderer {
         const correctIndex = (c.correct ?? 0);
         const chosen = slide.userChoice ?? null;
         const submitted = slide.submitted ?? false;
-
-        // Prevent overflow cutoffs for animations
         const containerId = `quiz-${slide.id}-categorize`;
 
-        // Each category becomes a drop zone
+        // 🧱 Build drop zones
         const dropZones = categories.map((cat, i) => {
             let bg = 'bg-white/10 border-gray-300';
             if (submitted) {
@@ -517,48 +515,45 @@ class UIRenderer {
             }
 
             return `
-            <div class="quiz-category-zone border ${bg} rounded-lg flex items-center justify-center text-white font-semibold p-4 text-center transition cursor-pointer"
-                 data-index="${i}" 
-                 ondragover="event.preventDefault()"
-                 ondrop="window.handleCategorizeDrop(event, '${containerId}')">
-                ${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}
-            </div>
-        `;
+        <div class="quiz-category-zone border ${bg} rounded-xl flex flex-col items-center justify-center 
+                    text-white font-semibold p-4 text-center transition relative min-h-[100px] drop-zone"
+             data-index="${i}"
+             ondragover="event.preventDefault()"
+             ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
+            <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
+        </div>`;
         }).join('');
 
-        // Build the question as draggable element
+        // 🧱 Build draggable question box (styled + padded)
         const draggableHtml = `
-        <div id="${containerId}-question" 
-             class="quiz-draggable bg-blue-500/40 text-white font-bold px-4 py-3 rounded-lg shadow-md cursor-move inline-block transition select-none"
+        <div id="${containerId}-question"
              draggable="${!submitted}"
+             class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
+                    transition select-none mb-6 max-w-xs text-center"
              ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
-             ${Utils.escapeHTML(question)}
-        </div>
-    `;
+            ${Utils.escapeHTML(question)}
+        </div>`;
 
-        // Arrange categories in responsive grid (max 2 per row)
-        const gridClass = categories.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 gap-3';
+        // ⚙️ Submit button appears only if question already dropped
+        const showSubmit = (chosen !== null && !submitted);
 
         return `
-        <div id="${containerId}" class="mt-6 relative w-full flex flex-col items-center text-center">
-            <h2 class="text-lg font-bold mb-4 text-white">${Utils.escapeHTML(question)}</h2>
-
-            <div class="quiz-categorize-container grid ${gridClass} gap-4 w-full max-w-md mx-auto mb-4">
-                ${dropZones}
-            </div>
-
-            ${!submitted ? `
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                        id="quiz-${slide.id}-submit">
-                    تأكيد
-                </button>
-            ` : ''}
-            <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out pointer-events-none"></div>
+    <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
+        ${draggableHtml}
+        <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
+            ${dropZones}
         </div>
-    `;
+        ${showSubmit ? `
+            <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
+                    id="quiz-${slide.id}-submit">
+                إرسال الإجابة
+            </button>
+        ` : ''}
+
+        <div id="quiz-${slide.id}-icon" 
+             class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out pointer-events-none"></div>
+    </div>`;
     }
-
-
 
     renderUniversalComparison(slide, type = 'text') {
         const c = slide.content || {};
@@ -780,46 +775,51 @@ class UIRenderer {
         const categories = Array.isArray(c.categories) ? c.categories : [];
         const correct = c.correct ?? 0;
 
+        // Mirror the carousel editor layout and visual style, but keep IDs/classes expected by other code
         return `
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">نص السؤال</label>
-                <textarea id="quiz-question-input" rows="2"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none">${Utils.escapeHTML(question)}</textarea>
-            </div>
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات الاختبار</h4>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
-                <div id="quiz-categories-list" class="space-y-2">
-                    ${categories.map((cat, i) => `
-                        <div class="flex items-center space-x-2 space-x-reverse">
-                            <input type="text" value="${Utils.escapeHTML(cat)}"
-                                   data-index="${i}"
-                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 quiz-category-input" />
-                            <button data-index="${i}" class="remove-category-btn p-2 text-red-500 hover:text-red-700">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-                <button id="add-category-btn" class="mt-2 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">نص السؤال</label>
+            <textarea id="quiz-question-input" rows="2"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                placeholder="أدخل نص السؤال هنا">${Utils.escapeHTML(question)}</textarea>
+        </div>
+
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">التصنيفات</label>
+            <ul id="quiz-categories-list" class="space-y-2">
+                ${categories.map((cat, i) => `
+                    <li class="flex items-center gap-2">
+                        <span class="w-6 text-gray-500 text-center">${i + 1}.</span>
+                        <input type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg quiz-category-input"
+                               data-index="${i}" value="${Utils.escapeHTML(cat)}" placeholder="اسم التصنيف ${i + 1}" />
+                        <button class="remove-category-btn p-2 text-red-500 hover:text-red-700" data-index="${i}" title="حذف التصنيف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </li>
+                `).join('')}
+            </ul>
+
+            <div class="mt-2 ${categories.length >= 4 ? 'hidden' : ''}">
+                <button id="add-category-btn" class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
                     <i class="fas fa-plus ml-1"></i> إضافة تصنيف
                 </button>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">التصنيف الصحيح</label>
-                <select id="correct-category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    ${categories.map((cat, i) => `
-                        <option value="${i}" ${i === correct ? 'selected' : ''}>${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</option>
-                    `).join('')}
-                </select>
-            </div>
         </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">التصنيف الصحيح</label>
+            <select id="correct-category-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                ${categories.map((cat, i) => `
+                    <option value="${i}" ${i === correct ? 'selected' : ''}>${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</option>
+                `).join('')}
+            </select>
+        </div>
+    </div>
     `;
     }
-
-
 
     renderImageComparisonEditor(slide) {
         const c = slide.content || {};
@@ -1234,6 +1234,189 @@ class DragDropManager {
     }
 }
 
+// 🧩 Drag start handler
+window.handleCategorizeDrag = (e, containerId) => {
+    e.dataTransfer.setData('text/plain', containerId);
+    const questionEl = document.getElementById(`${containerId}-question`);
+    if (questionEl) questionEl.classList.add('opacity-50', 'scale-95');
+};
+
+window.handleCategorizeDrop = (e, containerId, dropIndex) => {
+    e.preventDefault();
+    const questionEl = document.getElementById(`${containerId}-question`);
+    const container = document.getElementById(containerId);
+    if (!container || !questionEl) return;
+
+    // Reset drag visual
+    questionEl.classList.remove('opacity-50', 'scale-95');
+
+    // Append into zone if empty
+    const zone = container.querySelector(`.quiz-category-zone[data-index="${dropIndex}"]`);
+    if (zone && !zone.querySelector('.quiz-draggable')) {
+        zone.appendChild(questionEl);
+    }
+
+    // Style dropped question
+    questionEl.classList.remove('bg-white/80', 'text-gray-900');
+    questionEl.classList.add('bg-blue-500/70', 'text-white', 'shadow-lg', 'scale-100', 'transition-all');
+
+    // Save choice as a number (defensive)
+    const editor = window.courseEditor || window.editor;
+    if (editor && typeof editor.getCurrentSlide === 'function') {
+        const slide = editor.getCurrentSlide();
+        if (slide) {
+            slide.userChoice = Number(dropIndex);       // <- ensure numeric
+            slide.submitted = false;
+            editor.slideManager.saveToLocalStorage();
+
+            // If you prefer to re-render via the UIRenderer you can, but we keep it local:
+            // editor.ui.renderSlidePreviewContent && editor.ui.renderSlidePreviewContent(slide);
+        }
+    }
+
+    let btn = container.querySelector(`#${containerId}-submit`);
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = `${containerId}-submit`;   // ✅ correct ID
+        btn.textContent = 'إرسال الإجابة';
+        btn.className =
+            'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3';
+        btn.style.display = 'block';
+        btn.style.margin = '1rem auto 0 auto';
+        btn.addEventListener('click', () => {
+            if (window.handleQuizCategorizeSubmit) {
+                window.handleQuizCategorizeSubmit(containerId);
+            }
+        });
+        container.appendChild(btn);
+    }
+};
+
+
+window.handleQuizCategorizeSubmit = (containerId) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const editor = window.courseEditor || window.editor;
+    if (!editor || typeof editor.getCurrentSlide !== 'function') return;
+    const slide = editor.getCurrentSlide();
+    if (!slide || !slide.content) return;
+
+    const c = slide.content;
+    const correctRaw = c.correct;
+    const categories = Array.isArray(c.categories) ? c.categories : [];
+    const chosenRaw = slide.userChoice;
+
+    // Normalize chosen to number or null
+    const chosen = (chosenRaw === null || typeof chosenRaw === 'undefined')
+        ? null
+        : Number(chosenRaw);
+
+    // Normalize correct to an index (number) if possible
+    let correctIndex = null;
+    if (typeof correctRaw === 'number') {
+        correctIndex = correctRaw;
+    } else if (typeof correctRaw === 'string') {
+        // try numeric string first
+        const n = Number(correctRaw);
+        if (!Number.isNaN(n)) correctIndex = n;
+        else {
+            // fallback: if correctRaw is a category name, find its index
+            correctIndex = categories.findIndex(cat => {
+                if (!cat) return false;
+                return String(cat).trim() === String(correctRaw).trim();
+            });
+            if (correctIndex === -1) correctIndex = null;
+        }
+    } else {
+        // default fallback
+        correctIndex = 0;
+    }
+
+    // Debugging log (remove in production)
+    console.debug('Categorize submit:', { chosenRaw, chosen, correctRaw, correctIndex, categories });
+
+    if (chosen === null || typeof chosen === 'number' && Number.isNaN(chosen)) {
+        // nothing chosen — no-op (or show message)
+        console.warn('No choice selected for categorize quiz.');
+        return;
+    }
+
+    const questionEl = document.getElementById(`${containerId}-question`);
+    const dropZones = container.querySelectorAll('.quiz-category-zone');
+
+    // Safety: ensure correctIndex is a valid numeric index
+    if (correctIndex === null || correctIndex < 0 || correctIndex >= categories.length) {
+        console.warn('Correct index is invalid; defaulting to 0.');
+        correctIndex = 0;
+    }
+
+    // Decide correct/incorrect
+    const isCorrect = Number(chosen) === Number(correctIndex);
+
+    if (isCorrect) {
+        // correct: green question + green zone
+        if (questionEl) {
+            questionEl.classList.remove('bg-blue-500/70');
+            questionEl.classList.add('bg-green-500/70');
+        }
+        dropZones.forEach((zone, i) => {
+            if (i === chosen) {
+                zone.classList.remove('bg-white/10', 'border-gray-300');
+                zone.classList.add('bg-green-500/30', 'border-green-500');
+            } else {
+                // dim others
+                zone.classList.add('opacity-50');
+            }
+        });
+    } else {
+        // incorrect: red question, highlight correct with green
+        if (questionEl) {
+            questionEl.classList.remove('bg-blue-500/70');
+            questionEl.classList.add('bg-red-500/70');
+        }
+        dropZones.forEach((zone, i) => {
+            zone.classList.remove('bg-white/10', 'border-gray-300');
+            if (i === correctIndex) {
+                zone.classList.add('bg-green-500/30', 'border-green-500');
+            } else if (i === chosen) {
+                zone.classList.add('bg-red-500/30', 'border-red-500');
+            } else {
+                zone.classList.add('opacity-50');
+            }
+        });
+    }
+
+    // disable drag
+    if (questionEl) {
+        questionEl.setAttribute('draggable', 'false');
+        questionEl.style.cursor = 'default';
+    }
+
+    // Save submitted state and persist
+    slide.submitted = true;
+    slide.userChoice = Number(chosen);
+    editor.slideManager.saveToLocalStorage();
+
+    // Remove/hide the submit button
+    const btn = container.querySelector(`#quiz-${containerId}-submit`);
+    if (btn) btn.remove();
+
+    // Optional feedback icon behavior (similar to existing carousel)
+    const iconContainer = container.querySelector(`#quiz-${slide.id}-icon`);
+    if (iconContainer) {
+        iconContainer.innerHTML = isCorrect
+            ? '<i class="fas fa-check-circle text-green-400"></i>'
+            : '<i class="fas fa-times-circle text-red-400"></i>';
+        iconContainer.style.opacity = '1';
+        iconContainer.classList.add('quiz-icon-animate');
+        setTimeout(() => {
+            iconContainer.style.opacity = '0';
+            iconContainer.classList.remove('quiz-icon-animate');
+        }, 1500);
+    }
+};
+
 ////////////////////////////////////////////////////
 // UIInteractions — attaches event listeners + routes actions
 ////////////////////////////////////////////////////
@@ -1448,29 +1631,43 @@ class UIInteractions {
         }
 
 
-        // Add category
+        // 🧩 Add category (hide button if 4 reached)
         if (target.id === 'add-category-btn') {
             const slide = this.editor.getCurrentSlide();
             if (!slide) return;
 
             slide.content.categories = slide.content.categories || [];
+
+            // ✅ Stop adding beyond 4
+            if (slide.content.categories.length >= 4) return;
+
             slide.content.categories.push('');
             this.editor.saveToLocalStorage();
             this.editor.loadSlideEditContent(slide.id);
             return;
         }
 
-        // Remove category
-        if (target.classList.contains('remove-category-btn')) {
+        // 🧩 Remove category (quiz-categorize)
+        if (target.closest('.remove-category-btn')) {
+            const btn = target.closest('.remove-category-btn');
             const slide = this.editor.getCurrentSlide();
-            const index = parseInt(target.dataset.index);
-            if (!slide || isNaN(index)) return;
+            if (!slide || !slide.content) return;
 
-            slide.content.categories.splice(index, 1);
+            const index = parseInt(btn.dataset.index);
+            if (isNaN(index)) return;
+
+            slide.content.categories = slide.content.categories || [];
+
+            // Remove the category safely
+            if (index >= 0 && index < slide.content.categories.length) {
+                slide.content.categories.splice(index, 1);
+            }
+
             this.editor.saveToLocalStorage();
             this.editor.loadSlideEditContent(slide.id);
             return;
         }
+
 
         // quiz  multiple choice 
         const quizBtn = target.closest('[id^="quiz-"][id$="-answers"] button');
@@ -1778,6 +1975,40 @@ export default class CourseEditor {
         const slide = this.findSlide(this.currentLessonId, slideId);
         return this.renderSlidePreview(slide);
     }
+
+    // Return the currently active slide object or null if none
+    getCurrentSlide() {
+        if (!this.currentLessonId || this.currentSlideId == null) return null;
+        return this.findSlide(this.currentLessonId, this.currentSlideId);
+    }
+
+    // ---------- Lost functions ----------
+    showLessonEditForm() {
+        const currentLesson = this.findLessonById(this.currentLessonId);
+        if (!currentLesson) return;
+        document.getElementById('lesson-title-input').value = currentLesson.title;
+        document.getElementById('lesson-code-input').value = currentLesson.code;
+        document.getElementById('edit-lesson-form').classList.remove('hidden');
+        document.getElementById('lesson-title-display').classList.add('hidden');
+    }
+
+    hideLessonEditForm() {
+        document.getElementById('edit-lesson-form').classList.add('hidden');
+        document.getElementById('lesson-title-display').classList.remove('hidden');
+    }
+
+    saveLessonTitle() {
+        const newTitle = document.getElementById('lesson-title-input').value.trim();
+        const newCode = document.getElementById('lesson-code-input').value.trim();
+        const currentLesson = this.findLessonById(this.currentLessonId);
+        if (!currentLesson) return;
+        if (newTitle) currentLesson.title = newTitle;
+        currentLesson.code = newCode;
+        this.saveToLocalStorage();
+        this.updateLessonHeader();
+        this.renderLessonsSidebar();
+        this.hideLessonEditForm();
+    }
     showAddSlideModal() {
         if (this.dom.addSlideModal) this.dom.addSlideModal.classList.remove('hidden');
         // render default category
@@ -1794,6 +2025,12 @@ export default class CourseEditor {
         const lesson = this.findLessonById(lessonId);
         if (!lesson) return null;
         return lesson.slides.find(s => s.id === slideId) || null;
+    }
+
+    // ← ADD THIS
+    getCurrentSlide() {
+        if (!this.currentLessonId || this.currentSlideId == null) return null;
+        return this.findSlide(this.currentLessonId, this.currentSlideId);
     }
 
     updateLessonHeader() {

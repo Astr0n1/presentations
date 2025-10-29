@@ -513,3 +513,10 @@
 	transform-origin: center;
 	pointer-events: none;
 }
+
+.quiz-draggable {
+	transition: all 0.25s ease;
+}
+.quiz-draggable.dropped {
+	box-shadow: 0 0 20px rgba(37, 99, 235, 0.6);
+}
