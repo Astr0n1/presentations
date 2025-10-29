@@ -382,3 +382,84 @@
 .slide-content::-webkit-scrollbar-thumb:hover {
 	background: rgba(255, 255, 255, 0.5);
 }
+/* ----------------------------------------
+   🧩 Universal Comparison Slider Component
+----------------------------------------- */
+.comparison-wrapper {
+	position: relative;
+	width: 100%;
+	height: auto;
+	overflow: hidden;
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.2);
+}
+
+.comparison-layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	box-sizing: border-box;
+	transition: clip-path 0.2s ease;
+}
+
+/* Top (A) layer visible initially */
+.comparison-layer.top {
+	z-index: 2;
+	background: rgba(0, 0, 0, 0.2);
+}
+
+/* Bottom (B) layer always under */
+.comparison-layer.bottom {
+	z-index: 1;
+}
+
+/* Draggable Separator */
+.comparison-separator {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 4px;
+	background: #3b82f6; /* blue-500 */
+	cursor: ew-resize;
+	z-index: 3;
+	transition: background 0.2s ease;
+}
+
+.comparison-separator:hover,
+.comparison-separator.dragging {
+	background: #2563eb; /* blue-600 */
+	box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+/* Inner content */
+.comparison-text {
+	width: 100%;
+	color: #fff;
+	text-align: right;
+	direction: rtl;
+}
+
+.comparison-text h3 {
+	font-size: clamp(1rem, 1.8vw, 1.4rem);
+	font-weight: 700;
+	margin-bottom: 0.5rem;
+}
+
+.comparison-text p {
+	font-size: clamp(0.9rem, 1.2vw, 1rem);
+	line-height: 1.6;
+	color: #f3f4f6;
+}
+
+/* Responsive fix */
+@media (max-width: 768px) {
+	.comparison-wrapper {
+		height: auto;
+	}
+}
