@@ -93,7 +93,7 @@ class SlideManager {
                         title: 'مرحباً',
                         type: 'title',
                         subtype: 'undefined',
-                        content: { title: 'مرحباً بكم!', subtitle: 'نظام التحكم الآلي', buttonText: 'ابدأ التعلم' }
+                        content: { title: 'مرحباً بكم!', subtitle: 'مرحبا بكم في الدرس الجديد قم باضافة بعد الشرائح للدرس', buttonText: 'ابدأ التعلم' }
                     })
                 ]
             });
@@ -284,6 +284,11 @@ class SlideManager {
         const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
         if (!slide) return;
         slide.content.items = slide.content.items || [];
+        // Check if maximum limit reached
+        if (slide.content.items.length >= 4) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 4 نقاط في القائمة النقطية.', 'warning');
+            return;
+        }
         slide.content.items.push('نقطة جديدة');
         this.saveToLocalStorage();
         this.editor.loadSlideEditContent(slideId);
@@ -307,6 +312,13 @@ class SlideManager {
         const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
         if (!slide) return;
         slide.content.items = slide.content.items || [];
+
+        // Check if maximum limit reached
+        if (slide.content.items.length >= 4) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 4 عناصر في القائمة القابلة للتوسيع.', 'warning');
+            return;
+        }
+
         slide.content.items.push({ title: 'مفهوم جديد', text: 'محتوى المفهوم.' });
         this.saveToLocalStorage();
         this.editor.loadSlideEditContent(slideId);
@@ -385,7 +397,7 @@ class UIRenderer {
                 break;
 
             case 'title-undefined':
-                bodyHtml += `<div class="mt-8 text-center">
+                bodyHtml += `<div class="mt-4 text-center self-center">
                                 <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg px-6 py-2">
                                     ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
                                 </button>
@@ -702,10 +714,17 @@ class UIRenderer {
                 <div id="expandable-list-items-container-${slide.id}">
                     ${itemsHtml}
                 </div>
-                <button id="add-expandable-${slide.id}" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150 mt-2">
-                    <i class="fas fa-plus"></i>
-                    <span>أضف عنصراً قابلاً للتوسيع</span>
-                </button>
+                ${items.length < 4 ? `
+                    <button id="add-expandable-${slide.id}" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150 mt-2">
+                        <i class="fas fa-plus"></i>
+                        <span>أضف عنصراً قابلاً للتوسيع</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-2 text-gray-500 text-sm mt-2">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى 4 عناصر
+                    </div>
+                `}
             </div>
         `;
     }
