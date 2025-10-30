@@ -2302,7 +2302,6 @@ export default class CourseEditor {
         }
     }
 
-    // ---------- Drag & Drop Functionality (lessons & slides reordering) ----------
     attachDragAndDrop() {
         const lessonsContainer = this.dom.lessonsList;
         if (!lessonsContainer) return;
@@ -2314,20 +2313,27 @@ export default class CourseEditor {
         // LESSON drag
         lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
             lessonEl.addEventListener('dragstart', (e) => {
+                e.stopPropagation();
                 draggingLessonEl = lessonEl;
                 e.dataTransfer.effectAllowed = 'move';
                 lessonEl.classList.add('dragging-lesson');
             });
+
             lessonEl.addEventListener('dragend', (e) => {
+                e.stopPropagation();
                 if (draggingLessonEl) draggingLessonEl.classList.remove('dragging-lesson');
                 draggingLessonEl = null;
             });
+
             lessonEl.addEventListener('dragover', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 e.dataTransfer.dropEffect = 'move';
             });
+
             lessonEl.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 if (!draggingLessonEl || draggingLessonEl === lessonEl) return;
                 const all = Array.from(lessonsContainer.querySelectorAll('.lesson-item'));
                 const targetIndex = all.indexOf(lessonEl);
@@ -2350,6 +2356,7 @@ export default class CourseEditor {
 
             slidesContainer.querySelectorAll('.slide-item').forEach(slideEl => {
                 slideEl.addEventListener('dragstart', (e) => {
+                    e.stopPropagation();
                     draggingSlideEl = slideEl;
                     sourceLessonIdOfDraggingSlide = parseInt(slideEl.dataset.lessonId, 10);
                     e.dataTransfer.effectAllowed = 'move';
@@ -2359,19 +2366,27 @@ export default class CourseEditor {
                         sourceLessonId: sourceLessonIdOfDraggingSlide
                     }));
                 });
+
                 slideEl.addEventListener('dragend', (e) => {
+                    e.stopPropagation();
                     if (draggingSlideEl) draggingSlideEl.classList.remove('dragging-slide');
                     draggingSlideEl = null;
                     sourceLessonIdOfDraggingSlide = null;
+
+                    // Clean up any drop indicators
+                    document.querySelectorAll('.drop-indicator').forEach(ind => ind.remove());
+                    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
                 });
 
                 slideEl.addEventListener('dragover', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     e.dataTransfer.dropEffect = 'move';
                 });
 
                 slideEl.addEventListener('drop', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     let payload = null;
                     try {
                         const txt = e.dataTransfer.getData('text/plain');
@@ -2415,11 +2430,13 @@ export default class CourseEditor {
 
             slidesContainer.addEventListener('dragover', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 e.dataTransfer.dropEffect = 'move';
             });
 
             slidesContainer.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 let payload = null;
                 try {
                     const txt = e.dataTransfer.getData('text/plain');

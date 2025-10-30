@@ -760,7 +760,7 @@ body {
 .slide-item.dragging-slide,
 .lesson-item.dragging-lesson {
 	opacity: 0.95 !important; /* Much more visible */
-	transform: scale(1.02) rotate(2deg);
+	transform: scale(1.02) rotate(1deg);
 	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 	border: 2px solid #3b82f6 !important;
 	background-color: #f0f9ff !important;
@@ -866,4 +866,24 @@ body {
 .slide-item.dragging-slide .slide-actions,
 .lesson-item.dragging-lesson .lesson-header {
 	opacity: 1 !important;
+}
+
+/* Add to edit.css */
+.lesson-item,
+.slide-item {
+	cursor: grab;
+}
+
+.lesson-item:active,
+.slide-item:active {
+	cursor: grabbing;
+}
+
+/* Ensure lesson header doesn't interfere with slide dragging */
+.lesson-header {
+	cursor: pointer;
+}
+
+.slide-item {
+	cursor: grab;
 }
