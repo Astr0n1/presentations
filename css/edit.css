@@ -887,3 +887,44 @@ body {
 .slide-item {
 	cursor: grab;
 }
+
+/* Enhanced Drop Indicator Styles */
+.drop-target {
+	background-color: #f0f9ff !important;
+	border-left: 3px solid #3b82f6 !important;
+	transition: all 0.2s ease;
+}
+
+.lesson-slides.drop-target {
+	background-color: #f8fafc !important;
+	border: 2px dashed #cbd5e1 !important;
+	border-radius: 8px;
+	margin: 4px;
+}
+
+/* Pulse animation for indicators */
+@keyframes pulse-glow {
+	0%,
+	100% {
+		opacity: 0.7;
+		box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+	}
+	50% {
+		opacity: 1;
+		box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+	}
+}
+
+/* Ensure proper z-index for drag operations */
+.slide-item.dragging-slide,
+.lesson-item.dragging-lesson {
+	z-index: 1000;
+	position: relative;
+}
+
+/* Smooth transitions for drop targets */
+.lesson-item,
+.slide-item,
+.lesson-slides {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

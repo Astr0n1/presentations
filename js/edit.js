@@ -2310,7 +2310,7 @@ export default class CourseEditor {
         let draggingSlideEl = null;
         let sourceLessonIdOfDraggingSlide = null;
 
-        // LESSON drag
+        // LESSON drag with visual indicators
         lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
             lessonEl.addEventListener('dragstart', (e) => {
                 e.stopPropagation();
@@ -2323,18 +2323,36 @@ export default class CourseEditor {
                 e.stopPropagation();
                 if (draggingLessonEl) draggingLessonEl.classList.remove('dragging-lesson');
                 draggingLessonEl = null;
+
+                // Clean up all indicators
+                this.cleanupDropIndicators();
             });
 
             lessonEl.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 e.dataTransfer.dropEffect = 'move';
+
+                if (draggingLessonEl && draggingLessonEl !== lessonEl) {
+                    this.showLessonDropIndicator(lessonEl, e);
+                }
+            });
+
+            lessonEl.addEventListener('dragleave', (e) => {
+                // Only remove indicator if we're leaving the lesson element entirely
+                if (!lessonEl.contains(e.relatedTarget)) {
+                    this.cleanupDropIndicators();
+                }
             });
 
             lessonEl.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (!draggingLessonEl || draggingLessonEl === lessonEl) return;
+
+                // Clean up indicators before processing drop
+                this.cleanupDropIndicators();
+
                 const all = Array.from(lessonsContainer.querySelectorAll('.lesson-item'));
                 const targetIndex = all.indexOf(lessonEl);
                 lessonsContainer.removeChild(draggingLessonEl);
@@ -2349,7 +2367,7 @@ export default class CourseEditor {
             });
         });
 
-        // SLIDE drag
+        // SLIDE drag with visual indicators
         lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
             const slidesContainer = lessonEl.querySelector('.lesson-slides');
             if (!slidesContainer) return;
@@ -2373,20 +2391,34 @@ export default class CourseEditor {
                     draggingSlideEl = null;
                     sourceLessonIdOfDraggingSlide = null;
 
-                    // Clean up any drop indicators
-                    document.querySelectorAll('.drop-indicator').forEach(ind => ind.remove());
-                    document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+                    // Clean up all indicators
+                    this.cleanupDropIndicators();
                 });
 
                 slideEl.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     e.dataTransfer.dropEffect = 'move';
+
+                    if (draggingSlideEl) {
+                        this.showSlideDropIndicator(slideEl, e);
+                    }
+                });
+
+                slideEl.addEventListener('dragleave', (e) => {
+                    // Only remove indicator if we're leaving the slide element entirely
+                    if (!slideEl.contains(e.relatedTarget)) {
+                        this.cleanupDropIndicators();
+                    }
                 });
 
                 slideEl.addEventListener('drop', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+
+                    // Clean up indicators before processing drop
+                    this.cleanupDropIndicators();
+
                     let payload = null;
                     try {
                         const txt = e.dataTransfer.getData('text/plain');
@@ -2428,15 +2460,31 @@ export default class CourseEditor {
                 });
             });
 
+            // Handle dropping slides into empty lesson areas
             slidesContainer.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 e.dataTransfer.dropEffect = 'move';
+
+                if (draggingSlideEl) {
+                    // Show indicator at the end of the slides list
+                    this.showLessonEmptyAreaIndicator(slidesContainer, e);
+                }
+            });
+
+            slidesContainer.addEventListener('dragleave', (e) => {
+                if (!slidesContainer.contains(e.relatedTarget)) {
+                    this.cleanupDropIndicators();
+                }
             });
 
             slidesContainer.addEventListener('drop', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+
+                // Clean up indicators before processing drop
+                this.cleanupDropIndicators();
+
                 let payload = null;
                 try {
                     const txt = e.dataTransfer.getData('text/plain');
@@ -2474,6 +2522,100 @@ export default class CourseEditor {
                 this.loadSlideEditContent(this.currentSlideId);
             });
         });
+    }
+
+    // Add these new helper methods to the CourseEditor class:
+
+    /**
+     * Show drop indicator for lesson reordering
+     */
+    showLessonDropIndicator(lessonEl, e) {
+        this.cleanupDropIndicators();
+
+        const rect = lessonEl.getBoundingClientRect();
+        const isBefore = e.clientY < rect.top + rect.height / 2;
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator lesson-drop-indicator';
+        indicator.style.cssText = `
+        position: absolute;
+        ${isBefore ? 'top: -2px' : 'bottom: -2px'};
+        left: 10px;
+        right: 10px;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        border-radius: 2px;
+        z-index: 100;
+        animation: pulse-glow 1.5s ease-in-out infinite;
+    `;
+
+        lessonEl.parentNode.insertBefore(indicator, isBefore ? lessonEl : lessonEl.nextSibling);
+
+        // Also highlight the target lesson
+        lessonEl.classList.add('drop-target');
+    }
+
+    /**
+     * Show drop indicator for slide reordering
+     */
+    showSlideDropIndicator(slideEl, e) {
+        this.cleanupDropIndicators();
+
+        const rect = slideEl.getBoundingClientRect();
+        const isBefore = e.clientY < rect.top + rect.height / 2;
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator slide-drop-indicator';
+        indicator.style.cssText = `
+        position: absolute;
+        ${isBefore ? 'top: -2px' : 'bottom: -2px'};
+        left: 20px;
+        right: 20px;
+        height: 3px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        border-radius: 2px;
+        z-index: 100;
+        animation: pulse-glow 1.5s ease-in-out infinite;
+    `;
+
+        slideEl.parentNode.insertBefore(indicator, isBefore ? slideEl : slideEl.nextSibling);
+
+        // Also highlight the target slide
+        slideEl.classList.add('drop-target');
+    }
+
+    /**
+     * Show indicator for dropping into empty lesson area
+     */
+    showLessonEmptyAreaIndicator(slidesContainer, e) {
+        this.cleanupDropIndicators();
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator lesson-empty-indicator';
+        indicator.style.cssText = `
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+        border-radius: 2px;
+        margin: 8px 0;
+        animation: pulse-glow 1.5s ease-in-out infinite;
+    `;
+
+        // Add to the end of slides container
+        slidesContainer.appendChild(indicator);
+        slidesContainer.classList.add('drop-target');
+    }
+
+    /**
+     * Clean up all drop indicators
+     */
+    cleanupDropIndicators() {
+        // Remove all indicator elements
+        document.querySelectorAll('.drop-indicator').forEach(ind => ind.remove());
+
+        // Remove all drop target highlighting
+        document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+        document.querySelectorAll('.lesson-slides').forEach(el => el.classList.remove('drop-target'));
     }
 
     saveLessonOrderFromDOM() {
