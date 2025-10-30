@@ -739,3 +739,131 @@ body {
 .collapse-btn i.rotate {
 	transform: rotate(180deg);
 }
+
+.lesson-slides {
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.3s ease;
+}
+
+.lesson-expanded .lesson-slides {
+	max-height: 1000px;
+}
+
+/* Add these styles to your existing edit.css file */
+
+/* ------------------------------
+   🎯 Enhanced Drag & Drop Visual Feedback
+------------------------------ */
+
+/* Dragged element - fully visible with shadow */
+.slide-item.dragging-slide,
+.lesson-item.dragging-lesson {
+	opacity: 0.95 !important; /* Much more visible */
+	transform: scale(1.02) rotate(2deg);
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+	border: 2px solid #3b82f6 !important;
+	background-color: #f0f9ff !important;
+	z-index: 1000;
+	position: relative;
+}
+
+/* Drop indicator for lessons */
+.lesson-item.drop-indicator {
+	position: relative;
+}
+
+.lesson-item.drop-indicator::before {
+	content: "";
+	position: absolute;
+	top: -2px;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background: linear-gradient(90deg, #3b82f6, #60a5fa);
+	border-radius: 2px;
+	z-index: 10;
+	animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.lesson-item.drop-indicator-inside::before {
+	top: auto;
+	bottom: -2px;
+}
+
+/* Drop indicator for slides */
+.slide-item.drop-indicator {
+	position: relative;
+}
+
+.slide-item.drop-indicator::before {
+	content: "";
+	position: absolute;
+	top: -2px;
+	left: 10px;
+	right: 10px;
+	height: 3px;
+	background: linear-gradient(90deg, #10b981, #34d399);
+	border-radius: 2px;
+	z-index: 10;
+	animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.slide-item.drop-indicator-inside::before {
+	top: auto;
+	bottom: -2px;
+}
+
+/* Empty space placeholder for dragged element */
+.drag-placeholder {
+	background: linear-gradient(90deg, #f3f4f6, #e5e7eb);
+	border: 2px dashed #d1d5db;
+	border-radius: 8px;
+	height: 60px;
+	margin: 4px 0;
+	opacity: 0.7;
+	transition: all 0.3s ease;
+}
+
+.drag-placeholder.lesson-placeholder {
+	height: 80px;
+}
+
+/* Pulsing animation for drop indicators */
+@keyframes pulse-glow {
+	0%,
+	100% {
+		opacity: 0.7;
+		transform: scaleX(1);
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1.05);
+	}
+}
+
+/* Visual feedback for valid drop targets */
+.lesson-item.drop-target,
+.slide-item.drop-target {
+	background-color: #f0f9ff !important;
+	border-left: 3px solid #3b82f6 !important;
+	transition: all 0.2s ease;
+}
+
+/* Container feedback during drag operations */
+.drag-active .lesson-slides,
+.drag-active #lessons-list {
+	position: relative;
+}
+
+/* Smooth transitions for all drag states */
+.slide-item,
+.lesson-item {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Visual feedback for the element being dragged */
+.slide-item.dragging-slide .slide-actions,
+.lesson-item.dragging-lesson .lesson-header {
+	opacity: 1 !important;
+}

@@ -848,8 +848,9 @@ class UIRenderer {
 
         this.editor.lessons.forEach(lesson => {
             const isCurrent = lesson.id === this.editor.currentLessonId;
+            const isExpanded = this.editor.isLessonExpanded(lesson.id);
             const lessonEl = document.createElement('div');
-            lessonEl.className = `lesson-item bg-white border border-gray-200 rounded-lg overflow-hidden ${isCurrent ? 'lesson-expanded' : ''}`;
+            lessonEl.className = `lesson-item bg-white border border-gray-200 rounded-lg overflow-hidden ${isExpanded ? 'lesson-expanded' : ''}`;
             lessonEl.dataset.lessonId = lesson.id;
             lessonEl.draggable = true;
 
@@ -875,7 +876,7 @@ class UIRenderer {
             lessonEl.appendChild(inner.querySelector('div'));
 
             const slidesWrap = document.createElement('div');
-            slidesWrap.className = `lesson-slides ${isCurrent ? '' : 'hidden'}`;
+            slidesWrap.className = `lesson-slides ${isExpanded ? '' : 'hidden'}`;
             slidesWrap.innerHTML = `<div class="border-t border-gray-200"></div>`;
             const listZone = slidesWrap.querySelector('div');
 
@@ -1720,14 +1721,16 @@ class UIInteractions {
             const lessonItem = lessonHeader.closest('.lesson-item');
             if (lessonItem) {
                 const lessonId = parseInt(lessonItem.dataset.lessonId, 10);
-                lessonItem.classList.toggle('lesson-expanded');
-                const icon = lessonItem.querySelector('.expand-lesson i');
-                if (icon) icon.classList.toggle('rotate-180');
+
+                // Toggle expansion state
+                this.editor.toggleLessonExpansion(lessonId);
+
+                // Always re-render the sidebar to ensure consistent UI state
+                this.editor.renderLessonsSidebar();
 
                 if (!isNaN(lessonId) && lessonId !== this.editor.currentLessonId) {
                     this.editor.currentLessonId = lessonId;
                     this.editor.currentSlideId = null;
-                    this.editor.renderLessonsSidebar();
                     this.editor.updateLessonHeader();
                     if (this.editor.dom.slideEditContent) this.editor.dom.slideEditContent.innerHTML = this.editor.ui.getChooseSlidePlaceholder();
                     this.editor.renderSlidePreview(null);
@@ -1887,6 +1890,7 @@ export default class CourseEditor {
         this.lessons = [];
         this.currentLessonId = null;
         this.currentSlideId = null;
+        this.expandedLessons = new Set(); // Track expanded lesson IDs
 
         // dom refs
         this.dom = {
@@ -1922,6 +1926,10 @@ export default class CourseEditor {
         // Load/persist and initial state
         this.loadFromLocalStorage();
         this.ensureInitialState();
+        // If current lesson exists, expand it by default
+        if (this.currentLessonId) {
+            this.expandedLessons.add(this.currentLessonId);
+        }
 
         // Render initial UI
         this.renderLessonsSidebar();
@@ -1939,8 +1947,16 @@ export default class CourseEditor {
     }
 
     // bootstrap helpers delegating to managers
-    loadFromLocalStorage() { return this.slideManager.loadFromLocalStorage(); }
-    saveToLocalStorage() { return this.slideManager.saveToLocalStorage(); }
+    loadFromLocalStorage() {
+        this.slideManager.loadFromLocalStorage();
+        this.loadExpansionState();
+        return;
+    }
+    saveToLocalStorage() {
+        this.slideManager.saveToLocalStorage();
+        this.saveExpansionState();
+        return;
+    }
     ensureInitialState() { return this.slideManager.ensureInitialState(); }
 
     // re-expose slide manager methods so old callers still work
@@ -1955,6 +1971,38 @@ export default class CourseEditor {
     addExpandableListItem(slideId) { return this.slideManager.addExpandableListItem(slideId); }
     deleteExpandableListItem(slideId, index) { return this.slideManager.deleteExpandableListItem(slideId, index); }
 
+    isLessonExpanded(lessonId) {
+        return this.expandedLessons.has(lessonId);
+    }
+
+    toggleLessonExpansion(lessonId) {
+        if (this.expandedLessons.has(lessonId)) {
+            this.expandedLessons.delete(lessonId);
+        } else {
+            this.expandedLessons.add(lessonId);
+        }
+        this.saveExpansionState();
+    }
+
+    saveExpansionState() {
+        try {
+            localStorage.setItem('course_expanded_lessons', JSON.stringify(Array.from(this.expandedLessons)));
+        } catch (err) {
+            console.warn('Failed saving expansion state', err);
+        }
+    }
+
+    loadExpansionState() {
+        try {
+            const raw = localStorage.getItem('course_expanded_lessons');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                this.expandedLessons = new Set(parsed);
+            }
+        } catch (err) {
+            console.warn('Failed loading expansion state', err);
+        }
+    }
     // renderers
     renderLessonsSidebar() { return this.ui.renderLessonsSidebar(); }
     renderSlidePreview(slide) { return this.ui.renderSlidePreview(slide); }
@@ -2498,20 +2546,21 @@ function initSidebarToggles() {
             const top = rect.top + rect.height / 2;
             btnEl.style.top = `${top}px`; // slight correction; still kept translateY(-50%)
 
-            const offsetFromEdge = 8; // px gap from border (tweakable)
+            console.log(side, btnRect.width)
+            const offsetFromEdge = 0; // px gap from border (tweakable)
             if (side === 'left') {
                 const centerX = rect.right - offsetFromEdge; // px from viewport left
-                btnEl.style.left = `${Math.max(4, centerX - btnRect.width / 2)}px`;
+                btnEl.style.left = `${Math.max(20, centerX - btnRect.width / 2)}px`;
                 btnEl.style.right = 'auto';
             } else {
                 const centerX = rect.left + offsetFromEdge; // px from viewport left
-                btnEl.style.left = `${Math.max(4, centerX - btnRect.width / 2)}px`;
+                btnEl.style.left = `${Math.max(20, centerX - btnRect.width / 2)}px`;
                 btnEl.style.right = 'auto';
             }
         }
 
         // wrapper to compute both buttons
-        function positionSidebarButtons() {
+        function positionSidebarButtons(side) {
             // If sidebar is hidden via translate classes it may be offscreen; still compute using rect
             // Left / edit sidebar: inner edge is its right side
             positionSidebarButtonForSidebar(editSidebar, editBtn, 'left');
