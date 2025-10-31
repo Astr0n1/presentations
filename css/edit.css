@@ -315,7 +315,7 @@ body {
 	justify-content: center; /* ✅ vertically center content */
 	align-items: start; /* ✅ horizontally center for cleaner look */
 	height: 100%;
-	padding: 1rem 1.25rem;
+	padding: 3rem 2rem 1rem;
 	text-align: right;
 	direction: rtl;
 	overflow-y: auto;
@@ -927,4 +927,204 @@ body {
 .slide-item,
 .lesson-slides {
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* UPDATE THE TEXT SERIES STYLES IN edit.css */
+
+.text-series-nav-dot {
+	width: 12px !important;
+	height: 12px !important;
+	border: 2px solid white !important;
+	background-color: transparent !important;
+	border-radius: 50% !important;
+	transition: all 0.5s ease !important;
+	display: inline-block !important;
+	box-sizing: border-box !important;
+	cursor: pointer !important;
+}
+
+.text-series-nav-dot-active {
+	background-color: white !important;
+}
+
+.text-series-nav-dots {
+	position: absolute;
+	bottom: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 0.5rem;
+	z-index: 10;
+	direction: ltr !important; /* Force LTR direction for proper dot order */
+}
+
+/* Replace the existing text series animation styles with these smoother versions */
+
+.text-series-slide {
+	min-height: 300px;
+	transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Slower and smoother easing */
+	opacity: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 8px;
+	margin: 0.5rem 0;
+	transform: translateX(0); /* Add transform for potential slide animations */
+}
+
+.text-series-slide.block {
+	position: relative;
+	opacity: 1;
+	transform: translateX(0); /* Reset transform when active */
+}
+
+.text-series-slide.hidden {
+	display: none;
+}
+
+.text-series-preview {
+	position: relative;
+	min-height: 300px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 0.5rem;
+}
+
+.text-series-slides {
+	position: relative;
+	min-height: 300px;
+	transition: all 1s ease-in-out; /* Container transition for smoother overall feel */
+}
+
+/* Optional: Add a subtle fade-in scale effect for even smoother appearance */
+.text-series-slide.block {
+	animation: subtleSlideAppear 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+		forwards;
+}
+
+@keyframes subtleSlideAppear {
+	0% {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Keep the dot transitions smooth as well */
+.text-series-nav-dot {
+	width: 12px !important;
+	height: 12px !important;
+	border: 2px solid white !important;
+	background-color: transparent !important;
+	border-radius: 50% !important;
+	transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; /* Slower dot transitions */
+	display: inline-block !important;
+	box-sizing: border-box !important;
+	cursor: pointer !important;
+}
+
+.text-series-nav-dot-active {
+	background-color: white !important;
+	transform: scale(1.1); /* Subtle scale effect for active dot */
+}
+
+.text-series-nav-dots {
+	position: absolute;
+	bottom: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 0.5rem;
+	z-index: 10;
+	direction: ltr !important;
+}
+
+/* Image series styles */
+.image-series-slide {
+	min-height: 300px;
+	transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	opacity: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 8px;
+	margin: 0.5rem 0;
+	transform: translateX(0);
+}
+
+.image-series-slide.block {
+	position: relative;
+	opacity: 1;
+	transform: translateX(0);
+	animation: subtleSlideAppear 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+		forwards;
+}
+
+.image-series-slide.hidden {
+	display: none;
+}
+
+.image-series-preview {
+	position: relative;
+	min-height: 300px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 0.5rem;
+}
+
+.image-series-slides {
+	position: relative;
+	min-height: 300px;
+	transition: all 0.6s ease-in-out;
+}
+
+.image-series-nav-dot {
+	width: 12px !important;
+	height: 12px !important;
+	border: 2px solid white !important;
+	background-color: transparent !important;
+	border-radius: 50% !important;
+	transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+	display: inline-block !important;
+	box-sizing: border-box !important;
+	cursor: pointer !important;
+}
+
+.image-series-nav-dot-active {
+	background-color: white !important;
+	transform: scale(1.1);
+}
+
+.image-series-nav-dots {
+	position: absolute;
+	bottom: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 0.5rem;
+	z-index: 10;
+	direction: ltr !important;
+}
+
+.image-container img {
+	max-height: 400px;
+	width: auto;
+	border-radius: 12px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }

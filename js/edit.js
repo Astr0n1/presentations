@@ -206,18 +206,110 @@ class SlideManager {
             if (subtype === 'expandable-list') {
                 return { title: 'قائمة قابلة للتوسيع', subtitle: '', items: [{ title: 'عنوان المفهوم', text: 'شرح المفهوم' }] };
             }
+            if (subtype === 'text-series') {
+                return {
+                    title: 'سلسلة نصوص',
+                    subtitle: '',
+                    items: [
+                        { title: 'النص الأول', content: 'محتوى النص الأول يظهر هنا...' },
+                        { title: 'النص الثاني', content: 'محتوى النص الثاني يظهر هنا...' }
+                    ]
+                };
+            }
             return { title: 'محتوى', subtitle: '', text: 'أدخل المحتوى هنا...' };
         }
         if (type === 'video' && subtype === 'video') {
             return { title: 'فيديو جديد', subtitle: '', videoUrl: '', duration: '', description: '' };
         }
-        if (type === 'image' && subtype === 'comparison') {
-            return { title: 'مقارنة صور', subtitle: '', imageA: '', imageB: '' };
+        if (type === 'image') {
+            if (subtype === 'comparison') {
+                return { title: 'مقارنة صور', subtitle: '', imageA: '', imageB: '' };
+            }
+            if (subtype === 'image-series') { // ADD THIS CASE
+                return {
+                    title: 'سلسلة الصور',
+                    subtitle: '',
+                    items: [
+                        { title: 'الصورة الأولى', imageUrl: '' },
+                        { title: 'الصورة الثانية', imageUrl: '' }
+                    ]
+                };
+            }
         }
         if (type === 'title') {
             return { title: 'عنوان', subtitle: '', buttonText: 'ابدأ' };
         }
         return { title: 'شريحة جديدة', subtitle: '' };
+    }
+
+    // ADD THESE METHODS TO THE SlideManager CLASS:
+
+    addTextSeriesItem(slideId) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+        slide.content.items = slide.content.items || [];
+
+        // Check if maximum limit reached
+        if (slide.content.items.length >= 6) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 6 نصوص في السلسلة.', 'warning');
+            return;
+        }
+
+        slide.content.items.push({ title: '', content: 'محتوى النص الجديد...' });
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    deleteTextSeriesItem(slideId, index) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.items)) return;
+        if (slide.content.items.length <= 1) {
+            Swal.fire('تنبيه', 'يجب أن تحتوي السلسلة على نص واحد على الأقل.', 'warning');
+            return;
+        }
+        slide.content.items.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    addSeriesItem(slideId, contentType, itemTemplate, maxItems = 6) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+        slide.content.items = slide.content.items || [];
+
+        if (slide.content.items.length >= maxItems) {
+            Swal.fire('حد أقصى', `لا يمكن إضافة أكثر من ${maxItems} عناصر في السلسلة.`, 'warning');
+            return;
+        }
+
+        slide.content.items.push(itemTemplate);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    deleteSeriesItem(slideId, index, minItems = 1) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.items)) return;
+        if (slide.content.items.length <= minItems) {
+            Swal.fire('تنبيه', `يجب أن تحتوي السلسلة على ${minItems} عنصر واحد على الأقل.`, 'warning');
+            return;
+        }
+        slide.content.items.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    // Image series methods
+    addImageSeriesItem(slideId) {
+        this.addSeriesItem(slideId, 'image', { title: '', imageUrl: '' });
+    }
+
+    deleteImageSeriesItem(slideId, index) {
+        this.deleteSeriesItem(slideId, index, 1);
     }
 
     deleteSlideById(slideId) {
@@ -383,13 +475,14 @@ class UIRenderer {
                 }
                 bodyHtml += `</ul>`;
                 break;
-
             case 'text-comparison':
                 bodyHtml += this.renderUniversalComparison(slide, 'text');
                 break;
-
             case 'text-expandable-list':
                 bodyHtml += this.renderExpandableListPreview(slide);
+                break;
+            case 'text-text-series':
+                bodyHtml += this.renderTextSeriesPreview(slide);
                 break;
 
             case 'video-video':
@@ -406,6 +499,9 @@ class UIRenderer {
 
             case 'image-comparison':
                 bodyHtml += this.renderUniversalComparison(slide, 'image');
+                break;
+            case 'image-image-series':
+                bodyHtml += this.renderImageSeriesPreview(slide);
                 break;
 
             case 'quiz-multiple-choice-carousel': {
@@ -608,6 +704,202 @@ class UIRenderer {
     </div>`;
     }
 
+    renderTextSeriesEditor(slide) {
+        const items = slide.content.items || [];
+        const itemsHtml = items.map((it, idx) => `
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-3">
+                <label class="block text-sm font-medium text-gray-700">العنصر ${idx + 1}</label>
+                <button data-action="delete-text-series" data-index="${idx}" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150" ${items.length <= 1 ? 'disabled' : ''}>
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">العنوان (اختياري)</label>
+                    <input type="text" data-text-series="${idx}" data-field="title" value="${Utils.escapeHTML(it.title || '')}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                           placeholder="أدخل العنوان هنا..." />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">المحتوى</label>
+                    <textarea data-text-series="${idx}" data-field="content" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              placeholder="أدخل المحتوى هنا...">${Utils.escapeHTML(it.content || '')}</textarea>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+        return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+            <h4 class="text-base font-semibold mb-3 text-gray-800">محتوى السلسلة النصية</h4>
+            <div id="text-series-items-container-${slide.id}" class="space-y-3">
+                ${itemsHtml}
+            </div>
+            <div class="mt-4">
+                ${items.length < 6 ? `
+                    <button id="add-text-series-${slide.id}" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة نص جديد</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى 6 نصوص في السلسلة
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+    }
+
+    renderTextSeriesPreview(slide) {
+        const items = slide.content.items || [];
+        if (!items.length) {
+            return `<div class="text-center text-white/70 py-12">لا توجد نصوص في السلسلة</div>`;
+        }
+
+        const slidesHtml = items.map((item, index) => `
+        <div class="text-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-300 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
+            <div class="text-center max-w-2xl w-full">
+                ${item.title ? `<h3 class="text-2xl font-bold text-white mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
+                <div class="text-lg text-white leading-relaxed break-words hyphens-auto">
+                    ${Utils.escapeHTML(item.content || '').replace(/\n/g, '<br>')}
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+        const dotsHtml = items.map((_, index) => `
+        <span class="text-series-nav-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-300 cursor-pointer ${index === 0 ? 'text-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
+    `).join('');
+
+        return `
+        <div class="text-series-preview relative w-full overflow-hidden" id="text-series-${slide.id}">
+            <div class="text-series-slides relative w-full">
+                ${slidesHtml}
+            </div>
+            
+            ${items.length > 1 ? `
+                <div class="text-series-nav-dots absolute bottom-4 left-1/2 transform -translate-x-1/2 flex  space-x-reverse">
+                    ${dotsHtml}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    }
+
+    renderSeriesEditor(slide, itemType, itemRenderer) {
+        const items = slide.content.items || [];
+        const itemsHtml = items.map((it, idx) => `
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-3">
+                <label class="block text-sm font-medium text-gray-700">العنصر ${idx + 1}</label>
+                <button data-action="delete-${itemType}-series" data-index="${idx}" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150" ${items.length <= 1 ? 'disabled' : ''}>
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+            ${itemRenderer(it, idx)}
+        </div>
+    `).join('');
+
+        const maxItems = 6;
+        const itemName = itemType === 'text' ? 'نص' : 'صورة';
+
+        return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+            <h4 class="text-base font-semibold mb-3 text-gray-800">محتوى السلسلة ${itemType === 'text' ? 'النصية' : 'الصورية'}</h4>
+            <div id="${itemType}-series-items-container-${slide.id}" class="space-y-3">
+                ${itemsHtml}
+            </div>
+            <div class="mt-4">
+                ${items.length < maxItems ? `
+                    <button id="add-${itemType}-series-${slide.id}" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة ${itemName} جديد</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى ${maxItems} ${itemName === 'نص' ? 'نصوص' : 'صور'} في السلسلة
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+    }
+
+    renderImageSeriesEditor(slide) {
+        const imageItemRenderer = (item, index) => `
+        <div class="space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">العنوان (اختياري)</label>
+                <input type="text" data-image-series="${index}" data-field="title" value="${Utils.escapeHTML(item.title || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="أدخل العنوان هنا..." />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
+                <input type="url" data-image-series="${index}" data-field="imageUrl" value="${Utils.escapeHTML(item.imageUrl || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="https://example.com/image.jpg" />
+                ${item.imageUrl ? `
+                    <div class="mt-2 p-2 bg-gray-100 rounded-lg">
+                        <img src="${Utils.escapeHTML(item.imageUrl)}" alt="معاينة" class="max-h-32 mx-auto rounded" onerror="this.style.display='none'" />
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+        return this.renderSeriesEditor(slide, 'image', imageItemRenderer);
+    }
+
+    renderImageSeriesPreview(slide) {
+        const items = slide.content.items || [];
+        if (!items.length) {
+            return `<div class="text-center text-white/70 py-12">لا توجد صور في السلسلة</div>`;
+        }
+
+        const slidesHtml = items.map((item, index) => `
+        <div class="image-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-600 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
+            <div class="text-center max-w-2xl w-full">
+                ${item.title ? `<h3 class="text-2xl font-bold text-white mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
+                ${item.imageUrl ? `
+                    <div class="image-container mb-4">
+                        <img src="${Utils.escapeHTML(item.imageUrl)}" alt="${Utils.escapeHTML(item.title || 'صورة')}" 
+                             class="max-h-64 max-w-full mx-auto rounded-lg shadow-lg object-contain" 
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuS8muS4gOWbvueUteWtkDwvdGV4dD48L3N2Zz4='; this.alt='تعذر تحميل الصورة';" />
+                    </div>
+                ` : `
+                    <div class="text-white/70 text-center py-8 bg-black/20 rounded-lg">
+                        <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                        <p>لم يتم إدخال رابط الصورة بعد</p>
+                    </div>
+                `}
+            </div>
+        </div>
+    `).join('');
+
+        const dotsHtml = items.map((_, index) => `
+        <span class="image-series-nav-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-400 cursor-pointer ${index === 0 ? 'image-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
+    `).join('');
+
+        return `
+        <div class="image-series-preview relative w-full overflow-hidden" id="image-series-${slide.id}">
+            <div class="image-series-slides relative w-full">
+                ${slidesHtml}
+            </div>
+            
+            ${items.length > 1 ? `
+                <div class="image-series-nav-dots absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 space-x-reverse">
+                    ${dotsHtml}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    }
 
     // Video render (kept same heuristics)
     renderVideoPreview(slide) {
@@ -1017,11 +1309,17 @@ class UIRenderer {
             case 'text-expandable-list':
                 html += this.renderExpandableListEditor(slide);
                 break;
+            case 'text-text-series':
+                html += this.renderTextSeriesEditor(slide);
+                break;
             case 'video-video':
                 html += this.renderVideoEditor(slide);
                 break;
             case 'image-comparison':
                 html += this.renderImageComparisonEditor(slide);
+                break;
+            case 'image-image-series':
+                html += this.renderImageSeriesEditor(slide);
                 break;
             case 'quiz-multiple-choice-carousel':
                 html += this.renderQuizCarouselEditor(slide);
@@ -1254,6 +1552,152 @@ class DragDropManager {
         // Mouse/touch start inside preview container only
         container.addEventListener('mousedown', (e) => this.handleStart(e));
         container.addEventListener('touchstart', (e) => this.handleStart(e), { passive: false });
+        // Text series navigation
+        container.addEventListener('click', (e) => this.handleTextSeriesNavigation(e));
+    }
+
+    startTextSeriesSwipe(container, e) {
+        // Check if it's text series or image series
+        const isTextSeries = container.classList.contains('text-series-preview');
+        const isImageSeries = container.classList.contains('image-series-preview');
+
+        if (!isTextSeries && !isImageSeries) return;
+
+        this.textSeriesSwipe = {
+            container,
+            startX: e.touches ? e.touches[0].clientX : e.clientX,
+            startY: e.touches ? e.touches[0].clientY : e.clientY,
+            isSwiping: false
+        };
+
+        const move = (ev) => this.handleTextSeriesSwipeMove(ev);
+        const end = (ev) => this.handleTextSeriesSwipeEnd(ev, move, end);
+
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchmove', move, { passive: false });
+        document.addEventListener('touchend', end);
+    }
+
+    handleTextSeriesSwipeMove(e) {
+        if (!this.textSeriesSwipe) return;
+
+        const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+        const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaX = currentX - this.textSeriesSwipe.startX;
+        const deltaY = currentY - this.textSeriesSwipe.startY;
+
+        // Only consider it a swipe if horizontal movement is greater than vertical
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+            this.textSeriesSwipe.isSwiping = true;
+            e.preventDefault();
+        }
+    }
+
+    handleTextSeriesSwipeEnd(e, move, end) {
+        if (!this.textSeriesSwipe) return;
+
+        const currentX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const deltaX = currentX - this.textSeriesSwipe.startX;
+
+        if (this.textSeriesSwipe.isSwiping && Math.abs(deltaX) > 50) {
+            if (deltaX > 0) {
+                this.navigateTextSeries(this.textSeriesSwipe.container, -1); // Swipe right - previous
+            } else {
+                this.navigateTextSeries(this.textSeriesSwipe.container, 1); // Swipe left - next
+            }
+        }
+
+        this.textSeriesSwipe = null;
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', end);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', end);
+    }
+
+    handleTextSeriesNavigation(e) {
+        const target = e.target;
+        const textDot = target.closest('.text-series-nav-dot');
+        const imageDot = target.closest('.image-series-nav-dot');
+        if (textDot) {
+            const container = textDot.closest('.text-series-preview');
+            const index = parseInt(textDot.dataset.index);
+            this.goToTextSeriesSlide(container, index);
+            return;
+        }
+        if (imageDot) {
+            const container = imageDot.closest('.image-series-preview');
+            const index = parseInt(imageDot.dataset.index);
+            this.goToTextSeriesSlide(container, index); // Reuse the same navigation function
+            return;
+        }
+    }
+
+    navigateTextSeries(container, direction) {
+        // Determine which type of series we're dealing with
+        const isTextSeries = container.classList.contains('text-series-preview');
+        const slideSelector = isTextSeries ? '.text-series-slide' : '.image-series-slide';
+
+        const slides = container.querySelectorAll(slideSelector);
+        const dots = container.querySelectorAll(isTextSeries ? '.text-series-nav-dot' : '.image-series-nav-dot');
+
+        const currentIndex = Array.from(slides).findIndex(slide =>
+            slide.classList.contains('block') || slide.style.opacity === '1'
+        );
+
+        let newIndex = currentIndex + direction;
+
+        // Non-looping behavior
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= slides.length) newIndex = slides.length - 1;
+
+        if (newIndex !== currentIndex) {
+            this.goToTextSeriesSlide(container, newIndex);
+        }
+    }
+
+    // REPLACE the entire goToTextSeriesSlide method with this:
+
+    goToTextSeriesSlide(container, index) {
+        // Determine which type of series we're dealing with
+        const isTextSeries = container.classList.contains('text-series-preview');
+        const isImageSeries = container.classList.contains('image-series-preview');
+
+        const slideSelector = isTextSeries ? '.text-series-slide' : '.image-series-slide';
+        const dotSelector = isTextSeries ? '.text-series-nav-dot' : '.image-series-nav-dot';
+
+        const slides = container.querySelectorAll(slideSelector);
+        const dots = container.querySelectorAll(dotSelector);
+
+        // Hide all slides using display property instead of opacity
+        slides.forEach(slide => {
+            slide.classList.add('hidden');
+            slide.classList.remove('block');
+            slide.style.opacity = '0';
+        });
+
+        // Reset all dots
+        dots.forEach(dot => {
+            dot.classList.remove('text-series-nav-dot-active', 'image-series-nav-dot-active', 'bg-white');
+            dot.classList.add('bg-transparent');
+        });
+
+        // Show target slide
+        if (slides[index]) {
+            slides[index].classList.remove('hidden');
+            slides[index].classList.add('block');
+            // Use setTimeout to ensure display change happens before opacity transition
+            setTimeout(() => {
+                slides[index].style.opacity = '1';
+            }, 10);
+        }
+
+        // Activate target dot
+        if (dots[index]) {
+            dots[index].classList.remove('bg-transparent');
+            const activeClass = isTextSeries ? 'text-series-nav-dot-active' : 'image-series-nav-dot-active';
+            dots[index].classList.add(activeClass, 'bg-white');
+        }
     }
 
     handleStart(e) {
@@ -1264,7 +1708,15 @@ class DragDropManager {
             this.startComparisonDrag(sep, e);
             return;
         }
-        // if later we add other draggable types, check them here and branch
+
+        // Text series swipe handling
+        const textSeries = e.target.closest('.text-series-preview');
+        const imageSeries = e.target.closest('.image-series-preview'); // ADD THIS LINE
+
+        if (textSeries || imageSeries) { // UPDATE THIS CONDITION
+            this.startTextSeriesSwipe(textSeries || imageSeries, e);
+            return;
+        }
     }
 
     startComparisonDrag(separatorEl, e) {
@@ -1635,6 +2087,14 @@ class UIInteractions {
             }
         }
 
+        if (target.dataset && target.dataset.textSeries !== undefined) {
+            const idx = parseInt(target.dataset.textSeries, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'items', idx, field, target.value);
+            }
+        }
+
         if (target.id === 'edit-video-url') {
             if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'videoUrl', target.value);
         }
@@ -1643,6 +2103,14 @@ class UIInteractions {
         }
         if (target.id === 'edit-video-description') {
             if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'description', target.value);
+        }
+
+        if (target.dataset && target.dataset.imageSeries !== undefined) {
+            const idx = parseInt(target.dataset.imageSeries, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'items', idx, field, target.value);
+            }
         }
 
         if (target.id === 'quiz-question-input') {
@@ -1668,6 +2136,42 @@ class UIInteractions {
 
     handleDocumentClick(e) {
         const target = e.target;
+
+        // Text series delete button
+        const delTextSeriesBtn = target.closest('[data-action="delete-text-series"]');
+        if (delTextSeriesBtn) {
+            const idx = parseInt(delTextSeriesBtn.dataset.index, 10);
+            if (!isNaN(idx) && this.editor.currentSlideId != null) {
+                this.editor.deleteTextSeriesItem(this.editor.currentSlideId, idx);
+            }
+            return;
+        }
+
+        // Text series add button
+        const addTextSeriesBtn = target.closest('[id^="add-text-series-"]');
+        if (addTextSeriesBtn) {
+            const sid = this.editor.currentSlideId;
+            if (sid != null) this.editor.addTextSeriesItem(sid);
+            return;
+        }
+
+        // Image series delete button
+        const delImageSeriesBtn = target.closest('[data-action="delete-image-series"]');
+        if (delImageSeriesBtn) {
+            const idx = parseInt(delImageSeriesBtn.dataset.index, 10);
+            if (!isNaN(idx) && this.editor.currentSlideId != null) {
+                this.editor.deleteImageSeriesItem(this.editor.currentSlideId, idx);
+            }
+            return;
+        }
+
+        // Image series add button
+        const addImageSeriesBtn = target.closest('[id^="add-image-series-"]');
+        if (addImageSeriesBtn) {
+            const sid = this.editor.currentSlideId;
+            if (sid != null) this.editor.addImageSeriesItem(sid);
+            return;
+        }
 
         const addSlideBtn = target.closest('.add-slide-inside-lesson');
         if (addSlideBtn) {
@@ -1991,7 +2495,10 @@ export default class CourseEditor {
                 { subtype: 'expandable-list', title: 'قائمة قابلة للتوسيع', description: 'قائمة قابلة للتوسيع', icon: 'fa-layer-group' },
                 { subtype: 'text-series', title: 'سلسلة نصوص', description: 'عرض سلسلة نصوص قابلة للتمرير', icon: 'fa-ellipsis-h' },
             ],
-            image: [{ subtype: 'comparison', title: 'مقارنة صور', description: '', icon: 'fa-image' }],
+            image: [
+                { subtype: 'comparison', title: 'مقارنة صور', description: '', icon: 'fa-image' },
+                { subtype: 'image-series', title: 'سلسلة الصور', description: 'عرض سلسلة صور قابلة للتمرير', icon: 'fa-images' }
+            ],
             video: [{ subtype: 'video', title: 'فيديو', description: '', icon: 'fa-video' }],
             quiz: [
                 { subtype: 'multiple-choice-carousel', title: 'اختبار من متعدد', description: 'قم باختيار الاجابة الصحيحة', icon: 'fa-layer-group' },
@@ -2050,6 +2557,10 @@ export default class CourseEditor {
     deleteBulletedListItem(slideId, index) { return this.slideManager.deleteBulletedListItem(slideId, index); }
     addExpandableListItem(slideId) { return this.slideManager.addExpandableListItem(slideId); }
     deleteExpandableListItem(slideId, index) { return this.slideManager.deleteExpandableListItem(slideId, index); }
+    addTextSeriesItem(slideId) { return this.slideManager.addTextSeriesItem(slideId); }
+    deleteTextSeriesItem(slideId, index) { return this.slideManager.deleteTextSeriesItem(slideId, index); }
+    addImageSeriesItem(slideId) { return this.slideManager.addImageSeriesItem(slideId); }
+    deleteImageSeriesItem(slideId, index) { return this.slideManager.deleteImageSeriesItem(slideId, index); }
 
     isLessonExpanded(lessonId) {
         return this.expandedLessons.has(lessonId);
