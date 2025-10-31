@@ -17,6 +17,7 @@
 		<script defer src="js/auth.js"></script>
 		<script type="module" defer src="js/edit.js"></script>
 	</head>
+	<!-- <body class="bg-gray-100 min-h-screen" onload="requireAdmin()"> -->
 
 	<body class="bg-gray-100 min-h-screen">
 		<!-- Resize Indicator -->
@@ -46,6 +47,7 @@
 		</header>
 
 		<div class="flex">
+			<!-- Edit Sidebar (Left) -->
 			<!-- Left Edit Sidebar -->
 			<div
 				class="edit-sidebar fixed left-0 top-0 h-full bg-white border-r border-gray-200 overflow-y-auto z-20 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] sm:min-w-[40vw] sm:max-w-[100vw] transition-transform duration-300 ease-in-out"
@@ -54,7 +56,6 @@
 				<div
 					class="resize-handle resize-handle-right"
 					id="resize-edit-sidebar"
-					aria-label="تغيير حجم الشريط الجانبي"
 				></div>
 
 				<div class="p-6">
@@ -101,7 +102,6 @@
 							id="toggle-sidebar"
 							class="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
 							title="عرض قائمة الدروس"
-							aria-label="تبديل قائمة الدروس"
 						>
 							<i class="fas fa-bars"></i>
 						</button>
@@ -194,15 +194,20 @@
 						<!-- Preview content will be dynamically loaded here -->
 						<div
 							id="slide-preview-content"
-							class="w-full h-full overflow-hidden flex flex-col items-center justify-center text-center text-white opacity-80"
+							class="w-full h-full overflow-hidden"
 						>
-							<i class="fas fa-sliders-h text-6xl mb-6"></i>
-							<h2 class="text-2xl font-bold mb-3">
-								اختر سلايداً للمعاينة
-							</h2>
-							<p class="text-lg">
-								انقر على أي سلايد لرؤية محتواه هنا
-							</p>
+							<div
+								class="flex flex-col items-center justify-center text-center h-full text-white opacity-80"
+							>
+								<i class="fas fa-sliders-h text-6xl mb-6"></i>
+								<h2 class="text-2xl font-bold mb-3">
+									اختر سلايداً للمعاينة
+								</h2>
+								<p class="text-lg">
+									انقر على أي سلايد لرؤية محتواه هنا
+								</p>
+							</div>
+							`;
 						</div>
 					</div>
 				</div>
@@ -225,12 +230,6 @@
 							قائمة الدروس
 						</h3>
 						<div id="lessons-list" class="space-y-3">
-							<div
-								class="loading-lessons text-center py-4 text-gray-500 hidden"
-							>
-								<i class="fas fa-spinner fa-spin mr-2"></i>
-								جاري تحميل الدروس...
-							</div>
 							<!-- Lessons will be dynamically added here -->
 						</div>
 					</div>
@@ -263,13 +262,46 @@
 			<div
 				class="bg-white rounded-xl shadow-lg w-full max-w-4xl h-[70vh] flex flex-col"
 			>
-				<!-- Simplified modal header -->
 				<div
-					class="flex items-center justify-center p-4 border-b border-gray-200"
+					class="flex items-center justify-between max-w-[min(100%,700px)] mx-auto"
 				>
-					<h2 class="text-xl font-bold text-gray-900">
-						إضافة سلايد جديد
-					</h2>
+					<!-- Left: Menu button (moved here) -->
+					<div class="flex items-center space-x-3 space-x-reverse">
+						<button
+							id="toggle-sidebar"
+							class="p-2 rounded-lg hover:bg-gray-100"
+						>
+							<i class="fas fa-bars text-gray-600"></i>
+						</button>
+					</div>
+
+					<!-- Center: Lesson Title + ID -->
+					<div
+						class="flex items-center space-x-3 space-x-reverse text-center sm:text-right"
+					>
+						<h2
+							id="current-lesson-title"
+							class="text-2xl font-bold text-gray-900"
+						>
+							الدرس الأول
+						</h2>
+						<span
+							id="current-lesson-code"
+							class="text-gray-600 text-sm"
+						>
+							(الكود: 400014)
+						</span>
+					</div>
+
+					<!-- Right: Edit button -->
+					<div>
+						<button
+							id="edit-lesson-title"
+							class="p-2 ml-3 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+						>
+							<i class="fas fa-edit"></i>
+						</button>
+					</div>
 				</div>
 
 				<div class="flex flex-1 overflow-hidden">

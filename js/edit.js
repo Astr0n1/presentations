@@ -242,66 +242,74 @@ class SlideManager {
         return { title: 'شريحة جديدة', subtitle: '' };
     }
 
-    // Consolidated series item management
-    manageSeriesItem(slideId, action, itemType = 'text', index = null) {
+    // ADD THESE METHODS TO THE SlideManager CLASS:
+
+    addTextSeriesItem(slideId) {
         const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
         if (!slide) return;
-
         slide.content.items = slide.content.items || [];
-        const config = this.getSeriesConfig(itemType);
 
-        if (action === 'add') {
-            if (slide.content.items.length >= config.maxItems) {
-                Swal.fire('حد أقصى', config.maxMessage, 'warning');
-                return;
-            }
-            slide.content.items.push(config.template);
-        }
-        else if (action === 'delete' && index !== null) {
-            if (slide.content.items.length <= config.minItems) {
-                Swal.fire('تنبيه', config.minMessage, 'warning');
-                return;
-            }
-            slide.content.items.splice(index, 1);
+        // Check if maximum limit reached
+        if (slide.content.items.length >= 6) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 6 نصوص في السلسلة.', 'warning');
+            return;
         }
 
+        slide.content.items.push({ title: '', content: 'محتوى النص الجديد...' });
         this.saveToLocalStorage();
         this.editor.loadSlideEditContent(slideId);
         this.editor.loadSlidePreview(slideId);
     }
 
-    getSeriesConfig(itemType) {
-        const configs = {
-            text: {
-                maxItems: 6,
-                minItems: 1,
-                template: { title: '', content: 'محتوى النص الجديد...' },
-                maxMessage: 'لا يمكن إضافة أكثر من 6 نصوص في السلسلة.',
-                minMessage: 'يجب أن تحتوي السلسلة على نص واحد على الأقل.'
-            },
-            image: {
-                maxItems: 6,
-                minItems: 1,
-                template: { title: '', imageUrl: '' },
-                maxMessage: 'لا يمكن إضافة أكثر من 6 صور في السلسلة.',
-                minMessage: 'يجب أن تحتوي السلسلة على صورة واحدة على الأقل.'
-            },
-            expandable: {
-                maxItems: 4,
-                minItems: 1,
-                template: { title: 'مفهوم جديد', text: 'محتوى المفهوم.' },
-                maxMessage: 'لا يمكن إضافة أكثر من 4 عناصر في القائمة القابلة للتوسيع.',
-                minMessage: 'يجب أن تحتوي القائمة على عنصر واحد على الأقل.'
-            },
-            bulleted: {
-                maxItems: 4,
-                minItems: 1,
-                template: 'نقطة جديدة',
-                maxMessage: 'لا يمكن إضافة أكثر من 4 نقاط في القائمة النقطية.',
-                minMessage: 'يجب أن تحتوي القائمة على نقطة واحدة على الأقل.'
-            }
-        };
-        return configs[itemType] || configs.text;
+    deleteTextSeriesItem(slideId, index) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.items)) return;
+        if (slide.content.items.length <= 1) {
+            Swal.fire('تنبيه', 'يجب أن تحتوي السلسلة على نص واحد على الأقل.', 'warning');
+            return;
+        }
+        slide.content.items.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    addSeriesItem(slideId, contentType, itemTemplate, maxItems = 6) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+        slide.content.items = slide.content.items || [];
+
+        if (slide.content.items.length >= maxItems) {
+            Swal.fire('حد أقصى', `لا يمكن إضافة أكثر من ${maxItems} عناصر في السلسلة.`, 'warning');
+            return;
+        }
+
+        slide.content.items.push(itemTemplate);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    deleteSeriesItem(slideId, index, minItems = 1) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.items)) return;
+        if (slide.content.items.length <= minItems) {
+            Swal.fire('تنبيه', `يجب أن تحتوي السلسلة على ${minItems} عنصر واحد على الأقل.`, 'warning');
+            return;
+        }
+        slide.content.items.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    // Image series methods
+    addImageSeriesItem(slideId) {
+        this.addSeriesItem(slideId, 'image', { title: '', imageUrl: '' });
+    }
+
+    deleteImageSeriesItem(slideId, index) {
+        this.deleteSeriesItem(slideId, index, 1);
     }
 
     deleteSlideById(slideId) {
@@ -365,35 +373,57 @@ class SlideManager {
     }
 
     addBulletedListItem(slideId) {
-        this.manageSeriesItem(slideId, 'add', 'bulleted');
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+        slide.content.items = slide.content.items || [];
+        // Check if maximum limit reached
+        if (slide.content.items.length >= 4) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 4 نقاط في القائمة النقطية.', 'warning');
+            return;
+        }
+        slide.content.items.push('نقطة جديدة');
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
     }
 
     deleteBulletedListItem(slideId, index) {
-        this.manageSeriesItem(slideId, 'delete', 'bulleted', index);
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.items)) return;
+        if (slide.content.items.length <= 1) {
+            Swal.fire('تنبيه', 'يجب أن تحتوي القائمة على نقطة واحدة على الأقل.', 'warning');
+            return;
+        }
+        slide.content.items.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
     }
 
     addExpandableListItem(slideId) {
-        this.manageSeriesItem(slideId, 'add', 'expandable');
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+        slide.content.items = slide.content.items || [];
+
+        // Check if maximum limit reached
+        if (slide.content.items.length >= 4) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 4 عناصر في القائمة القابلة للتوسيع.', 'warning');
+            return;
+        }
+
+        slide.content.items.push({ title: 'مفهوم جديد', text: 'محتوى المفهوم.' });
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
     }
 
     deleteExpandableListItem(slideId, index) {
-        this.manageSeriesItem(slideId, 'delete', 'expandable', index);
-    }
-
-    addTextSeriesItem(slideId) {
-        this.manageSeriesItem(slideId, 'add', 'text');
-    }
-
-    deleteTextSeriesItem(slideId, index) {
-        this.manageSeriesItem(slideId, 'delete', 'text', index);
-    }
-
-    addImageSeriesItem(slideId) {
-        this.manageSeriesItem(slideId, 'add', 'image');
-    }
-
-    deleteImageSeriesItem(slideId, index) {
-        this.manageSeriesItem(slideId, 'delete', 'image', index);
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.items)) return;
+        slide.content.items.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
     }
 }
 
@@ -426,9 +456,9 @@ class UIRenderer {
         previewContainer.className = `slide-preview rounded-t-xl fixed-slide-size mx-auto slide-${slide.type}`;
 
         const headerHtml = `
-            <div class="slide-header w-full text-right">
-                <h1 class="font-extrabold mb-2 text-white text-center text-xl md:text-2xl leading-tight">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
-                ${slide.content.subtitle ? `<h2 class="mb-4 text-gray-200 text-lg md:text-xl leading-relaxed">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+            <div class="slide-header w-full">
+                <h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
+                ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
             </div>
         `;
 
@@ -437,10 +467,10 @@ class UIRenderer {
 
         switch (key) {
             case 'text-bulleted-list':
-                bodyHtml += `<ul class="space-y-2 mt-2 max-h-96 overflow-y-auto break-words list-disc list-outside pr-4">`;
+                bodyHtml += `<ul class="space-y-2 mt-2 max-h-96 overflow-y-auto break-words">`;
                 if (Array.isArray(slide.content.items)) {
                     slide.content.items.forEach(it => {
-                        bodyHtml += `<li class="text-white text-base leading-loose">${Utils.escapeHTML(it)}</li>`;
+                        bodyHtml += `<li class="text-white">${Utils.escapeHTML(it)}</li>`;
                     });
                 }
                 bodyHtml += `</ul>`;
@@ -461,7 +491,7 @@ class UIRenderer {
 
             case 'title-undefined':
                 bodyHtml += `<div class="mt-4 text-center self-center">
-                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-6 py-3 text-lg shadow-lg transition-colors">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg px-6 py-2">
                                     ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
                                 </button>
                             </div>`;
@@ -484,9 +514,9 @@ class UIRenderer {
 
             default:
                 if (slide.content.text) {
-                    bodyHtml += `<div class="prose max-w-none text-base text-white mt-3 max-h-96 overflow-y-auto break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml += `<div class="prose max-w-none text-base text-white mt-3 max-h-96 overflow-y-auto break-words hyphens-auto">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
                 } else {
-                    bodyHtml += `<div class="text-center text-gray-200 py-12 text-lg">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
+                    bodyHtml += `<div class="text-center text-gray-200 py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
                 }
         }
 
@@ -541,7 +571,7 @@ class UIRenderer {
                 else classes += "border-gray-300 bg-white/10 text-gray-300";
             } else {
                 classes += isChosen
-                    ? "border-blue-500 bg-black/25 text-white hover:bg-black/35"
+                    ? "border-blue-500 quiz-option-selected text-white"
                     : "border-gray-300 bg-white/10 text-white hover:bg-white/20";
             }
 
@@ -588,7 +618,7 @@ class UIRenderer {
                 else if (chosen === i && i !== correctIndex) bg = 'bg-red-600/30 border-red-500';
                 else bg = 'bg-white/10 border-gray-400 opacity-50';
             } else if (chosen === i) {
-                bg = 'bg-black/25 border-blue-500';
+                bg = 'bg-black/30 border-blue-500';
             }
 
             return `
@@ -1510,11 +1540,9 @@ class UIRenderer {
 class DragDropManager {
     constructor(editor) {
         this.editor = editor;
-        this.activeDrag = null;
-        this.seriesSwipe = null;
+        this.activeDrag = null; // { target, wrapper, topLayer }
         this.boundHandlers = {};
         this.initScopedHandlers();
-        this.setupSeriesNavigation();
     }
 
     initScopedHandlers() {
@@ -1528,39 +1556,22 @@ class DragDropManager {
         container.addEventListener('click', (e) => this.handleTextSeriesNavigation(e));
     }
 
-    // Consolidated navigation handler for both text and image series
-    setupSeriesNavigation() {
-        const container = this.editor.dom.slidePreviewContainer;
-        if (!container) return;
+    startTextSeriesSwipe(container, e) {
+        // Check if it's text series or image series
+        const isTextSeries = container.classList.contains('text-series-preview');
+        const isImageSeries = container.classList.contains('image-series-preview');
 
-        container.addEventListener('click', (e) => {
-            const dot = e.target.closest('.text-series-nav-dot, .image-series-nav-dot');
-            if (dot) {
-                const container = dot.closest('.text-series-preview, .image-series-preview');
-                const index = parseInt(dot.dataset.index);
-                this.goToSeriesSlide(container, index);
-                return;
-            }
-        });
+        if (!isTextSeries && !isImageSeries) return;
 
-        // Touch/mouse swipe handling
-        container.addEventListener('touchstart', (e) => this.startSeriesSwipe(e));
-        container.addEventListener('mousedown', (e) => this.startSeriesSwipe(e));
-    }
-
-    startSeriesSwipe(e) {
-        const container = e.target.closest('.text-series-preview, .image-series-preview');
-        if (!container) return;
-
-        this.seriesSwipe = {
+        this.textSeriesSwipe = {
             container,
             startX: e.touches ? e.touches[0].clientX : e.clientX,
             startY: e.touches ? e.touches[0].clientY : e.clientY,
             isSwiping: false
         };
 
-        const move = (ev) => this.handleSeriesSwipeMove(ev);
-        const end = (ev) => this.handleSeriesSwipeEnd(ev, move, end);
+        const move = (ev) => this.handleTextSeriesSwipeMove(ev);
+        const end = (ev) => this.handleTextSeriesSwipeEnd(ev, move, end);
 
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', end);
@@ -1568,79 +1579,124 @@ class DragDropManager {
         document.addEventListener('touchend', end);
     }
 
-    handleSeriesSwipeMove(e) {
-        if (!this.seriesSwipe) return;
+    handleTextSeriesSwipeMove(e) {
+        if (!this.textSeriesSwipe) return;
+
         const currentX = e.touches ? e.touches[0].clientX : e.clientX;
         const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-        const deltaX = currentX - this.seriesSwipe.startX;
-        const deltaY = currentY - this.seriesSwipe.startY;
+        const deltaX = currentX - this.textSeriesSwipe.startX;
+        const deltaY = currentY - this.textSeriesSwipe.startY;
 
+        // Only consider it a swipe if horizontal movement is greater than vertical
         if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-            this.seriesSwipe.isSwiping = true;
+            this.textSeriesSwipe.isSwiping = true;
             e.preventDefault();
         }
     }
 
-    handleSeriesSwipeEnd(e, move, end) {
-        if (!this.seriesSwipe) return;
-        const currentX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-        const deltaX = currentX - this.seriesSwipe.startX;
+    handleTextSeriesSwipeEnd(e, move, end) {
+        if (!this.textSeriesSwipe) return;
 
-        if (this.seriesSwipe.isSwiping && Math.abs(deltaX) > 50) {
-            const direction = deltaX > 0 ? -1 : 1;
-            this.navigateSeries(this.seriesSwipe.container, direction);
+        const currentX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const deltaX = currentX - this.textSeriesSwipe.startX;
+
+        if (this.textSeriesSwipe.isSwiping && Math.abs(deltaX) > 50) {
+            if (deltaX > 0) {
+                this.navigateTextSeries(this.textSeriesSwipe.container, -1); // Swipe right - previous
+            } else {
+                this.navigateTextSeries(this.textSeriesSwipe.container, 1); // Swipe left - next
+            }
         }
 
-        this.seriesSwipe = null;
+        this.textSeriesSwipe = null;
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', end);
         document.removeEventListener('touchmove', move);
         document.removeEventListener('touchend', end);
     }
 
-    navigateSeries(container, direction) {
+    handleTextSeriesNavigation(e) {
+        const target = e.target;
+        const textDot = target.closest('.text-series-nav-dot');
+        const imageDot = target.closest('.image-series-nav-dot');
+        if (textDot) {
+            const container = textDot.closest('.text-series-preview');
+            const index = parseInt(textDot.dataset.index);
+            this.goToTextSeriesSlide(container, index);
+            return;
+        }
+        if (imageDot) {
+            const container = imageDot.closest('.image-series-preview');
+            const index = parseInt(imageDot.dataset.index);
+            this.goToTextSeriesSlide(container, index); // Reuse the same navigation function
+            return;
+        }
+    }
+
+    navigateTextSeries(container, direction) {
+        // Determine which type of series we're dealing with
         const isTextSeries = container.classList.contains('text-series-preview');
         const slideSelector = isTextSeries ? '.text-series-slide' : '.image-series-slide';
+
         const slides = container.querySelectorAll(slideSelector);
-        const currentIndex = Array.from(slides).findIndex(slide => slide.classList.contains('block'));
+        const dots = container.querySelectorAll(isTextSeries ? '.text-series-nav-dot' : '.image-series-nav-dot');
+
+        const currentIndex = Array.from(slides).findIndex(slide =>
+            slide.classList.contains('block') || slide.style.opacity === '1'
+        );
 
         let newIndex = currentIndex + direction;
+
+        // Non-looping behavior
         if (newIndex < 0) newIndex = 0;
         if (newIndex >= slides.length) newIndex = slides.length - 1;
 
         if (newIndex !== currentIndex) {
-            this.goToSeriesSlide(container, newIndex);
+            this.goToTextSeriesSlide(container, newIndex);
         }
     }
 
-    goToSeriesSlide(container, index) {
+    // REPLACE the entire goToTextSeriesSlide method with this:
+
+    goToTextSeriesSlide(container, index) {
+        // Determine which type of series we're dealing with
         const isTextSeries = container.classList.contains('text-series-preview');
+        const isImageSeries = container.classList.contains('image-series-preview');
+
         const slideSelector = isTextSeries ? '.text-series-slide' : '.image-series-slide';
         const dotSelector = isTextSeries ? '.text-series-nav-dot' : '.image-series-nav-dot';
 
         const slides = container.querySelectorAll(slideSelector);
         const dots = container.querySelectorAll(dotSelector);
 
+        // Hide all slides using display property instead of opacity
         slides.forEach(slide => {
             slide.classList.add('hidden');
             slide.classList.remove('block');
             slide.style.opacity = '0';
         });
 
+        // Reset all dots
         dots.forEach(dot => {
-            dot.classList.remove('bg-white');
+            dot.classList.remove('text-series-nav-dot-active', 'image-series-nav-dot-active', 'bg-white');
             dot.classList.add('bg-transparent');
         });
 
+        // Show target slide
         if (slides[index]) {
             slides[index].classList.remove('hidden');
             slides[index].classList.add('block');
-            setTimeout(() => { slides[index].style.opacity = '1'; }, 10);
+            // Use setTimeout to ensure display change happens before opacity transition
+            setTimeout(() => {
+                slides[index].style.opacity = '1';
+            }, 10);
         }
 
+        // Activate target dot
         if (dots[index]) {
             dots[index].classList.remove('bg-transparent');
-            dots[index].classList.add('bg-white');
+            const activeClass = isTextSeries ? 'text-series-nav-dot-active' : 'image-series-nav-dot-active';
+            dots[index].classList.add(activeClass, 'bg-white');
         }
     }
 
@@ -1653,10 +1709,12 @@ class DragDropManager {
             return;
         }
 
-        // 🔥 FIXED: Use the new unified series swipe handler
-        const seriesContainer = e.target.closest('.text-series-preview, .image-series-preview');
-        if (seriesContainer) {
-            this.startSeriesSwipe(e);
+        // Text series swipe handling
+        const textSeries = e.target.closest('.text-series-preview');
+        const imageSeries = e.target.closest('.image-series-preview'); // ADD THIS LINE
+
+        if (textSeries || imageSeries) { // UPDATE THIS CONDITION
+            this.startTextSeriesSwipe(textSeries || imageSeries, e);
             return;
         }
     }
@@ -2079,22 +2137,12 @@ class UIInteractions {
     handleDocumentClick(e) {
         const target = e.target;
 
-        // Series item delete buttons
-        const delSeriesBtn = target.closest('[data-action^="delete-"]');
-        if (delSeriesBtn) {
-            const action = delSeriesBtn.dataset.action;
-            const idx = parseInt(delSeriesBtn.dataset.index, 10);
-
+        // Text series delete button
+        const delTextSeriesBtn = target.closest('[data-action="delete-text-series"]');
+        if (delTextSeriesBtn) {
+            const idx = parseInt(delTextSeriesBtn.dataset.index, 10);
             if (!isNaN(idx) && this.editor.currentSlideId != null) {
-                if (action === 'delete-text-series') {
-                    this.editor.deleteTextSeriesItem(this.editor.currentSlideId, idx);
-                } else if (action === 'delete-image-series') {
-                    this.editor.deleteImageSeriesItem(this.editor.currentSlideId, idx);
-                } else if (action === 'delete-expandable') {
-                    this.editor.deleteExpandableListItem(this.editor.currentSlideId, idx);
-                } else if (action === 'delete-bullet') {
-                    this.editor.deleteBulletedListItem(this.editor.currentSlideId, idx);
-                }
+                this.editor.deleteTextSeriesItem(this.editor.currentSlideId, idx);
             }
             return;
         }
@@ -2514,157 +2562,6 @@ export default class CourseEditor {
     addImageSeriesItem(slideId) { return this.slideManager.addImageSeriesItem(slideId); }
     deleteImageSeriesItem(slideId, index) { return this.slideManager.deleteImageSeriesItem(slideId, index); }
 
-    getCurrentSlide() {
-        if (!this.currentLessonId || this.currentSlideId == null) return null;
-        return this.findSlide(this.currentLessonId, this.currentSlideId);
-    }
-    setupUnifiedDragDrop() {
-        const lessonsContainer = this.dom.lessonsList;
-        if (!lessonsContainer) return;
-
-        let draggingElement = null;
-        let dragType = null;
-        let sourceLessonId = null;
-
-        // Add drag event listeners to all draggable elements
-        const setupDragListeners = () => {
-            lessonsContainer.querySelectorAll('.lesson-item, .slide-item').forEach(element => {
-                element.setAttribute('draggable', 'true');
-
-                element.addEventListener('dragstart', (e) => {
-                    draggingElement = element;
-                    dragType = element.classList.contains('lesson-item') ? 'lesson' : 'slide';
-
-                    if (dragType === 'slide') {
-                        sourceLessonId = parseInt(element.dataset.lessonId, 10);
-                    }
-
-                    // Add visual feedback
-                    element.classList.add('opacity-50', 'scale-95', 'border-2', 'border-blue-500');
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-
-                element.addEventListener('dragend', () => {
-                    if (draggingElement) {
-                        draggingElement.classList.remove('opacity-50', 'scale-95', 'border-2', 'border-blue-500');
-                    }
-                    draggingElement = null;
-                    dragType = null;
-                    sourceLessonId = null;
-
-                    // Remove all drop indicators
-                    this.cleanupDropIndicators();
-                });
-
-                element.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if (!draggingElement || draggingElement === element) return;
-
-                    this.showUnifiedDropIndicator(element, e, dragType);
-                });
-
-                element.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    this.handleUnifiedDrop(element, e, dragType, sourceLessonId);
-                });
-            });
-        };
-
-        // Initial setup
-        setupDragListeners();
-
-        // Re-setup when lessons are re-rendered
-        const originalRender = this.renderLessonsSidebar;
-        this.renderLessonsSidebar = () => {
-            originalRender.call(this);
-            setTimeout(setupDragListeners, 0);
-        };
-    }
-
-    showUnifiedDropIndicator(targetElement, event, dragType) {
-        this.cleanupDropIndicators();
-
-        const rect = targetElement.getBoundingClientRect();
-        const isBefore = event.clientY < rect.top + rect.height / 2;
-        const indicatorColor = dragType === 'lesson' ? 'bg-blue-500' : 'bg-green-500';
-
-        const indicator = document.createElement('div');
-        indicator.className = `drop-indicator h-1 ${indicatorColor} rounded-full absolute left-4 right-4 z-50`;
-        indicator.style.top = isBefore ? '0' : 'auto';
-        indicator.style.bottom = isBefore ? 'auto' : '0';
-
-        targetElement.parentNode.insertBefore(indicator, isBefore ? targetElement : targetElement.nextSibling);
-        targetElement.classList.add('bg-blue-50', 'border-r-4', 'border-blue-500');
-    }
-
-    handleUnifiedDrop(targetElement, event, dragType, sourceLessonId) {
-        this.cleanupDropIndicators();
-
-        if (!draggingElement) return;
-
-        if (dragType === 'lesson') {
-            this.handleLessonDrop(targetElement);
-        } else {
-            this.handleSlideDrop(targetElement, sourceLessonId);
-        }
-    }
-
-    handleLessonDrop(targetElement) {
-        const allLessons = Array.from(this.dom.lessonsList.querySelectorAll('.lesson-item'));
-        const targetIndex = allLessons.indexOf(targetElement);
-
-        if (targetIndex > -1) {
-            this.dom.lessonsList.removeChild(draggingElement);
-            const children = Array.from(this.dom.lessonsList.children);
-
-            if (targetIndex >= children.length) {
-                this.dom.lessonsList.appendChild(draggingElement);
-            } else {
-                this.dom.lessonsList.insertBefore(draggingElement, children[targetIndex]);
-            }
-
-            this.saveLessonOrderFromDOM();
-            this.renderLessonsSidebar();
-        }
-    }
-
-    handleSlideDrop(targetElement, sourceLessonId) {
-        const draggedSlideId = parseInt(draggingElement.dataset.slideId, 10);
-        const targetSlideId = parseInt(targetElement.dataset.slideId, 10);
-        const targetLessonId = parseInt(targetElement.dataset.lessonId, 10);
-
-        // Remove from source
-        const srcLesson = this.findLessonById(sourceLessonId);
-        const srcIndex = srcLesson ? srcLesson.slides.findIndex(s => s.id === draggedSlideId) : -1;
-        let draggedSlideObj = null;
-
-        if (srcLesson && srcIndex > -1) {
-            draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
-        }
-
-        if (!draggedSlideObj) return;
-
-        // Add to target
-        const targetLesson = this.findLessonById(targetLessonId);
-        if (!targetLesson) return;
-
-        const insertionIndex = Math.max(0, targetLesson.slides.findIndex(s => s.id === targetSlideId) + 1);
-        targetLesson.slides.splice(insertionIndex, 0, draggedSlideObj);
-
-        this.saveToLocalStorage();
-        this.renderLessonsSidebar();
-        this.currentLessonId = targetLessonId;
-        this.currentSlideId = draggedSlideObj.id;
-        this.loadSlideEditContent(this.currentSlideId);
-    }
-
-    cleanupDropIndicators() {
-        document.querySelectorAll('.drop-indicator').forEach(ind => ind.remove());
-        document.querySelectorAll('.bg-blue-50').forEach(el => {
-            el.classList.remove('bg-blue-50', 'border-r-4', 'border-blue-500');
-        });
-    }
-
     isLessonExpanded(lessonId) {
         return this.expandedLessons.has(lessonId);
     }
@@ -2997,7 +2894,319 @@ export default class CourseEditor {
     }
 
     attachDragAndDrop() {
-        this.setupUnifiedDragDrop();
+        const lessonsContainer = this.dom.lessonsList;
+        if (!lessonsContainer) return;
+
+        let draggingLessonEl = null;
+        let draggingSlideEl = null;
+        let sourceLessonIdOfDraggingSlide = null;
+
+        // LESSON drag with visual indicators
+        lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
+            lessonEl.addEventListener('dragstart', (e) => {
+                e.stopPropagation();
+                draggingLessonEl = lessonEl;
+                e.dataTransfer.effectAllowed = 'move';
+                lessonEl.classList.add('dragging-lesson');
+            });
+
+            lessonEl.addEventListener('dragend', (e) => {
+                e.stopPropagation();
+                if (draggingLessonEl) draggingLessonEl.classList.remove('dragging-lesson');
+                draggingLessonEl = null;
+
+                // Clean up all indicators
+                this.cleanupDropIndicators();
+            });
+
+            lessonEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = 'move';
+
+                if (draggingLessonEl && draggingLessonEl !== lessonEl) {
+                    this.showLessonDropIndicator(lessonEl, e);
+                }
+            });
+
+            lessonEl.addEventListener('dragleave', (e) => {
+                // Only remove indicator if we're leaving the lesson element entirely
+                if (!lessonEl.contains(e.relatedTarget)) {
+                    this.cleanupDropIndicators();
+                }
+            });
+
+            lessonEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!draggingLessonEl || draggingLessonEl === lessonEl) return;
+
+                // Clean up indicators before processing drop
+                this.cleanupDropIndicators();
+
+                const all = Array.from(lessonsContainer.querySelectorAll('.lesson-item'));
+                const targetIndex = all.indexOf(lessonEl);
+                lessonsContainer.removeChild(draggingLessonEl);
+                const children = Array.from(lessonsContainer.children);
+                if (targetIndex >= children.length) {
+                    lessonsContainer.appendChild(draggingLessonEl);
+                } else {
+                    lessonsContainer.insertBefore(draggingLessonEl, children[targetIndex]);
+                }
+                this.saveLessonOrderFromDOM();
+                this.renderLessonsSidebar();
+            });
+        });
+
+        // SLIDE drag with visual indicators
+        lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
+            const slidesContainer = lessonEl.querySelector('.lesson-slides');
+            if (!slidesContainer) return;
+
+            slidesContainer.querySelectorAll('.slide-item').forEach(slideEl => {
+                slideEl.addEventListener('dragstart', (e) => {
+                    e.stopPropagation();
+                    draggingSlideEl = slideEl;
+                    sourceLessonIdOfDraggingSlide = parseInt(slideEl.dataset.lessonId, 10);
+                    e.dataTransfer.effectAllowed = 'move';
+                    slideEl.classList.add('dragging-slide');
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        slideId: slideEl.dataset.slideId,
+                        sourceLessonId: sourceLessonIdOfDraggingSlide
+                    }));
+                });
+
+                slideEl.addEventListener('dragend', (e) => {
+                    e.stopPropagation();
+                    if (draggingSlideEl) draggingSlideEl.classList.remove('dragging-slide');
+                    draggingSlideEl = null;
+                    sourceLessonIdOfDraggingSlide = null;
+
+                    // Clean up all indicators
+                    this.cleanupDropIndicators();
+                });
+
+                slideEl.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = 'move';
+
+                    if (draggingSlideEl) {
+                        this.showSlideDropIndicator(slideEl, e);
+                    }
+                });
+
+                slideEl.addEventListener('dragleave', (e) => {
+                    // Only remove indicator if we're leaving the slide element entirely
+                    if (!slideEl.contains(e.relatedTarget)) {
+                        this.cleanupDropIndicators();
+                    }
+                });
+
+                slideEl.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Clean up indicators before processing drop
+                    this.cleanupDropIndicators();
+
+                    let payload = null;
+                    try {
+                        const txt = e.dataTransfer.getData('text/plain');
+                        if (txt) payload = JSON.parse(txt);
+                    } catch (err) { }
+                    const draggedSlideId = payload ? parseInt(payload.slideId, 10) : (draggingSlideEl ? parseInt(draggingSlideEl.dataset.slideId, 10) : null);
+                    const draggedFromLessonId = payload ? parseInt(payload.sourceLessonId, 10) : sourceLessonIdOfDraggingSlide;
+                    if (!draggedSlideId) return;
+                    const targetSlideId = parseInt(slideEl.dataset.slideId, 10);
+                    const targetLessonId = parseInt(slideEl.dataset.lessonId, 10);
+
+                    // remove from source
+                    const srcLesson = this.findLessonById(draggedFromLessonId);
+                    const srcIndex = srcLesson ? srcLesson.slides.findIndex(s => s.id === draggedSlideId) : -1;
+                    let draggedSlideObj = null;
+                    if (srcLesson && srcIndex > -1) {
+                        draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
+                    } else if (draggingSlideEl) {
+                        for (const l of this.lessons) {
+                            const idx = l.slides.findIndex(s => s.id === draggedSlideId);
+                            if (idx > -1) {
+                                draggedSlideObj = l.slides.splice(idx, 1)[0];
+                                break;
+                            }
+                        }
+                    }
+                    if (!draggedSlideObj) return;
+
+                    const targetLesson = this.findLessonById(targetLessonId);
+                    if (!targetLesson) return;
+                    const insertionIndex = Math.max(0, targetLesson.slides.findIndex(s => s.id === targetSlideId) + 1);
+                    targetLesson.slides.splice(insertionIndex, 0, draggedSlideObj);
+
+                    this.saveToLocalStorage();
+                    this.renderLessonsSidebar();
+                    this.currentLessonId = targetLessonId;
+                    this.currentSlideId = draggedSlideObj.id;
+                    this.loadSlideEditContent(this.currentSlideId);
+                });
+            });
+
+            // Handle dropping slides into empty lesson areas
+            slidesContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = 'move';
+
+                if (draggingSlideEl) {
+                    // Show indicator at the end of the slides list
+                    this.showLessonEmptyAreaIndicator(slidesContainer, e);
+                }
+            });
+
+            slidesContainer.addEventListener('dragleave', (e) => {
+                if (!slidesContainer.contains(e.relatedTarget)) {
+                    this.cleanupDropIndicators();
+                }
+            });
+
+            slidesContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Clean up indicators before processing drop
+                this.cleanupDropIndicators();
+
+                let payload = null;
+                try {
+                    const txt = e.dataTransfer.getData('text/plain');
+                    if (txt) payload = JSON.parse(txt);
+                } catch (err) { }
+                const draggedSlideId = payload ? parseInt(payload.slideId, 10) : (draggingSlideEl ? parseInt(draggingSlideEl.dataset.slideId, 10) : null);
+                const draggedFromLessonId = payload ? parseInt(payload.sourceLessonId, 10) : sourceLessonIdOfDraggingSlide;
+                if (!draggedSlideId) return;
+
+                const srcLesson = this.findLessonById(draggedFromLessonId);
+                let draggedSlideObj = null;
+                if (srcLesson) {
+                    const srcIndex = srcLesson.slides.findIndex(s => s.id === draggedSlideId);
+                    if (srcIndex > -1) draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
+                }
+                if (!draggedSlideObj) {
+                    for (const l of this.lessons) {
+                        const idx = l.slides.findIndex(s => s.id === draggedSlideId);
+                        if (idx > -1) {
+                            draggedSlideObj = l.slides.splice(idx, 1)[0];
+                            break;
+                        }
+                    }
+                }
+                if (!draggedSlideObj) return;
+
+                const lessonId = parseInt(lessonEl.dataset.lessonId, 10);
+                const targetLesson = this.findLessonById(lessonId);
+                if (!targetLesson) return;
+                targetLesson.slides.push(draggedSlideObj);
+                this.saveToLocalStorage();
+                this.renderLessonsSidebar();
+                this.currentLessonId = lessonId;
+                this.currentSlideId = draggedSlideObj.id;
+                this.loadSlideEditContent(this.currentSlideId);
+            });
+        });
+    }
+
+    // Add these new helper methods to the CourseEditor class:
+
+    /**
+     * Show drop indicator for lesson reordering
+     */
+    showLessonDropIndicator(lessonEl, e) {
+        this.cleanupDropIndicators();
+
+        const rect = lessonEl.getBoundingClientRect();
+        const isBefore = e.clientY < rect.top + rect.height / 2;
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator lesson-drop-indicator';
+        indicator.style.cssText = `
+        position: absolute;
+        ${isBefore ? 'top: -2px' : 'bottom: -2px'};
+        left: 10px;
+        right: 10px;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        border-radius: 2px;
+        z-index: 100;
+        animation: pulse-glow 1.5s ease-in-out infinite;
+    `;
+
+        lessonEl.parentNode.insertBefore(indicator, isBefore ? lessonEl : lessonEl.nextSibling);
+
+        // Also highlight the target lesson
+        lessonEl.classList.add('drop-target');
+    }
+
+    /**
+     * Show drop indicator for slide reordering
+     */
+    showSlideDropIndicator(slideEl, e) {
+        this.cleanupDropIndicators();
+
+        const rect = slideEl.getBoundingClientRect();
+        const isBefore = e.clientY < rect.top + rect.height / 2;
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator slide-drop-indicator';
+        indicator.style.cssText = `
+        position: absolute;
+        ${isBefore ? 'top: -2px' : 'bottom: -2px'};
+        left: 20px;
+        right: 20px;
+        height: 3px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        border-radius: 2px;
+        z-index: 100;
+        animation: pulse-glow 1.5s ease-in-out infinite;
+    `;
+
+        slideEl.parentNode.insertBefore(indicator, isBefore ? slideEl : slideEl.nextSibling);
+
+        // Also highlight the target slide
+        slideEl.classList.add('drop-target');
+    }
+
+    /**
+     * Show indicator for dropping into empty lesson area
+     */
+    showLessonEmptyAreaIndicator(slidesContainer, e) {
+        this.cleanupDropIndicators();
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator lesson-empty-indicator';
+        indicator.style.cssText = `
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+        border-radius: 2px;
+        margin: 8px 0;
+        animation: pulse-glow 1.5s ease-in-out infinite;
+    `;
+
+        // Add to the end of slides container
+        slidesContainer.appendChild(indicator);
+        slidesContainer.classList.add('drop-target');
+    }
+
+    /**
+     * Clean up all drop indicators
+     */
+    cleanupDropIndicators() {
+        // Remove all indicator elements
+        document.querySelectorAll('.drop-indicator').forEach(ind => ind.remove());
+
+        // Remove all drop target highlighting
+        document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+        document.querySelectorAll('.lesson-slides').forEach(el => el.classList.remove('drop-target'));
     }
 
     saveLessonOrderFromDOM() {
