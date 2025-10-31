@@ -12,16 +12,7 @@
 body {
 	padding-top: var(--header-height);
 }
-/* Sidebars should sit below the fixed header and fill remaining viewport height */
-.sidebar,
-.edit-sidebar {
-	/* keep fixed positioning but ensure it starts below header */
-	position: fixed !important;
-	top: var(--header-height) !important;
-	height: calc(100vh - var(--header-height)) !important;
-	transition: transform 0.3s ease, opacity 0.3s ease;
-	overflow-y: auto; /* ensure sidebars scroll independently */
-}
+
 /* Resize Handles */
 .resize-handle {
 	position: absolute;
@@ -148,27 +139,6 @@ body {
 	border-radius: 12px;
 }
 
-/* Different slide type backgrounds */
-.slide-type-video {
-	background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-}
-
-.slide-type-image {
-	background: linear-gradient(135deg, #a8e6cf 0%, #56ab2f 100%);
-}
-
-.slide-type-quiz {
-	background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-}
-
-.slide-type-interactive {
-	background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-}
-
-.slide-type-content {
-	background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
-}
-
 /* Slide Library Modal */
 .slide-category-btn.active {
 	background-color: #e0e7ff; /* bg-indigo-100 */
@@ -270,8 +240,8 @@ body {
 	transition: all 0.8s cubic-bezier(0.55, 0.08, 0.68, 0.53);
 }
 /* ----------------------------------------
-		Responsive Slide Preview Based on Height
-	-----------------------------------------*/
+			Responsive Slide Preview Based on Height
+		-----------------------------------------*/
 .fixed-slide-size {
 	/* maintain 2:3 ratio using height as base */
 	height: calc(90vh - 120px); /* leave room for header/margins */
@@ -307,8 +277,8 @@ body {
 	}
 }
 /* -------------------------------------------------
-		🔧 Unified Slide Content Layout (Clean + Responsive)
-	--------------------------------------------------*/
+			🔧 Unified Slide Content Layout (Clean + Responsive)
+		--------------------------------------------------*/
 .slide-content {
 	display: flex;
 	flex-direction: column;
@@ -323,77 +293,17 @@ body {
 }
 
 /* ---------------------------------------
-		Header inside slide preview
-	---------------------------------------- */
+			Header inside slide preview
+		---------------------------------------- */
 .slide-header {
 	width: 100%;
 	padding: 0 1rem;
 	text-align: right;
 }
 
-/* Smaller, balanced typography */
-.slide-content h1 {
-	text-align: center;
-	font-size: clamp(1rem, 2vw, 1.75rem); /* ↓ ~70% smaller */
-	line-height: 1.3;
-	font-weight: 800;
-	color: #fff;
-	margin-bottom: 0.75rem;
-}
-
-.slide-content h2 {
-	font-size: clamp(0.9rem, 1.6vw, 1.3rem);
-	line-height: 1.4;
-	color: #e5e7eb;
-	margin-bottom: 1rem;
-}
-
-.slide-content h3 {
-	font-size: clamp(0.8rem, 1.45vw, 1.1rem);
-	line-height: 1.2;
-	color: #e5e7eb;
-}
-
-.slide-content p,
-.slide-content li {
-	font-size: clamp(0.8rem, 1.1vw, 1rem);
-	line-height: 1.7;
-	color: #fff;
-}
-
-/* ✅ Keep bullets visible and aligned correctly in RTL */
-.slide-content ul {
-	padding-inline-start: 1.25rem;
-	list-style-type: disc;
-	list-style-position: outside;
-	margin-top: 0.5rem;
-	margin-bottom: 0.5rem;
-	align-self: stretch; /* ensures list uses full width */
-}
-
-.slide-content li {
-	margin-bottom: 0.25rem;
-}
-
 /* ✅ Center elements like images, videos, or quiz blocks neatly */
 .slide-content > *:not(:last-child) {
 	margin-bottom: 1rem;
-}
-
-/* ✅ Buttons / call-to-action (exclude quiz-option buttons) */
-.slide-content button:not(.quiz-option) {
-	align-self: center;
-	padding: 0.75rem 1.5rem;
-	font-size: clamp(0.9rem, 1.2vw, 1rem);
-	font-weight: 600;
-	border-radius: 0.75rem;
-	background: #2563eb;
-	color: white;
-	transition: background 0.2s ease;
-}
-
-.slide-content button:not(.quiz-option):hover {
-	background: #1d4ed8;
 }
 
 /* ✅ Keep embedded media responsive */
@@ -416,8 +326,8 @@ body {
 	background: rgba(255, 255, 255, 0.5);
 }
 /* ----------------------------------------
-		🧩 Universal Comparison Slider Component
-	----------------------------------------- */
+			🧩 Universal Comparison Slider Component
+		----------------------------------------- */
 .comparison-wrapper {
 	position: relative;
 	width: 100%;
@@ -498,22 +408,12 @@ body {
 }
 
 /* -------------------------------
-		🧩 Fix: prevent slide cutoff behind mobile nav
-	--------------------------------*/
+			🧩 Fix: prevent slide cutoff behind mobile nav
+		--------------------------------*/
 @media (max-width: 768px) {
 	.fixed-slide-size {
 		margin-bottom: 4rem; /* enough room so slide isn't covered */
 	}
-}
-
-/* ✅ Selected (but not submitted) quiz option */
-.quiz-option-selected {
-	background-color: rgba(0, 0, 0, 0.25); /* soft translucent black */
-	border-color: rgba(255, 255, 255, 0.3);
-}
-
-.quiz-option-selected:hover {
-	background-color: rgba(0, 0, 0, 0.35); /* slightly darker on hover */
 }
 
 /* ✅ Animated quiz feedback icon fly-over */
@@ -546,200 +446,6 @@ body {
 	pointer-events: none;
 }
 
-.quiz-draggable {
-	transition: all 0.25s ease;
-}
-.quiz-draggable.dropped {
-	box-shadow: 0 0 20px rgba(37, 99, 235, 0.6);
-}
-
-/* ----------------------------------------
-   🧭 Fixed Header Styling
----------------------------------------- */
-.main-header {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	z-index: 100; /* ensures it stays above sidebars and content */
-	background: #ffffff;
-	border-bottom: 1px solid #e5e7eb;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* subtle elevation */
-}
-
-/* Maintain space below the fixed header */
-body {
-	padding-top: 72px; /* approximate header height; adjust if needed */
-}
-
-@media (max-width: 768px) {
-	:root {
-		--header-height: var(--header-height-mobile);
-	}
-	/* mobile: sidebars are often hidden — keep safe heights if visible */
-	.sidebar,
-	.edit-sidebar {
-		top: var(--header-height) !important;
-		height: calc(100vh - var(--header-height)) !important;
-	}
-}
-
-/* ----------------------------------------
-   🎨 Lesson Header Layout Adjustments
----------------------------------------- */
-
-/* Limit the lesson header card to match slide width */
-.bg-white.rounded-xl.shadow-sm.px-6.py-4.mb-6 {
-	max-width: min(700px, 100%);
-	margin-left: auto;
-	margin-right: auto;
-}
-
-/* Title and ID horizontal layout */
-#lesson-title-display {
-	display: flex;
-	align-items: baseline;
-	gap: 0.5rem;
-	flex-wrap: wrap;
-}
-
-/* Style the ID inline in parentheses */
-#current-lesson-code {
-	font-size: 0.95rem;
-	color: #6b7280;
-	margin-top: 0 !important;
-}
-
-/* Space the edit button away from title */
-#edit-lesson-title {
-	margin-right: 1rem;
-}
-
-/* Center all header content neatly above the slide */
-.main-content > .bg-white {
-	margin-left: auto;
-	margin-right: auto;
-}
-
-/* -------------------------------
-   🧭 Lesson Header Layout Fix
--------------------------------- */
-.bg-white.rounded-xl.shadow-sm.px-6.py-4.mb-6 {
-	max-width: min(700px, 100%);
-	margin-inline: auto;
-}
-
-/* Inline layout for title and code */
-#lesson-title-display {
-	display: flex;
-	align-items: baseline;
-	gap: 0.5rem;
-	direction: rtl;
-}
-
-/* Lesson code style */
-#current-lesson-code {
-	font-size: 0.95rem;
-	color: #6b7280;
-}
-
-/* Space edit button */
-#edit-lesson-title {
-	margin-inline-start: 1rem;
-}
-
-/* ----------------------------------------
-   🧭 Sidebar Collapse/Expand Buttons (Fixed + dynamic positioning)
----------------------------------------- */
-.sidebar-toggle-btn {
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	background-color: #ffffff;
-	border-radius: 50%;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-	transition: background 0.2s ease, transform 0.3s ease, left 0.22s ease,
-		top 0.22s ease;
-	border: 1px solid #e5e7eb;
-	position: fixed;
-	top: 50%; /* will be corrected by JS (kept centered vertically) */
-	transform: translateY(-50%);
-	z-index: 60;
-}
-
-.sidebar-toggle-btn:hover {
-	background-color: #eff6ff;
-}
-
-/* small visual tweak when sidebar is collapsed (JS toggles class) */
-.sidebar-toggle-btn.collapsed {
-	background-color: #ffffff;
-	opacity: 1;
-	transform: translateY(-50%) scale(1);
-}
-
-/* ------------------------------------
-   🧭 Sidebar Collapse Button (Refined)
-------------------------------------- */
-.collapse-btn {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 38px;
-	height: 38px;
-	border-radius: 50%;
-	background-color: #ffffff;
-	border: 1.5px solid #d1d5db;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	z-index: 50;
-	transition: all 0.3s ease; /* syncs with sidebar */
-}
-
-.collapse-btn i {
-	font-size: 1rem;
-	color: #374151;
-	transition: transform 0.3s ease;
-}
-
-/* Expanded — half inside, half outside */
-.edit-sidebar.expanded .collapse-btn.left-btn {
-	right: -19px;
-}
-.sidebar.expanded .collapse-btn.right-btn {
-	left: -19px;
-}
-
-/* Collapsed — fully visible outside */
-.edit-sidebar.collapsed .collapse-btn.left-btn {
-	right: -40px;
-	background: transparent;
-	border: none;
-	box-shadow: none;
-}
-.sidebar.collapsed .collapse-btn.right-btn {
-	left: -40px;
-	background: transparent;
-	border: none;
-	box-shadow: none;
-}
-
-/* Optional hover flair for expanded state */
-.collapse-btn:hover {
-	background-color: #f3f4f6;
-}
-
-/* Flip arrow icons for RTL/LTR auto logic */
-.collapse-btn i.rotate {
-	transform: rotate(180deg);
-}
-
 .lesson-slides {
 	max-height: 0;
 	overflow: hidden;
@@ -748,158 +454,6 @@ body {
 
 .lesson-expanded .lesson-slides {
 	max-height: 1000px;
-}
-
-/* Add these styles to your existing edit.css file */
-
-/* ------------------------------
-   🎯 Enhanced Drag & Drop Visual Feedback
------------------------------- */
-
-/* Dragged element - fully visible with shadow */
-.slide-item.dragging-slide,
-.lesson-item.dragging-lesson {
-	opacity: 0.95 !important; /* Much more visible */
-	transform: scale(1.02) rotate(1deg);
-	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-	border: 2px solid #3b82f6 !important;
-	background-color: #f0f9ff !important;
-	z-index: 1000;
-	position: relative;
-}
-
-/* Drop indicator for lessons */
-.lesson-item.drop-indicator {
-	position: relative;
-}
-
-.lesson-item.drop-indicator::before {
-	content: "";
-	position: absolute;
-	top: -2px;
-	left: 0;
-	right: 0;
-	height: 3px;
-	background: linear-gradient(90deg, #3b82f6, #60a5fa);
-	border-radius: 2px;
-	z-index: 10;
-	animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
-.lesson-item.drop-indicator-inside::before {
-	top: auto;
-	bottom: -2px;
-}
-
-/* Drop indicator for slides */
-.slide-item.drop-indicator {
-	position: relative;
-}
-
-.slide-item.drop-indicator::before {
-	content: "";
-	position: absolute;
-	top: -2px;
-	left: 10px;
-	right: 10px;
-	height: 3px;
-	background: linear-gradient(90deg, #10b981, #34d399);
-	border-radius: 2px;
-	z-index: 10;
-	animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
-.slide-item.drop-indicator-inside::before {
-	top: auto;
-	bottom: -2px;
-}
-
-/* Empty space placeholder for dragged element */
-.drag-placeholder {
-	background: linear-gradient(90deg, #f3f4f6, #e5e7eb);
-	border: 2px dashed #d1d5db;
-	border-radius: 8px;
-	height: 60px;
-	margin: 4px 0;
-	opacity: 0.7;
-	transition: all 0.3s ease;
-}
-
-.drag-placeholder.lesson-placeholder {
-	height: 80px;
-}
-
-/* Pulsing animation for drop indicators */
-@keyframes pulse-glow {
-	0%,
-	100% {
-		opacity: 0.7;
-		transform: scaleX(1);
-	}
-	50% {
-		opacity: 1;
-		transform: scaleX(1.05);
-	}
-}
-
-/* Visual feedback for valid drop targets */
-.lesson-item.drop-target,
-.slide-item.drop-target {
-	background-color: #f0f9ff !important;
-	border-left: 3px solid #3b82f6 !important;
-	transition: all 0.2s ease;
-}
-
-/* Container feedback during drag operations */
-.drag-active .lesson-slides,
-.drag-active #lessons-list {
-	position: relative;
-}
-
-/* Smooth transitions for all drag states */
-.slide-item,
-.lesson-item {
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Visual feedback for the element being dragged */
-.slide-item.dragging-slide .slide-actions,
-.lesson-item.dragging-lesson .lesson-header {
-	opacity: 1 !important;
-}
-
-/* Add to edit.css */
-.lesson-item,
-.slide-item {
-	cursor: grab;
-}
-
-.lesson-item:active,
-.slide-item:active {
-	cursor: grabbing;
-}
-
-/* Ensure lesson header doesn't interfere with slide dragging */
-.lesson-header {
-	cursor: pointer;
-}
-
-.slide-item {
-	cursor: grab;
-}
-
-/* Enhanced Drop Indicator Styles */
-.drop-target {
-	background-color: #f0f9ff !important;
-	border-left: 3px solid #3b82f6 !important;
-	transition: all 0.2s ease;
-}
-
-.lesson-slides.drop-target {
-	background-color: #f8fafc !important;
-	border: 2px dashed #cbd5e1 !important;
-	border-radius: 8px;
-	margin: 4px;
 }
 
 /* Pulse animation for indicators */
@@ -1127,4 +681,76 @@ body {
 	width: auto;
 	border-radius: 12px;
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ------------------------------
+		🎯 Essential Drag & Drop Visual Feedback (Fixed)
+	------------------------------ */
+
+/* Dragged element states */
+.slide-item.dragging-slide,
+.lesson-item.dragging-lesson {
+	opacity: 0.5;
+	transform: scale(1.02);
+}
+
+/* Drop indicator styles */
+.drop-indicator {
+	position: absolute;
+	left: 10px;
+	right: 10px;
+	height: 3px;
+	border-radius: 2px;
+	z-index: 100;
+	animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Drop target highlighting */
+.lesson-item.drop-target,
+.slide-item.drop-target {
+	background-color: #f0f9ff !important;
+	border-right: 3px solid #3b82f6 !important;
+}
+
+/* Cursor states for draggable elements */
+.lesson-item,
+.slide-item {
+	cursor: grab;
+}
+
+.lesson-item:active,
+.slide-item:active {
+	cursor: grabbing;
+}
+
+.lesson-header {
+	cursor: pointer;
+}
+
+/* Quiz option interactive states */
+.quiz-option {
+	transition: all 0.2s ease;
+}
+
+.quiz-option:hover {
+	background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+@keyframes pulse-glow {
+	0%,
+	100% {
+		opacity: 0.7;
+		transform: scaleX(1);
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1.05);
+	}
+}
+
+/* Essential body padding for mobile */
+@media (max-width: 768px) {
+	body {
+		padding-bottom: 120px; /* Space for mobile navigation */
+	}
 }
