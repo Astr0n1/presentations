@@ -375,7 +375,7 @@ class UIRenderer {
 
         switch (key) {
             case 'text-bulleted-list':
-                bodyHtml += `<ul class="space-y-2 mt-2">`;
+                bodyHtml += `<ul class="space-y-2 mt-2 max-h-96 overflow-y-auto break-words">`;
                 if (Array.isArray(slide.content.items)) {
                     slide.content.items.forEach(it => {
                         bodyHtml += `<li class="text-white">${Utils.escapeHTML(it)}</li>`;
@@ -418,14 +418,14 @@ class UIRenderer {
 
             default:
                 if (slide.content.text) {
-                    bodyHtml += `<div class="prose max-w-none text-base text-white mt-3">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml += `<div class="prose max-w-none text-base text-white mt-3 max-h-96 overflow-y-auto break-words hyphens-auto">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
                 } else {
                     bodyHtml += `<div class="text-center text-gray-200 py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
                 }
         }
 
         previewContent.innerHTML = `
-            <div class="slide-content">
+            <div class="slide-content w-full h-full overflow-y-auto break-words hyphens-auto">
                 ${headerHtml + bodyHtml}
             </div>
         `;
@@ -435,7 +435,7 @@ class UIRenderer {
 
     renderExpandableListPreview(slide) {
         const items = slide.content.items || [];
-        let html = `<div class="space-y-3 mt-3 w-full">`;
+        let html = `<div class="space-y-3 mt-3 w-full max-h-96 overflow-y-auto break-words">`;
 
         items.forEach((item, idx) => {
             html += `
@@ -468,7 +468,7 @@ class UIRenderer {
             const isCorrect = submitted && i === correctIndex;
             const isWrong = submitted && isChosen && i !== correctIndex;
 
-            let classes = "quiz-option w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition ";
+            let classes = "quiz-option w-full flex items-start gap-2 px-3 py-2 rounded-lg border transition text-right break-words hyphens-auto ";
             if (submitted) {
                 if (isCorrect) classes += "border-green-500 bg-green-600/30 text-white";
                 else if (isWrong) classes += "border-red-500 bg-red-600/30 text-white";
@@ -479,13 +479,13 @@ class UIRenderer {
                     : "border-gray-300 bg-white/10 text-white hover:bg-white/20";
             }
 
-            const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400'></i>` : "";
+            const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400 flex-shrink-0'></i>` : "";
             return `
             <button data-index="${i}" class="${classes}">
-                <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full">
+                <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
                     ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
                 </span>
-                <span class="flex-1 text-right">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
+                <span class="flex-1 text-right break-words hyphens-auto min-w-0">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
                 ${mark}
             </button>
         `;
@@ -493,9 +493,8 @@ class UIRenderer {
 
         return `
         <div class="mt-4 relative overflow-visible w-full">
-            <h2 class="text-lg font-bold text-center mb-3 text-white">${Utils.escapeHTML(question)}</h2>
-            <div class="space-y-2 max-w-md mx-auto" id="quiz-${slide.id}-answers">
-                ${answersHTML}
+            <h2 class="text-lg font-bold text-center mb-3 text-white break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
+            <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">                ${answersHTML}
             </div>
             ${submitted ? "" : `
                 <div class="text-center mt-4">
@@ -576,13 +575,13 @@ class UIRenderer {
             ? (c.imageA
                 ? `<img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="w-full h-full object-contain rounded-lg">`
                 : `<div class="text-white/70 text-center py-8">الصورة الأولى غير محددة</div>`)
-            : `<div class="text-white text-center p-6"><h3 class="text-xl font-bold mb-3">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
+            : `<div class="text-white text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
 
         const rightHtml = (type === 'image')
             ? (c.imageB
                 ? `<img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="w-full h-full object-contain rounded-lg">`
                 : `<div class="text-white/70 text-center py-8">الصورة الثانية غير محددة</div>`)
-            : `<div class="text-white text-center p-6"><h3 class="text-xl font-bold mb-3">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
+            : `<div class="text-white text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
 
         // unified background + fully opaque top layer
         return `
@@ -665,10 +664,17 @@ class UIRenderer {
                 <div id="bulleted-list-items-container-${slide.id}">
                     ${itemsHtml}
                 </div>
-                <button id="add-bullet-${slide.id}" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150 mt-2">
-                    <i class="fas fa-plus"></i>
-                    <span>أضف نقطة جديدة</span>
-                </button>
+                ${items.length < 4 ? `
+                    <button id="add-bullet-${slide.id}" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-150 mt-2">
+                        <i class="fas fa-plus"></i>
+                        <span>أضف نقطة جديدة</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-2 text-gray-500 text-sm mt-2">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى 4 نقاط
+                    </div>
+                `}
             </div>
         `;
     }
@@ -767,21 +773,33 @@ class UIRenderer {
 
             <div class="mb-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">الإجابات</label>
-                <ul id="quiz-answers" class="space-y-2">
+                <ul id="quiz-answers" class="space-y-2 w-full min-w-0">
                     ${answers.map((a, i) => `
-                        <li class="flex items-center gap-2">
-                            <span class="w-6 text-gray-500 text-center">${i + 1}.</span>
-                            <input type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg quiz-answer-input" data-index="${i}" value="${Utils.escapeHTML(a)}" placeholder="الإجابة ${i + 1}" />
-                            <button class="text-red-500 hover:text-red-700 remove-answer" data-index="${i}"><i class="fas fa-trash"></i></button>
+                        <li class="flex items-center gap-2 w-full min-w-0">
+                            <span class="w-6 text-gray-500 text-center flex-shrink-0">${i + 1}.</span>
+                            <input type="text" class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg quiz-answer-input truncate" data-index="${i}" value="${Utils.escapeHTML(a)}" placeholder="الإجابة ${i + 1}" />
+                            <button class="text-red-500 hover:text-red-700 remove-answer flex-shrink-0" data-index="${i}"><i class="fas fa-trash"></i></button>
                         </li>
                     `).join('')}
                 </ul>
-                <button id="add-answer" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i class="fas fa-plus mr-1"></i> إضافة إجابة</button>
+                <div class="mt-3">
+                    ${answers.length < 4 ? `
+                        <button id="add-answer" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            <span>إضافة إجابة</span>
+                        </button>
+                    ` : `
+                        <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                            <i class="fas fa-info-circle ml-1"></i>
+                            الحد الأقصى 4 إجابات
+                        </div>
+                    `}
+                </div>
             </div>
 
-            <div>
+            <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1">رقم الإجابة الصحيحة</label>
-                <input type="number" id="quiz-correct" min="1" max="${answers.length || 1}" value="${correct}" class="w-24 px-3 py-2 border border-gray-300 rounded-lg" />
+                <input type="number" id="quiz-correct" min="1" max="${Math.max(1, answers.length)}" value="${Math.min(correct, Math.max(1, answers.length))}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
             </div>
         </div>
     `;
@@ -821,10 +839,18 @@ class UIRenderer {
                 `).join('')}
             </ul>
 
-            <div class="mt-2 ${categories.length >= 4 ? 'hidden' : ''}">
-                <button id="add-category-btn" class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    <i class="fas fa-plus ml-1"></i> إضافة تصنيف
-                </button>
+            <div class="mt-3">
+                ${categories.length < 4 ? `
+                    <button id="add-category-btn" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة تصنيف</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى 4 تصنيفات
+                    </div>
+                `}
             </div>
         </div>
 
@@ -1077,7 +1103,30 @@ class UIRenderer {
         if (quizQuestion) quizQuestion.addEventListener('input', (e) => this.editor.updateSlideContent(slideId, 'question', e.target.value));
 
         const quizCorrect = document.getElementById('quiz-correct');
-        if (quizCorrect) quizCorrect.addEventListener('input', (e) => this.editor.updateSlideContent(slideId, 'correct', parseInt(e.target.value) || 1));
+        if (quizCorrect) {
+            quizCorrect.addEventListener('input', (e) => {
+                const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+                if (!slide || !slide.content.answers) return;
+
+                const maxValue = Math.max(1, slide.content.answers.length);
+                let value = parseInt(e.target.value) || 1;
+                value = Math.max(1, Math.min(value, maxValue));
+                e.target.value = value;
+
+                this.editor.updateSlideContent(slideId, 'correct', value);
+            });
+
+            // Also validate on blur
+            quizCorrect.addEventListener('blur', (e) => {
+                const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+                if (!slide || !slide.content.answers) return;
+
+                const maxValue = Math.max(1, slide.content.answers.length);
+                let value = parseInt(e.target.value) || 1;
+                value = Math.max(1, Math.min(value, maxValue));
+                e.target.value = value;
+            });
+        }
 
         const quizAnswersList = document.getElementById('quiz-answers');
         if (quizAnswersList) {
@@ -1105,6 +1154,17 @@ class UIRenderer {
         if (addAnswerBtn) addAnswerBtn.addEventListener('click', () => {
             const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
             if (!slide.content.answers) slide.content.answers = [];
+            // MISSING: Add the 4-answer limit check here
+            if (slide.content.answers.length >= 4) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'حد أقصى',
+                    text: 'لا يمكن إضافة أكثر من 4 إجابات.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return;
+            }
             slide.content.answers.push('');
             this.editor.saveToLocalStorage();
             this.loadSlideEditContent(slideId);
@@ -1695,7 +1755,7 @@ class UIInteractions {
             const slideEl = quizBtn.closest('[id^="quiz-"][id$="-answers"]');
             const slideId = parseInt(slideEl.id.split('-')[1]);
             const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
-            if (!slide.submitted) {
+            if (!slide || !slide.submitted) {
                 slide.userChoice = parseInt(quizBtn.dataset.index);
                 this.editor.saveToLocalStorage();
                 this.editor.loadSlidePreview(slideId);
@@ -1929,6 +1989,7 @@ export default class CourseEditor {
                 { subtype: 'bulleted-list', title: 'قائمة نقطية', description: 'عرض قائمة نقطية', icon: 'fa-list-ul' },
                 { subtype: 'comparison', title: 'مقارنة', description: 'مقارنة نصية', icon: 'fa-columns' },
                 { subtype: 'expandable-list', title: 'قائمة قابلة للتوسيع', description: 'قائمة قابلة للتوسيع', icon: 'fa-layer-group' },
+                { subtype: 'text-series', title: 'سلسلة نصوص', description: 'عرض سلسلة نصوص قابلة للتمرير', icon: 'fa-ellipsis-h' },
             ],
             image: [{ subtype: 'comparison', title: 'مقارنة صور', description: '', icon: 'fa-image' }],
             video: [{ subtype: 'video', title: 'فيديو', description: '', icon: 'fa-video' }],
@@ -2724,7 +2785,6 @@ function initSidebarToggles() {
             const top = rect.top + rect.height / 2;
             btnEl.style.top = `${top}px`; // slight correction; still kept translateY(-50%)
 
-            console.log(side, btnRect.width)
             const offsetFromEdge = 0; // px gap from border (tweakable)
             if (side === 'left') {
                 const centerX = rect.right - offsetFromEdge; // px from viewport left
