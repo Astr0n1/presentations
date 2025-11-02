@@ -195,6 +195,36 @@ class SlideManager {
         this.editor.loadSlideEditContent(slide.id);
     }
 
+    addImageCollectionSection(slideId) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+        slide.content.sections = slide.content.sections || [];
+
+        // Check if maximum limit reached
+        if (slide.content.sections.length >= 4) {
+            Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 4 أقسام في مجموعة الصور.', 'warning');
+            return;
+        }
+
+        slide.content.sections.push({ imageUrl: '', description: '' });
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    deleteImageCollectionSection(slideId, index) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || !Array.isArray(slide.content.sections)) return;
+        if (slide.content.sections.length <= 1) {
+            Swal.fire('تنبيه', 'يجب أن تحتوي المجموعة على قسم واحد على الأقل.', 'warning');
+            return;
+        }
+        slide.content.sections.splice(index, 1);
+        this.saveToLocalStorage();
+        this.editor.loadSlideEditContent(slideId);
+        this.editor.loadSlidePreview(slideId);
+    }
+
     initializeNewSlideContent(type, subtype) {
         if (type === 'text') {
             if (subtype === 'bulleted-list') {
@@ -232,6 +262,15 @@ class SlideManager {
                     items: [
                         { title: 'الصورة الأولى', imageUrl: '' },
                         { title: 'الصورة الثانية', imageUrl: '' }
+                    ]
+                };
+            }
+            if (subtype === 'image-collection') {
+                return {
+                    title: 'مجموعة صور',
+                    subtitle: '',
+                    sections: [
+                        { imageUrl: '', description: '' }
                     ]
                 };
             }
@@ -503,6 +542,9 @@ class UIRenderer {
             case 'image-image-series':
                 bodyHtml += this.renderImageSeriesPreview(slide);
                 break;
+            case 'image-image-collection':
+                bodyHtml += this.renderImageCollectionPreview(slide);
+                break;
 
             case 'quiz-multiple-choice-carousel': {
                 bodyHtml += this.renderQuizCarousel(slide);
@@ -548,6 +590,146 @@ class UIRenderer {
 
         html += `</div>`;
         return html;
+    }
+
+    renderImageCollectionPreview(slide) {
+        const sections = slide.content.sections || [];
+        if (!sections.length) {
+            return `<div class="text-center text-white/70 py-12">لا توجد صور في المجموعة</div>`;
+        }
+
+        const isDetailView = slide.content._selectedSection !== undefined && slide.content._selectedSection !== null;
+
+        if (isDetailView) {
+            const selectedIndex = slide.content._selectedSection;
+            const selectedSection = sections[selectedIndex];
+
+            return `
+            <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center p-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
+                 data-action="close-detail">
+                ${selectedSection.imageUrl ? `
+                    <div class="image-container mb-6 flex-1 flex items-center justify-center w-full max-w-4xl overflow-hidden">
+                        <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
+                             alt="الصورة المحددة" 
+                             class="max-h-[70%] max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <div class="fallback-placeholder hidden text-center text-white/70 py-8">
+                            <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                            <p>تعذر تحميل الصورة</p>
+                        </div>
+                    </div>
+                    ${selectedSection.description ? `
+                        <div class="description-container bg-black/40 rounded-xl p-6 max-w-2xl w-full border border-white/20 overflow-hidden">
+                            <p class="text-white text-lg leading-relaxed text-center font-medium break-words">${Utils.escapeHTML(selectedSection.description)}</p>
+                        </div>
+                    ` : ''}
+                ` : `
+                    <div class="text-white/70 text-center py-8">
+                        <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                        <p>لم يتم إدخال رابط الصورة بعد</p>
+                    </div>
+                `}
+                <div class="absolute bottom-6 text-white/60 text-sm">
+                    انقر في أي مكان للعودة
+                </div>
+            </div>
+        `;
+        }
+
+        // Grid view - Fixed layout without cropping issues
+        const sectionsHtml = sections.map((section, index) => `
+    <div class="image-collection-item mb-4 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl w-4/5 mx-auto" 
+         data-action="open-detail" 
+         data-index="${index}">
+        ${section.imageUrl ? `
+            <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full aspect-[3/2] flex items-center justify-center p-2">
+                <img src="${Utils.escapeHTML(section.imageUrl)}" 
+                     alt="صورة ${index + 1}" 
+                     class="h-full w-full object-contain rounded-lg"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                <div class="fallback-placeholder hidden h-full w-full items-center justify-center text-white/70 bg-black/10 rounded-lg">
+                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                    <p class="text-xs">تعذر تحميل الصورة</p>
+                </div>
+            </div>
+        ` : `
+            <div class="aspect-[3/2] bg-black/20 rounded-xl flex items-center justify-center text-white/70 border-2 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full p-2">
+                <div class="text-center">
+                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                    <p class="text-xs">لا توجد صورة</p>
+                </div>
+            </div>
+        `}
+    </div>
+`).join('');
+
+        return `
+    <div class="image-collection-grid w-full h-full py-4">
+        <div class="flex flex-col items-center justify-start h-full space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            ${sectionsHtml}
+        </div>
+    </div>
+`;
+    }
+
+    renderImageCollectionEditor(slide) {
+        const sections = slide.content.sections || [];
+        const sectionsHtml = sections.map((section, idx) => `
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-3">
+                <label class="block text-sm font-medium text-gray-700">القسم ${idx + 1}</label>
+                <button data-action="delete-image-collection-section" data-index="${idx}" 
+                        class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150" 
+                        ${sections.length <= 1 ? 'disabled' : ''}>
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
+                    <input type="url" data-image-collection="${idx}" data-field="imageUrl" 
+                           value="${Utils.escapeHTML(section.imageUrl || '')}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                           placeholder="https://example.com/image.jpg" />
+                    ${section.imageUrl ? `
+                        <div class="mt-2 p-2 bg-gray-100 rounded-lg">
+                            <img src="${Utils.escapeHTML(section.imageUrl)}" alt="معاينة" 
+                                 class="max-h-32 mx-auto rounded" onerror="this.style.display='none'" />
+                        </div>
+                    ` : ''}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الوصف (اختياري)</label>
+                    <textarea data-image-collection="${idx}" data-field="description" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              placeholder="أدخل وصف الصورة هنا...">${Utils.escapeHTML(section.description || '')}</textarea>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+        return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+            <h4 class="text-base font-semibold mb-3 text-gray-800">محتوى مجموعة الصور</h4>
+            <div id="image-collection-sections-container-${slide.id}" class="space-y-3">
+                ${sectionsHtml}
+            </div>
+            <div class="mt-4">
+                ${sections.length < 4 ? `
+                    <button id="add-image-collection-section-${slide.id}" 
+                            class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة قسم جديد</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى 4 أقسام في المجموعة
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
     }
 
 
@@ -1321,6 +1503,9 @@ class UIRenderer {
             case 'image-image-series':
                 html += this.renderImageSeriesEditor(slide);
                 break;
+            case 'image-image-collection':
+                html += this.renderImageCollectionEditor(slide);
+                break;
             case 'quiz-multiple-choice-carousel':
                 html += this.renderQuizCarouselEditor(slide);
                 break;
@@ -2079,6 +2264,14 @@ class UIInteractions {
             }
         }
 
+        if (target.dataset && target.dataset.imageCollection !== undefined) {
+            const idx = parseInt(target.dataset.imageCollection, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'sections', idx, field, target.value);
+            }
+        }
+
         if (target.dataset && target.dataset.expandable !== undefined) {
             const idx = parseInt(target.dataset.expandable, 10);
             const field = target.dataset.expandableField;
@@ -2170,6 +2363,50 @@ class UIInteractions {
         if (addImageSeriesBtn) {
             const sid = this.editor.currentSlideId;
             if (sid != null) this.editor.addImageSeriesItem(sid);
+            return;
+        }
+
+        // Image collection section delete button
+        const delImageCollectionBtn = target.closest('[data-action="delete-image-collection-section"]');
+        if (delImageCollectionBtn) {
+            const idx = parseInt(delImageCollectionBtn.dataset.index, 10);
+            if (!isNaN(idx) && this.editor.currentSlideId != null) {
+                this.editor.deleteImageCollectionSection(this.editor.currentSlideId, idx);
+            }
+            return;
+        }
+
+        // Image collection add button
+        const addImageCollectionBtn = target.closest('[id^="add-image-collection-section-"]');
+        if (addImageCollectionBtn) {
+            const sid = this.editor.currentSlideId;
+            if (sid != null) this.editor.addImageCollectionSection(sid);
+            return;
+        }
+
+        // Image collection preview interactions
+        const imageCollectionDetail = target.closest('[data-action="close-detail"]');
+        if (imageCollectionDetail) {
+            const slide = this.editor.getCurrentSlide();
+            if (slide && slide.content._selectedSection !== undefined) {
+                // Close detail view
+                delete slide.content._selectedSection;
+                this.editor.saveToLocalStorage();
+                this.editor.loadSlidePreview(slide.id);
+            }
+            return;
+        }
+
+        const imageCollectionItem = target.closest('[data-action="open-detail"]');
+        if (imageCollectionItem) {
+            const index = parseInt(imageCollectionItem.dataset.index, 10);
+            const slide = this.editor.getCurrentSlide();
+            if (slide && !isNaN(index)) {
+                // Open detail view
+                slide.content._selectedSection = index;
+                this.editor.saveToLocalStorage();
+                this.editor.loadSlidePreview(slide.id);
+            }
             return;
         }
 
@@ -2497,7 +2734,8 @@ export default class CourseEditor {
             ],
             image: [
                 { subtype: 'comparison', title: 'مقارنة صور', description: '', icon: 'fa-image' },
-                { subtype: 'image-series', title: 'سلسلة الصور', description: 'عرض سلسلة صور قابلة للتمرير', icon: 'fa-images' }
+                { subtype: 'image-series', title: 'سلسلة الصور', description: 'عرض سلسلة صور قابلة للتمرير', icon: 'fa-images' },
+                { subtype: 'image-collection', title: 'مجموعة صور', description: 'مجموعة صور قابلة للنقر لعرض التفاصيل', icon: 'fa-th' }
             ],
             video: [{ subtype: 'video', title: 'فيديو', description: '', icon: 'fa-video' }],
             quiz: [
@@ -2561,6 +2799,8 @@ export default class CourseEditor {
     deleteTextSeriesItem(slideId, index) { return this.slideManager.deleteTextSeriesItem(slideId, index); }
     addImageSeriesItem(slideId) { return this.slideManager.addImageSeriesItem(slideId); }
     deleteImageSeriesItem(slideId, index) { return this.slideManager.deleteImageSeriesItem(slideId, index); }
+    addImageCollectionSection(slideId) { return this.slideManager.addImageCollectionSection(slideId); }
+    deleteImageCollectionSection(slideId, index) { return this.slideManager.deleteImageCollectionSection(slideId, index); }
 
     isLessonExpanded(lessonId) {
         return this.expandedLessons.has(lessonId);
