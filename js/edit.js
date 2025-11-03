@@ -612,7 +612,7 @@ class UIRenderer {
                     <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
                          alt="الصورة المحددة" 
                          class="max-h-full max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
                     <div class="fallback-placeholder hidden text-center text-white/70 py-8">
                         <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
                         <p>تعذر تحميل الصورة</p>
@@ -638,9 +638,9 @@ class UIRenderer {
 
         // Normal mode - Calculate dynamic heights with extra space
         const sectionsCount = sections.length;
-        const gapHeight = 0.75; // Reduced from 1rem to 0.75rem
+        const gapHeight = 0.75;
         const totalGapsHeight = (sectionsCount - 1) * gapHeight;
-        const extraPadding = 2; // 2rem extra space at top and bottom
+        const extraPadding = 2;
         const availableHeight = `calc((100% - ${totalGapsHeight}rem - ${extraPadding}rem) / ${sectionsCount})`;
 
         const sectionsHtml = sections.map((section, index) => `
@@ -654,7 +654,7 @@ class UIRenderer {
                      alt="صورة ${index + 1}" 
                      class="w-full h-full object-contain rounded-lg max-w-full"
                      style="max-width: 80%; max-height: 100%;"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                 <div class="fallback-placeholder hidden h-full w-full items-center justify-center text-white/70 bg-black/10 rounded-lg">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
                     <p class="text-xs">تعذر تحميل الصورة</p>
@@ -683,61 +683,66 @@ class UIRenderer {
     renderImageCollectionEditor(slide) {
         const sections = slide.content.sections || [];
         const sectionsHtml = sections.map((section, idx) => `
-        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="flex items-center justify-between mb-3">
-                <label class="block text-sm font-medium text-gray-700">القسم ${idx + 1}</label>
-                <button data-action="delete-image-collection-section" data-index="${idx}" 
-                        class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150" 
-                        ${sections.length <= 1 ? 'disabled' : ''}>
-                    <i class="fas fa-trash text-sm"></i>
-                </button>
-            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
-                    <input type="url" data-image-collection="${idx}" data-field="imageUrl" 
-                           value="${Utils.escapeHTML(section.imageUrl || '')}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                           placeholder="https://example.com/image.jpg" />
-                    ${section.imageUrl ? `
-                        <div class="mt-2 p-2 bg-gray-100 rounded-lg">
-                            <img src="${Utils.escapeHTML(section.imageUrl)}" alt="معاينة" 
-                                 class="max-h-32 mx-auto rounded" onerror="this.style.display='none'" />
+    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between mb-3">
+            <label class="block text-sm font-medium text-gray-700">القسم ${idx + 1}</label>
+            <button data-action="delete-image-collection-section" data-index="${idx}" 
+                    class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150" 
+                    ${sections.length <= 1 ? 'disabled' : ''}>
+                <i class="fas fa-trash text-sm"></i>
+            </button>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
+                <input type="url" data-image-collection="${idx}" data-field="imageUrl" 
+                       value="${Utils.escapeHTML(section.imageUrl || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="https://example.com/image.jpg" />
+                ${section.imageUrl ? `
+                    <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
+                        <img src="${Utils.escapeHTML(section.imageUrl)}" alt="معاينة" 
+                             class="max-h-32 mx-auto rounded" 
+                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
+                            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
+                            <p class="text-xs">تعذر تحميل الصورة</p>
                         </div>
-                    ` : ''}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الوصف (اختياري)</label>
-                    <textarea data-image-collection="${idx}" data-field="description" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                              placeholder="أدخل وصف الصورة هنا...">${Utils.escapeHTML(section.description || '')}</textarea>
-                </div>
+                    </div>
+                ` : ''}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">الوصف (اختياري)</label>
+                <textarea data-image-collection="${idx}" data-field="description" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          placeholder="أدخل وصف الصورة هنا...">${Utils.escapeHTML(section.description || '')}</textarea>
             </div>
         </div>
-    `).join('');
+    </div>
+`).join('');
 
         return `
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-            <h4 class="text-base font-semibold mb-3 text-gray-800">محتوى مجموعة الصور</h4>
-            <div id="image-collection-sections-container-${slide.id}" class="space-y-3">
-                ${sectionsHtml}
-            </div>
-            <div class="mt-4">
-                ${sections.length < 4 ? `
-                    <button id="add-image-collection-section-${slide.id}" 
-                            class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
-                        <i class="fas fa-plus"></i>
-                        <span>إضافة قسم جديد</span>
-                    </button>
-                ` : `
-                    <div class="w-full text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
-                        <i class="fas fa-info-circle ml-1"></i>
-                        الحد الأقصى 4 أقسام في المجموعة
-                    </div>
-                `}
-            </div>
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-base font-semibold mb-3 text-gray-800">محتوى مجموعة الصور</h4>
+        <div id="image-collection-sections-container-${slide.id}" class="space-y-3">
+            ${sectionsHtml}
         </div>
-    `;
+        <div class="mt-4">
+            ${sections.length < 4 ? `
+                <button id="add-image-collection-section-${slide.id}" 
+                        class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
+                    <i class="fas fa-plus"></i>
+                    <span>إضافة قسم جديد</span>
+                </button>
+            ` : `
+                <div class="w-full text-center py-3 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    الحد الأقصى 4 أقسام في المجموعة
+                </div>
+            `}
+        </div>
+    </div>
+`;
     }
 
 
@@ -868,13 +873,27 @@ class UIRenderer {
         // Build content per type
         const leftHtml = (type === 'image')
             ? (c.imageA
-                ? `<img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="w-full h-full object-contain rounded-lg">`
+                ? `<div class="relative w-full h-full">
+                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="w-full h-full object-contain rounded-lg"
+                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center text-white/70">
+                   <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                   <p class="text-xs">تعذر تحميل الصورة</p>
+                 </div>
+               </div>`
                 : `<div class="text-white/70 text-center py-8">الصورة الأولى غير محددة</div>`)
             : `<div class="text-white text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
 
         const rightHtml = (type === 'image')
             ? (c.imageB
-                ? `<img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="w-full h-full object-contain rounded-lg">`
+                ? `<div class="relative w-full h-full">
+                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="w-full h-full object-contain rounded-lg"
+                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center text-white/70">
+                   <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                   <p class="text-xs">تعذر تحميل الصورة</p>
+                 </div>
+               </div>`
                 : `<div class="text-white/70 text-center py-8">الصورة الثانية غير محددة</div>`)
             : `<div class="text-white text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
 
@@ -1031,26 +1050,32 @@ class UIRenderer {
 
     renderImageSeriesEditor(slide) {
         const imageItemRenderer = (item, index) => `
-        <div class="space-y-3">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">العنوان (اختياري)</label>
-                <input type="text" data-image-series="${index}" data-field="title" value="${Utils.escapeHTML(item.title || '')}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                       placeholder="أدخل العنوان هنا..." />
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
-                <input type="url" data-image-series="${index}" data-field="imageUrl" value="${Utils.escapeHTML(item.imageUrl || '')}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                       placeholder="https://example.com/image.jpg" />
-                ${item.imageUrl ? `
-                    <div class="mt-2 p-2 bg-gray-100 rounded-lg">
-                        <img src="${Utils.escapeHTML(item.imageUrl)}" alt="معاينة" class="max-h-32 mx-auto rounded" onerror="this.style.display='none'" />
-                    </div>
-                ` : ''}
-            </div>
+    <div class="space-y-3">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">العنوان (اختياري)</label>
+            <input type="text" data-image-series="${index}" data-field="title" value="${Utils.escapeHTML(item.title || '')}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="أدخل العنوان هنا..." />
         </div>
-    `;
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
+            <input type="url" data-image-series="${index}" data-field="imageUrl" value="${Utils.escapeHTML(item.imageUrl || '')}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="https://example.com/image.jpg" />
+            ${item.imageUrl ? `
+                <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
+                    <img src="${Utils.escapeHTML(item.imageUrl)}" alt="معاينة" 
+                         class="max-h-32 mx-auto rounded" 
+                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                    <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
+                        <i class="fas fa-image text-lg mb-1 opacity-50"></i>
+                        <p class="text-xs">تعذر تحميل الصورة</p>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    </div>
+`;
 
         return this.renderSeriesEditor(slide, 'image', imageItemRenderer);
     }
@@ -1062,42 +1087,42 @@ class UIRenderer {
         }
 
         const slidesHtml = items.map((item, index) => `
-        <div class="image-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-600 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
-            <div class="text-center max-w-2xl w-full">
-                ${item.title ? `<h3 class="text-2xl font-bold text-white mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
-                ${item.imageUrl ? `
-                    <div class="image-container mb-4">
-                        <img src="${Utils.escapeHTML(item.imageUrl)}" alt="${Utils.escapeHTML(item.title || 'صورة')}" 
-                             class="max-h-64 max-w-full mx-auto rounded-lg shadow-lg object-contain" 
-                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuS8muS4gOWbvueUteWtkDwvdGV4dD48L3N2Zz4='; this.alt='تعذر تحميل الصورة';" />
-                    </div>
-                ` : `
-                    <div class="text-white/70 text-center py-8 bg-black/20 rounded-lg">
-                        <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
-                        <p>لم يتم إدخال رابط الصورة بعد</p>
-                    </div>
-                `}
-            </div>
+    <div class="image-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-600 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
+        <div class="text-center max-w-2xl w-full">
+            ${item.title ? `<h3 class="text-2xl font-bold text-white mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
+            ${item.imageUrl ? `
+                <div class="image-container mb-4">
+                    <img src="${Utils.escapeHTML(item.imageUrl)}" alt="${Utils.escapeHTML(item.title || 'صورة')}" 
+                         class="max-h-64 max-w-full mx-auto rounded-lg shadow-lg object-contain" 
+                         onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuS8muS4gOWbvueUteWtkDwvdGV4dD48L3N2Zz4='; this.alt='تعذر تحميل الصورة';" />
+                </div>
+            ` : `
+                <div class="text-white/70 text-center py-8 bg-black/20 rounded-lg">
+                    <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                    <p>لم يتم إدخال رابط الصورة بعد</p>
+                </div>
+            `}
         </div>
-    `).join('');
+    </div>
+`).join('');
 
         const dotsHtml = items.map((_, index) => `
-        <span class="image-series-nav-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-400 cursor-pointer ${index === 0 ? 'image-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
-    `).join('');
+    <span class="image-series-nav-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-400 cursor-pointer ${index === 0 ? 'image-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
+`).join('');
 
         return `
-        <div class="image-series-preview relative w-full overflow-hidden" id="image-series-${slide.id}">
-            <div class="image-series-slides relative w-full">
-                ${slidesHtml}
-            </div>
-            
-            ${items.length > 1 ? `
-                <div class="image-series-nav-dots absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 space-x-reverse">
-                    ${dotsHtml}
-                </div>
-            ` : ''}
+    <div class="image-series-preview relative w-full overflow-hidden" id="image-series-${slide.id}">
+        <div class="image-series-slides relative w-full">
+            ${slidesHtml}
         </div>
-    `;
+        
+        ${items.length > 1 ? `
+            <div class="image-series-nav-dots absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 space-x-reverse">
+                ${dotsHtml}
+            </div>
+        ` : ''}
+    </div>
+`;
     }
 
     // Video render (kept same heuristics)
