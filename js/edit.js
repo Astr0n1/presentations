@@ -2757,6 +2757,7 @@ export default class CourseEditor {
         }
 
         // Render initial UI
+        this.setupSidebarToggles();
         this.renderLessonsSidebar();
         this.updateLessonHeader();
 
@@ -2804,6 +2805,116 @@ export default class CourseEditor {
 
     isLessonExpanded(lessonId) {
         return this.expandedLessons.has(lessonId);
+    }
+
+    // Replace the entire setupSidebarToggles method with this:
+    setupSidebarToggles() {
+        const leftSidebar = document.querySelector('.edit-sidebar');
+        const rightSidebar = document.querySelector('.sidebar');
+        const leftToggle = document.getElementById('collapse-edit-sidebar');
+        const rightToggle = document.getElementById('collapse-lessons-sidebar');
+        const leftInternalToggle = document.getElementById('toggle-edit-sidebar');
+        const rightInternalToggle = document.getElementById('toggle-sidebar');
+
+        // Initialize button states based on current sidebar visibility
+        this.updateToggleButtonStates();
+
+        if (leftToggle && leftSidebar) {
+            leftToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isCollapsed = leftSidebar.classList.contains('-translate-x-full');
+
+                if (isCollapsed) {
+                    // Expand left sidebar
+                    leftSidebar.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'left', false);
+                } else {
+                    // Collapse left sidebar
+                    leftSidebar.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'left', true);
+                }
+
+                this.updateToggleButtonStates();
+            });
+        }
+
+        if (rightToggle && rightSidebar) {
+            rightToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isCollapsed = rightSidebar.classList.contains('translate-x-full');
+
+                if (isCollapsed) {
+                    // Expand right sidebar
+                    rightSidebar.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'right', false);
+                } else {
+                    // Collapse right sidebar
+                    rightSidebar.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'right', true);
+                }
+
+                this.updateToggleButtonStates();
+            });
+        }
+
+        // Keep existing internal toggle functionality
+        if (leftInternalToggle && leftSidebar) {
+            leftInternalToggle.addEventListener('click', () => {
+                const currentlyCollapsed = leftSidebar.classList.contains('-translate-x-full');
+                if (currentlyCollapsed) {
+                    leftSidebar.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'left', false);
+                } else {
+                    leftSidebar.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'left', true);
+                }
+                this.updateToggleButtonStates();
+            });
+        }
+
+        if (rightInternalToggle && rightSidebar) {
+            rightInternalToggle.addEventListener('click', () => {
+                const currentlyCollapsed = rightSidebar.classList.contains('translate-x-full');
+                if (currentlyCollapsed) {
+                    rightSidebar.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'right', false);
+                } else {
+                    rightSidebar.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+                    this.saveSidebarStateForLesson(this.currentLessonId, 'right', true);
+                }
+                this.updateToggleButtonStates();
+            });
+        }
+    }
+
+    // Add this new method to update button icons and visibility
+    updateToggleButtonStates() {
+        const leftSidebar = document.querySelector('.edit-sidebar');
+        const rightSidebar = document.querySelector('.sidebar');
+        const leftToggle = document.getElementById('collapse-edit-sidebar');
+        const rightToggle = document.getElementById('collapse-lessons-sidebar');
+
+        if (leftToggle && leftSidebar) {
+            const isLeftCollapsed = leftSidebar.classList.contains('-translate-x-full');
+            const icon = leftToggle.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-chevron-right', isLeftCollapsed);
+                icon.classList.toggle('fa-chevron-left', !isLeftCollapsed);
+            }
+            // Always show left toggle button
+            leftToggle.classList.remove('hidden');
+        }
+
+        if (rightToggle && rightSidebar) {
+            const isRightCollapsed = rightSidebar.classList.contains('translate-x-full');
+            const icon = rightToggle.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-chevron-left', isRightCollapsed);
+                icon.classList.toggle('fa-chevron-right', !isRightCollapsed);
+            }
+            // Always show right toggle button
+            rightToggle.classList.remove('hidden');
+        }
     }
 
     toggleLessonExpansion(lessonId) {
@@ -2976,6 +3087,9 @@ export default class CourseEditor {
                     rightEl.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
                 }
             }
+
+            // ADD THIS LINE to update button states when applying saved state
+            this.updateToggleButtonStates();
         } catch (err) {
             console.warn('Failed applying sidebar state', err);
         }
@@ -3517,101 +3631,9 @@ export default class CourseEditor {
     }
 }
 
-function initSidebarToggles() {
-    // -----------------------------
-    // Sidebar toggle buttons: dynamic positioning (RTL/LTR safe)
-    // -----------------------------
-    (function () {
-        const editSidebar = document.querySelector('.edit-sidebar');
-        const rightSidebar = document.querySelector('.sidebar'); // lessons sidebar
-        const editBtn = document.getElementById('collapse-edit-sidebar');
-        const rightBtn = document.getElementById('collapse-lessons-sidebar');
-
-        if (!editBtn || !rightBtn) return;
-
-        function positionSidebarButtonForSidebar(sidebarEl, btnEl, side = 'left') {
-            if (!sidebarEl || !btnEl) return;
-            const rect = sidebarEl.getBoundingClientRect();
-            const btnRect = btnEl.getBoundingClientRect();
-            const top = rect.top + rect.height / 2;
-            btnEl.style.top = `${top}px`; // slight correction; still kept translateY(-50%)
-
-            const offsetFromEdge = 0; // px gap from border (tweakable)
-            if (side === 'left') {
-                const centerX = rect.right - offsetFromEdge; // px from viewport left
-                btnEl.style.left = `${Math.max(20, centerX - btnRect.width / 2)}px`;
-                btnEl.style.right = 'auto';
-            } else {
-                const centerX = rect.left + offsetFromEdge; // px from viewport left
-                btnEl.style.left = `${Math.max(20, centerX - btnRect.width / 2)}px`;
-                btnEl.style.right = 'auto';
-            }
-        }
-
-        // wrapper to compute both buttons
-        function positionSidebarButtons(side) {
-            // If sidebar is hidden via translate classes it may be offscreen; still compute using rect
-            // Left / edit sidebar: inner edge is its right side
-            positionSidebarButtonForSidebar(editSidebar, editBtn, 'left');
-
-            // Right / lessons sidebar: inner edge is its left side
-            positionSidebarButtonForSidebar(rightSidebar, rightBtn, 'right');
-        }
-
-        // Toggle behavior with icon flip and reposition
-        function toggleEditSidebar() {
-            const icon = editBtn.querySelector('i');
-            const collapsed = editSidebar.classList.toggle('-translate-x-full');
-            // icon direction: when collapsed -> show chevron-right (to indicate expand); when open -> chevron-left (to indicate collapse)
-            if (icon) {
-                icon.classList.toggle('fa-chevron-left', !collapsed);
-                icon.classList.toggle('fa-chevron-right', collapsed);
-            }
-            // reposition the button after transform (use small timeout so layout updated)
-            setTimeout(positionSidebarButtons, 220);
-            editBtn.classList.toggle('collapsed', collapsed);
-        }
-
-        function toggleRightSidebar() {
-            const icon = rightBtn.querySelector('i');
-            const collapsed = rightSidebar.classList.toggle('translate-x-full');
-            // icon direction: when collapsed -> show chevron-left (to indicate expand); when open -> chevron-right (to indicate collapse)
-            if (icon) {
-                icon.classList.toggle('fa-chevron-right', !collapsed);
-                icon.classList.toggle('fa-chevron-left', collapsed);
-            }
-            setTimeout(positionSidebarButtons, 220);
-            rightBtn.classList.toggle('collapsed', collapsed);
-        }
-
-        // attach events
-        editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleEditSidebar();
-        });
-
-        rightBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleRightSidebar();
-        });
-
-        // also reposition on window resize / orientation change and after initial load
-        window.addEventListener('resize', positionSidebarButtons);
-        window.addEventListener('orientationchange', positionSidebarButtons);
-
-        // If you have any UI method that toggles sidebars (like existing toggle buttons), ensure it calls positionSidebarButtons()
-        // For safety, call at the end of initialization and after a small delay (so fonts/layout settled)
-        setTimeout(positionSidebarButtons, 50);
-        setTimeout(positionSidebarButtons, 300);
-    })();
-
-}
-
 // auto-init in browser and keep backward-compatibility on window
 if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
-        initSidebarToggles();
-        // create and attach instance
         try {
             const editor = new CourseEditor();
             window.courseEditor = editor;

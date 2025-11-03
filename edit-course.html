@@ -47,47 +47,29 @@
 		</header>
 
 		<div class="flex">
-			<!-- Edit Sidebar (Left) -->
-			<!-- Left Edit Sidebar -->
-			<div
-				class="edit-sidebar fixed left-0 top-0 h-full bg-white border-r border-gray-200 overflow-y-auto z-20 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] sm:min-w-[40vw] sm:max-w-[100vw] transition-transform duration-300 ease-in-out"
-			>
-				<!-- Resize Handle for Left Sidebar -->
-				<div
-					class="resize-handle resize-handle-right"
-					id="resize-edit-sidebar"
-				></div>
+			<!-- Edit Sidebar (Left) - REMOVE BUTTON FROM HERE -->
+			<div class="edit-sidebar fixed left-0 top-0 h-full bg-white border-r border-gray-200 z-20 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] sm:min-w-[40vw] sm:max-w-[100vw] transition-transform duration-300 ease-in-out">
+					<!-- Resize Handle -->
+					<div class="resize-handle resize-handle-right" id="resize-edit-sidebar"></div>
 
-				<div class="p-6">
-					<div class="flex items-center justify-between mb-6">
-						<h2 class="text-xl font-bold text-gray-900">
-							تعديل السلايد
-						</h2>
-						<button
-							id="toggle-edit-sidebar"
-							class="p-2 rounded-lg hover:bg-gray-100"
-						>
-							<i class="fas fa-chevron-left text-gray-600"></i>
-						</button>
+					<!-- Scrollable Content Container -->
+					<div class="h-full overflow-y-auto">
+							<div class="p-6">
+									<div class="flex items-center justify-between mb-6">
+											<h2 class="text-xl font-bold text-gray-900">تعديل السلايد</h2>
+											<button id="toggle-edit-sidebar" class="p-2 rounded-lg hover:bg-gray-100">
+													<i class="fas fa-chevron-left text-gray-600"></i>
+											</button>
+									</div>
+									<div id="slide-edit-content">
+											<div class="text-center text-gray-500 py-12">
+													<i class="fas fa-edit text-4xl mb-4"></i>
+													<p>اختر سلايداً للتعديل</p>
+											</div>
+									</div>
+							</div>
 					</div>
-
-					<div id="slide-edit-content">
-						<!-- Content will be dynamically loaded here based on selected slide -->
-						<div class="text-center text-gray-500 py-12">
-							<i class="fas fa-edit text-4xl mb-4"></i>
-							<p>اختر سلايداً للتعديل</p>
-						</div>
-					</div>
-				</div>
 			</div>
-			<!-- Collapse / Expand Button -->
-			<button
-				id="collapse-edit-sidebar"
-				class="sidebar-toggle-btn absolute right-[-14px] top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-colors z-50"
-				title="إخفاء / إظهار قائمة التعديل"
-			>
-				<i class="fas fa-chevron-left text-gray-600"></i>
-			</button>
 
 			<!-- Main Content -->
 			<div class="main-content flex-1 p-6">
@@ -213,46 +195,50 @@
 				</div>
 			</div>
 
-			<!-- Right Lessons Sidebar -->
-			<div
-				class="sidebar fixed right-0 top-0 h-full bg-white border-l border-gray-200 overflow-y-auto z-10 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] hidden sm:hidden md:block transition-transform duration-300 ease-in-out"
-			>
-				<!-- Resize Handle for Right Sidebar -->
-				<div
-					class="resize-handle resize-handle-left"
-					id="resize-sidebar"
-				></div>
+			<!-- Right Lessons Sidebar - REMOVE BUTTON FROM HERE -->
+			<div class="sidebar fixed right-0 top-0 h-full bg-white border-l border-gray-200 z-10 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] hidden sm:hidden md:block transition-transform duration-300 ease-in-out">
+					<!-- Resize Handle -->
+					<div class="resize-handle resize-handle-left" id="resize-sidebar"></div>
 
-				<div class="p-6">
-					<!-- Lessons List -->
-					<div class="mb-6">
-						<h3 class="text-lg font-semibold text-gray-900 mb-4">
-							قائمة الدروس
-						</h3>
-						<div id="lessons-list" class="space-y-3">
-							<!-- Lessons will be dynamically added here -->
-						</div>
+					<!-- Scrollable Content Container -->
+					<div class="h-full overflow-y-auto">
+							<div class="p-6">
+									<!-- Lessons List -->
+									<div class="mb-6">
+											<h3 class="text-lg font-semibold text-gray-900 mb-4">قائمة الدروس</h3>
+											<div id="lessons-list" class="space-y-3">
+													<!-- Lessons will be dynamically added here -->
+											</div>
+									</div>
+
+									<!-- Add Lesson Button -->
+									<button
+											id="add-lesson-btn"
+											class="w-full flex items-center justify-center space-x-2 space-x-reverse py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors mb-6"
+									>
+											<i class="fas fa-plus"></i>
+											<span>إضافة درس جديد</span>
+									</button>
+							</div>
 					</div>
-
-					<!-- Add Lesson Button -->
-					<button
-						id="add-lesson-btn"
-						class="w-full flex items-center justify-center space-x-2 space-x-reverse py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors mb-6"
-					>
-						<i class="fas fa-plus"></i>
-						<span>إضافة درس جديد</span>
-					</button>
-				</div>
 			</div>
-			<!-- Collapse / Expand Button -->
+
+			<!-- FLOATING COLLAPSE BUTTONS -->
 			<button
-				id="collapse-lessons-sidebar"
-				class="sidebar-toggle-btn absolute left-[-14px] top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-colors z-50"
-				title="إخفاء / إظهار قائمة الدروس"
+					id="collapse-edit-sidebar"
+					class="fixed left-4 top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-all duration-300 z-50 w-8 h-8 flex items-center justify-center sidebar-toggle-btn"
+					title="إخفاء / إظهار قائمة التعديل"
 			>
-				<i class="fas fa-chevron-right text-gray-600"></i>
+					<i class="fas fa-chevron-right text-gray-600 text-sm"></i>
 			</button>
-		</div>
+
+			<button
+					id="collapse-lessons-sidebar"
+					class="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-all duration-300 z-50 w-8 h-8 flex items-center justify-center sidebar-toggle-btn hidden md:flex"
+					title="إخفاء / إظهار قائمة الدروس"
+			>
+					<i class="fas fa-chevron-left text-gray-600 text-sm"></i>
+			</button>
 
 		<!-- Add Slide Modal -->
 		<div
