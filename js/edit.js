@@ -767,15 +767,18 @@ class UIRenderer {
 
             const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400 flex-shrink-0'></i>` : "";
             return `
-            <button data-index="${i}" class="${classes}">
-                <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
-                    ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
-                </span>
-                <span class="flex-1 text-right break-words hyphens-auto min-w-0">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
-                ${mark}
-            </button>
-        `;
+        <button data-index="${i}" class="${classes}">
+            <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
+                ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
+            </span>
+            <span class="flex-1 text-right break-words hyphens-auto min-w-0">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
+            ${mark}
+        </button>
+    `;
         }).join('');
+
+        // Use the common function to check if submit button should be shown
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
 
         return `
     <div class="mt-4 relative overflow-visible w-full">
@@ -783,10 +786,14 @@ class UIRenderer {
         <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">
             ${answersHTML}
         </div>
-        ${submitted ? "" : `
+        ${showSubmit ? `
             <div class="text-center mt-4">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" id="quiz-${slide.id}-submit">تأكيد</button>
-            </div>`}
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
+                        id="quiz-${slide.id}-submit">
+                    تأكيد الإجابة
+                </button>
+            </div>
+        ` : ''}
         <!-- New feedback icon container -->
         <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
     </div>
@@ -802,6 +809,9 @@ class UIRenderer {
         const submitted = slide.submitted ?? false;
         const containerId = `quiz-${slide.id}-categorize`;
 
+        // Use common function to check if submit should be shown
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
+
         // 🧱 Build drop zones
         const dropZones = categories.map((cat, i) => {
             let bg = 'bg-white/10 border-gray-300';
@@ -814,44 +824,41 @@ class UIRenderer {
             }
 
             return `
-        <div class="quiz-category-zone border ${bg} rounded-xl flex flex-col items-center justify-center 
-                    text-white font-semibold p-4 text-center transition relative min-h-[100px] drop-zone"
-             data-index="${i}"
-             ondragover="event.preventDefault()"
-             ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
-            <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
-        </div>`;
+    <div class="quiz-category-zone border ${bg} rounded-xl flex flex-col items-center justify-center 
+                text-white font-semibold p-4 text-center transition relative min-h-[100px] drop-zone"
+         data-index="${i}"
+         ondragover="event.preventDefault()"
+         ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
+        <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
+    </div>`;
         }).join('');
 
-        // 🧱 Build draggable question box (styled + padded)
+        // 🧱 Build draggable question box
         const draggableHtml = `
-        <div id="${containerId}-question"
-             draggable="${!submitted}"
-             class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
-                    transition select-none mb-6 max-w-xs text-center"
-             ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
-            ${Utils.escapeHTML(question)}
-        </div>`;
-
-        // ⚙️ Submit button appears only if question already dropped
-        const showSubmit = (chosen !== null && !submitted);
+    <div id="${containerId}-question"
+         draggable="${!submitted}"
+         class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
+                transition select-none mb-6 max-w-xs text-center"
+         ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
+        ${Utils.escapeHTML(question)}
+    </div>`;
 
         return `
-            <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
-        ${draggableHtml}
-        <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
-            ${dropZones}
-        </div>
-        ${showSubmit ? `
-            <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
-                    id="quiz-${slide.id}-submit">
-                إرسال الإجابة
-            </button>
-        ` : ''}
+        <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
+    ${draggableHtml}
+    <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
+        ${dropZones}
+    </div>
+    ${showSubmit ? `
+        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
+                id="quiz-${slide.id}-submit">
+            إرسال الإجابة
+        </button>
+    ` : ''}
 
-        <!-- New feedback icon container -->
-        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-    </div>`;
+    <!-- New feedback icon container -->
+    <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+</div>`;
     }
 
     renderUniversalComparison(slide, type = 'text') {
@@ -1987,35 +1994,29 @@ window.handleCategorizeDrop = (e, containerId, dropIndex) => {
     questionEl.classList.remove('bg-white/80', 'text-gray-900');
     questionEl.classList.add('bg-blue-500/70', 'text-white', 'shadow-lg', 'scale-100', 'transition-all');
 
-    // Save choice as a number (defensive)
+    // Save choice using common function
     const editor = window.courseEditor || window.editor;
-    if (editor && typeof editor.getCurrentSlide === 'function') {
-        const slide = editor.getCurrentSlide();
-        if (slide) {
-            slide.userChoice = Number(dropIndex);       // <- ensure numeric
-            slide.submitted = false;
-            editor.slideManager.saveToLocalStorage();
-
-            // If you prefer to re-render via the UIRenderer you can, but we keep it local:
-            // editor.ui.renderSlidePreviewContent && editor.ui.renderSlidePreviewContent(slide);
-        }
+    if (editor && typeof editor.setQuizUserChoice === 'function') {
+        const slideId = parseInt(containerId.split('-')[1]);
+        editor.setQuizUserChoice(slideId, Number(dropIndex));
     }
 
-    let btn = container.querySelector(`#${containerId}-submit`);
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = `${containerId}-submit`;   // ✅ correct ID
-        btn.textContent = 'إرسال الإجابة';
-        btn.className =
-            'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3';
-        btn.style.display = 'block';
-        btn.style.margin = '1rem auto 0 auto';
-        btn.addEventListener('click', () => {
-            if (window.handleQuizCategorizeSubmit) {
-                window.handleQuizCategorizeSubmit(containerId);
-            }
-        });
-        container.appendChild(btn);
+    // Show submit button if not already shown
+    let btn = container.querySelector(`#quiz-${slideId}-submit`);
+    if (!btn && editor) {
+        const slide = editor.getCurrentSlide();
+        if (slide && editor.shouldShowQuizSubmit(slide)) {
+            btn = document.createElement('button');
+            btn.id = `quiz-${slideId}-submit`;
+            btn.textContent = 'إرسال الإجابة';
+            btn.className = 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3';
+            btn.style.display = 'block';
+            btn.style.margin = '1rem auto 0 auto';
+            btn.addEventListener('click', () => {
+                editor.handleQuizSubmit(slideId, containerId);
+            });
+            container.appendChild(btn);
+        }
     }
 };
 
@@ -2026,122 +2027,26 @@ window.handleQuizCategorizeSubmit = (containerId) => {
 
     const editor = window.courseEditor || window.editor;
     if (!editor || typeof editor.getCurrentSlide !== 'function') return;
+
+    const slideId = parseInt(containerId.split('-')[1]);
     const slide = editor.getCurrentSlide();
     if (!slide || !slide.content) return;
 
-    const c = slide.content;
-    const correctRaw = c.correct;
-    const categories = Array.isArray(c.categories) ? c.categories : [];
-    const chosenRaw = slide.userChoice;
+    // Use QuizManager for submission logic
+    editor.handleQuizSubmit(slideId, containerId);
 
-    // Normalize chosen to number or null
-    const chosen = (chosenRaw === null || typeof chosenRaw === 'undefined')
-        ? null
-        : Number(chosenRaw);
-
-    // Normalize correct to an index (number) if possible
-    let correctIndex = null;
-    if (typeof correctRaw === 'number') {
-        correctIndex = correctRaw;
-    } else if (typeof correctRaw === 'string') {
-        // try numeric string first
-        const n = Number(correctRaw);
-        if (!Number.isNaN(n)) correctIndex = n;
-        else {
-            // fallback: if correctRaw is a category name, find its index
-            correctIndex = categories.findIndex(cat => {
-                if (!cat) return false;
-                return String(cat).trim() === String(correctRaw).trim();
-            });
-            if (correctIndex === -1) correctIndex = null;
-        }
-    } else {
-        // default fallback
-        correctIndex = 0;
-    }
-
-    // Debugging log (remove in production)
-    console.debug('Categorize submit:', { chosenRaw, chosen, correctRaw, correctIndex, categories });
-
-    if (chosen === null || typeof chosen === 'number' && Number.isNaN(chosen)) {
-        // nothing chosen — no-op (or show message)
-        console.warn('No choice selected for categorize quiz.');
-        return;
-    }
-
+    // Additional UI updates specific to categorize quiz
     const questionEl = document.getElementById(`${containerId}-question`);
     const dropZones = container.querySelectorAll('.quiz-category-zone');
 
-    // Safety: ensure correctIndex is a valid numeric index
-    if (correctIndex === null || correctIndex < 0 || correctIndex >= categories.length) {
-        console.warn('Correct index is invalid; defaulting to 0.');
-        correctIndex = 0;
-    }
-
-    // Decide correct/incorrect
-    const isCorrect = Number(chosen) === Number(correctIndex);
-
-    if (isCorrect) {
-        // correct: green question + green zone
-        if (questionEl) {
-            questionEl.classList.remove('bg-blue-500/70');
-            questionEl.classList.add('bg-green-500/70');
-        }
-        dropZones.forEach((zone, i) => {
-            if (i === chosen) {
-                zone.classList.remove('bg-white/10', 'border-gray-300');
-                zone.classList.add('bg-green-500/30', 'border-green-500');
-            } else {
-                // dim others
-                zone.classList.add('opacity-50');
-            }
-        });
-    } else {
-        // incorrect: red question, highlight correct with green
-        if (questionEl) {
-            questionEl.classList.remove('bg-blue-500/70');
-            questionEl.classList.add('bg-red-500/70');
-        }
-        dropZones.forEach((zone, i) => {
-            zone.classList.remove('bg-white/10', 'border-gray-300');
-            if (i === correctIndex) {
-                zone.classList.add('bg-green-500/30', 'border-green-500');
-            } else if (i === chosen) {
-                zone.classList.add('bg-red-500/30', 'border-red-500');
-            } else {
-                zone.classList.add('opacity-50');
-            }
-        });
-    }
-
-    // disable drag
     if (questionEl) {
         questionEl.setAttribute('draggable', 'false');
         questionEl.style.cursor = 'default';
     }
 
-    // Save submitted state and persist
-    slide.submitted = true;
-    slide.userChoice = Number(chosen);
-    editor.slideManager.saveToLocalStorage();
-
-    // Remove/hide the submit button
-    const btn = container.querySelector(`#quiz-${containerId}-submit`);
+    // Remove submit button
+    const btn = container.querySelector(`#quiz-${slideId}-submit`);
     if (btn) btn.remove();
-
-    // Enhanced feedback icon behavior with smooth curved path
-    const feedbackEl = container.querySelector(`#quiz-${slide.id}-feedback`);
-    if (feedbackEl) {
-        // Choose from smooth animations
-        const smoothPaths = ['smooth-curve', 'figure-eight', 'gentle-wave'];
-        const randomPath = smoothPaths[Math.floor(Math.random() * smoothPaths.length)];
-
-        feedbackEl.innerHTML = isCorrect
-            ? '<i class="fas fa-check-circle"></i>'
-            : '<i class="fas fa-times-circle"></i>';
-
-        feedbackEl.className = `quiz-feedback-icon ${isCorrect ? 'correct' : 'incorrect'} animate-${randomPath}`;
-    }
 };
 
 ////////////////////////////////////////////////////
@@ -2500,49 +2405,18 @@ class UIInteractions {
         }
 
 
-        // quiz  multiple choice 
         const quizBtn = target.closest('[id^="quiz-"][id$="-answers"] button');
         if (quizBtn) {
             const slideEl = quizBtn.closest('[id^="quiz-"][id$="-answers"]');
             const slideId = parseInt(slideEl.id.split('-')[1]);
-            const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
-            if (!slide || !slide.submitted) {
-                slide.userChoice = parseInt(quizBtn.dataset.index);
-                this.editor.saveToLocalStorage();
-                this.editor.loadSlidePreview(slideId);
-            }
+            this.editor.setQuizUserChoice(slideId, parseInt(quizBtn.dataset.index));
             return;
         }
 
-        // quiz submit
         const submitBtn = target.closest('[id^="quiz-"][id$="-submit"]');
         if (submitBtn) {
             const slideId = parseInt(submitBtn.id.split('-')[1]);
-            const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
-            if (!slide || slide.submitted) return;
-
-            slide.submitted = true;
-            this.editor.saveToLocalStorage();
-            this.editor.loadSlidePreview(slideId);
-
-            // Show smooth curved path feedback animation
-            setTimeout(() => {
-                const feedbackEl = document.getElementById(`quiz-${slideId}-feedback`);
-                const isCorrect = (slide.userChoice === (slide.content.correct - 1));
-
-                if (feedbackEl) {
-                    // Choose from smooth animations (you can pick one or keep random)
-                    const smoothPaths = ['smooth-curve', 'figure-eight', 'gentle-wave'];
-                    const randomPath = smoothPaths[Math.floor(Math.random() * smoothPaths.length)];
-
-                    feedbackEl.innerHTML = isCorrect
-                        ? '<i class="fas fa-check-circle"></i>'
-                        : '<i class="fas fa-times-circle"></i>';
-
-                    feedbackEl.className = `quiz-feedback-icon ${isCorrect ? 'correct' : 'incorrect'} animate-${randomPath}`;
-                }
-            }, 100);
-
+            this.editor.handleQuizSubmit(slideId);
             return;
         }
 
@@ -2713,6 +2587,148 @@ class UIInteractions {
 }
 
 ////////////////////////////////////////////////////
+// QuizManager - Common quiz functionality
+////////////////////////////////////////////////////
+class QuizManager {
+    constructor(editor) {
+        this.editor = editor;
+    }
+
+    // Common quiz validation
+    validateQuizContent(slide) {
+        const c = slide.content || {};
+
+        // Basic validation that applies to all quiz types
+        if (!c.question || c.question.trim() === '') {
+            return { isValid: false, message: 'يجب إدخال سؤال للاختبار' };
+        }
+
+        // Type-specific validation
+        switch (slide.subtype) {
+            case 'multiple-choice-carousel':
+                if (!c.answers || c.answers.length < 2) {
+                    return { isValid: false, message: 'يجب إدخال على الأقل إجابتين' };
+                }
+                if (c.correct === undefined || c.correct === null) {
+                    return { isValid: false, message: 'يجب تحديد الإجابة الصحيحة' };
+                }
+                break;
+
+            case 'categorize':
+                if (!c.categories || c.categories.length < 2) {
+                    return { isValid: false, message: 'يجب إدخال على الأقل تصنيفين' };
+                }
+                if (c.correct === undefined || c.correct === null) {
+                    return { isValid: false, message: 'يجب تحديد التصنيف الصحيح' };
+                }
+                break;
+        }
+
+        return { isValid: true };
+    }
+
+    // Common submit handler
+    handleQuizSubmit(slideId, containerId = null) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || slide.submitted) return;
+
+        // Validate before submission
+        const validation = this.validateQuizContent(slide);
+        if (!validation.isValid) {
+            Swal.fire('تنبيه', validation.message, 'warning');
+            return;
+        }
+
+        slide.submitted = true;
+        this.editor.saveToLocalStorage();
+        this.editor.loadSlidePreview(slideId);
+
+        // Show feedback animation
+        this.showQuizFeedback(slide, containerId);
+    }
+
+    // Common feedback display
+    showQuizFeedback(slide, containerId = null) {
+        setTimeout(() => {
+            // Try to find feedback element using containerId first, then fall back to slide id
+            let feedbackEl = null;
+            if (containerId) {
+                feedbackEl = document.querySelector(`#${containerId} .quiz-feedback-icon`);
+            }
+            if (!feedbackEl) {
+                feedbackEl = document.getElementById(`quiz-${slide.id}-feedback`);
+            }
+
+            const isCorrect = this.isAnswerCorrect(slide);
+
+            if (feedbackEl) {
+                const smoothPaths = ['smooth-curve', 'figure-eight', 'gentle-wave'];
+                const randomPath = smoothPaths[Math.floor(Math.random() * smoothPaths.length)];
+
+                feedbackEl.innerHTML = isCorrect
+                    ? '<i class="fas fa-check-circle"></i>'
+                    : '<i class="fas fa-times-circle"></i>';
+
+                feedbackEl.className = `quiz-feedback-icon ${isCorrect ? 'correct' : 'incorrect'} animate-${randomPath}`;
+            }
+        }, 100);
+    }
+
+    // Common answer correctness check
+    isAnswerCorrect(slide) {
+        const c = slide.content || {};
+
+        switch (slide.subtype) {
+            case 'multiple-choice-carousel':
+                return slide.userChoice === (c.correct - 1); // Convert to 0-indexed
+
+            case 'categorize':
+                return slide.userChoice === c.correct;
+
+            default:
+                return false;
+        }
+    }
+
+    // Common reset functionality
+    resetQuiz(slideId) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide) return;
+
+        slide.userChoice = null;
+        slide.submitted = false;
+        this.editor.saveToLocalStorage();
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    // Common user choice setter
+    setUserChoice(slideId, choice) {
+        const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
+        if (!slide || slide.submitted) return;
+
+        slide.userChoice = choice;
+        this.editor.saveToLocalStorage();
+        this.editor.loadSlidePreview(slideId);
+    }
+
+    // Check if submit button should be shown
+    shouldShowSubmitButton(slide) {
+        if (slide.submitted) return false;
+
+        switch (slide.subtype) {
+            case 'multiple-choice-carousel':
+                return slide.userChoice !== null && slide.userChoice !== undefined;
+
+            case 'categorize':
+                return slide.userChoice !== null && slide.userChoice !== undefined;
+
+            default:
+                return false;
+        }
+    }
+}
+
+////////////////////////////////////////////////////
 // CourseEditor — orchestrator
 ////////////////////////////////////////////////////
 export default class CourseEditor {
@@ -2773,6 +2789,7 @@ export default class CourseEditor {
         this.updateLessonHeader();
 
         // interactions & drag system
+        this.quizManager = new QuizManager(this);
         this.interactions = new UIInteractions(this);
         this.dragManager = new DragDropManager(this);
 
@@ -2814,6 +2831,11 @@ export default class CourseEditor {
     addImageCollectionSection(slideId) { return this.slideManager.addImageCollectionSection(slideId); }
     deleteImageCollectionSection(slideId, index) { return this.slideManager.deleteImageCollectionSection(slideId, index); }
 
+    isQuizAnswerCorrect(slide) { return this.quizManager.isAnswerCorrect(slide); }
+    setQuizUserChoice(slideId, choice) { return this.quizManager.setUserChoice(slideId, choice); }
+    resetQuiz(slideId) { return this.quizManager.resetQuiz(slideId); }
+    shouldShowQuizSubmit(slide) { return this.quizManager.shouldShowSubmitButton(slide); }
+    handleQuizSubmit(slideId, containerId = null) { return this.quizManager.handleQuizSubmit(slideId, containerId); }
     isLessonExpanded(lessonId) {
         return this.expandedLessons.has(lessonId);
     }
