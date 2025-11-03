@@ -1099,3 +1099,133 @@ body {
 	position: relative;
 	z-index: 1;
 }
+
+/* Hide lessons collapse button on mobile */
+@media (max-width: 767px) {
+	#collapse-lessons-sidebar {
+		display: none !important;
+	}
+}
+
+/* Ensure it's visible on medium screens and up */
+@media (min-width: 768px) {
+	#collapse-lessons-sidebar {
+		display: flex !important;
+	}
+}
+/* ----------------------------------------
+   🖼️ Enhanced Image Collection Styles
+----------------------------------------- */
+
+/* Normal mode - Dynamic height distribution */
+.image-collection-grid {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.image-collection-item {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.image-collection-item .image-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100%;
+}
+
+.image-collection-item img {
+	object-fit: contain;
+	max-width: 80% !important;
+	max-height: 100% !important;
+	width: auto;
+	height: auto;
+}
+
+/* Focus mode - Proper height distribution with reduced gap */
+.image-collection-detail {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+	justify-content: space-between; /* Better space distribution */
+}
+
+.image-collection-detail .image-container {
+	flex: 1;
+	min-height: 0; /* Allow shrinking */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	/* Removed margin-bottom - gap is now handled by container */
+}
+
+.image-collection-detail .image-container img {
+	max-width: 100%;
+	max-height: 100%;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+}
+
+.image-collection-detail .description-container {
+	max-height: min(300px, 30vh);
+	overflow-y: auto;
+	flex-shrink: 0;
+	margin-top: 0.5rem; /* Reduced from 1rem to 0.5rem */
+}
+
+/* Ensure proper scrolling for long descriptions */
+.description-container::-webkit-scrollbar {
+	width: 6px;
+}
+
+.description-container::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 3px;
+}
+
+.description-container::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 3px;
+}
+
+.description-container::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.5);
+}
+
+/* Better spacing for the container */
+.image-collection-grid > div {
+	padding: 0.5rem 0; /* Reduced vertical padding */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.image-collection-item {
+		width: 90% !important;
+	}
+
+	.image-collection-detail {
+		padding: 0.5rem;
+	}
+
+	.image-collection-detail .description-container {
+		max-height: min(250px, 25vh);
+		margin-top: 0.25rem; /* Even smaller gap on mobile */
+	}
+
+	.image-collection-grid > div {
+		padding: 0.25rem 0; /* Less padding on mobile */
+	}
+}
+
+/* Additional safety margin for many images */
+@media (min-height: 800px) {
+	.image-collection-grid > div {
+		padding: 1rem 0; /* More space on taller screens */
+	}
+}

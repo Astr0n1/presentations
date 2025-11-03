@@ -605,47 +605,55 @@ class UIRenderer {
             const selectedSection = sections[selectedIndex];
 
             return `
-            <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center p-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
-                 data-action="close-detail">
-                ${selectedSection.imageUrl ? `
-                    <div class="image-container mb-6 flex-1 flex items-center justify-center w-full max-w-4xl overflow-hidden">
-                        <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
-                             alt="الصورة المحددة" 
-                             class="max-h-[70%] max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                        <div class="fallback-placeholder hidden text-center text-white/70 py-8">
-                            <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
-                            <p>تعذر تحميل الصورة</p>
-                        </div>
-                    </div>
-                    ${selectedSection.description ? `
-                        <div class="description-container bg-black/40 rounded-xl p-6 max-w-2xl w-full border border-white/20 overflow-hidden">
-                            <p class="text-white text-lg leading-relaxed text-center font-medium break-words">${Utils.escapeHTML(selectedSection.description)}</p>
-                        </div>
-                    ` : ''}
-                ` : `
-                    <div class="text-white/70 text-center py-8">
+        <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center p-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
+             data-action="close-detail">
+            ${selectedSection.imageUrl ? `
+                <div class="image-container flex-1 flex items-center justify-center w-full max-w-4xl overflow-hidden">
+                    <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
+                         alt="الصورة المحددة" 
+                         class="max-h-full max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                    <div class="fallback-placeholder hidden text-center text-white/70 py-8">
                         <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
-                        <p>لم يتم إدخال رابط الصورة بعد</p>
+                        <p>تعذر تحميل الصورة</p>
                     </div>
-                `}
-                <div class="absolute bottom-6 text-white/60 text-sm">
-                    انقر في أي مكان للعودة
                 </div>
+                ${selectedSection.description ? `
+                    <div class="description-container bg-black/40 rounded-xl p-4 max-w-2xl w-full border border-white/20 overflow-y-auto mt-2" style="max-height: min(300px, 30vh);">
+                        <p class="text-white text-lg leading-relaxed text-center font-medium break-words">${Utils.escapeHTML(selectedSection.description)}</p>
+                    </div>
+                ` : ''}
+            ` : `
+                <div class="text-white/70 text-center py-8">
+                    <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                    <p>لم يتم إدخال رابط الصورة بعد</p>
+                </div>
+            `}
+            <div class="absolute bottom-4 text-white/60 text-sm">
+                انقر في أي مكان للعودة
             </div>
-        `;
+        </div>
+    `;
         }
 
-        // Grid view - Fixed layout without cropping issues
+        // Normal mode - Calculate dynamic heights with extra space
+        const sectionsCount = sections.length;
+        const gapHeight = 0.75; // Reduced from 1rem to 0.75rem
+        const totalGapsHeight = (sectionsCount - 1) * gapHeight;
+        const extraPadding = 2; // 2rem extra space at top and bottom
+        const availableHeight = `calc((100% - ${totalGapsHeight}rem - ${extraPadding}rem) / ${sectionsCount})`;
+
         const sectionsHtml = sections.map((section, index) => `
-    <div class="image-collection-item mb-4 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl w-4/5 mx-auto" 
+    <div class="image-collection-item cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl w-4/5 mx-auto" 
          data-action="open-detail" 
-         data-index="${index}">
+         data-index="${index}"
+         style="height: ${availableHeight}; max-height: ${availableHeight};">
         ${section.imageUrl ? `
-            <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full aspect-[3/2] flex items-center justify-center p-2">
+            <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full h-full flex items-center justify-center p-2">
                 <img src="${Utils.escapeHTML(section.imageUrl)}" 
                      alt="صورة ${index + 1}" 
-                     class="h-full w-full object-contain rounded-lg"
+                     class="w-full h-full object-contain rounded-lg max-w-full"
+                     style="max-width: 80%; max-height: 100%;"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                 <div class="fallback-placeholder hidden h-full w-full items-center justify-center text-white/70 bg-black/10 rounded-lg">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
@@ -653,7 +661,7 @@ class UIRenderer {
                 </div>
             </div>
         ` : `
-            <div class="aspect-[3/2] bg-black/20 rounded-xl flex items-center justify-center text-white/70 border-2 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full p-2">
+            <div class="h-full bg-black/20 rounded-xl flex items-center justify-center text-white/70 border-2 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full p-2">
                 <div class="text-center">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
                     <p class="text-xs">لا توجد صورة</p>
@@ -664,8 +672,8 @@ class UIRenderer {
 `).join('');
 
         return `
-    <div class="image-collection-grid w-full h-full py-4">
-        <div class="flex flex-col items-center justify-start h-full space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+    <div class="image-collection-grid w-full h-full">
+        <div class="flex flex-col items-center justify-center h-full space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent py-2">
             ${sectionsHtml}
         </div>
     </div>
