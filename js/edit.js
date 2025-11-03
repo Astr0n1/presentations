@@ -778,17 +778,19 @@ class UIRenderer {
         }).join('');
 
         return `
-        <div class="mt-4 relative overflow-visible w-full">
-            <h2 class="text-lg font-bold text-center mb-3 text-white break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
-            <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">                ${answersHTML}
-            </div>
-            ${submitted ? "" : `
-                <div class="text-center mt-4">
-                    <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" id="quiz-${slide.id}-submit">تأكيد</button>
-                </div>`}
-            <div id="quiz-${slide.id}-icon" class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out"></div>
+    <div class="mt-4 relative overflow-visible w-full">
+        <h2 class="text-lg font-bold text-center mb-3 text-white break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
+        <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">
+            ${answersHTML}
         </div>
-    `;
+        ${submitted ? "" : `
+            <div class="text-center mt-4">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" id="quiz-${slide.id}-submit">تأكيد</button>
+            </div>`}
+        <!-- New feedback icon container -->
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>
+`;
     }
 
     renderQuizCategorize(slide) {
@@ -835,7 +837,7 @@ class UIRenderer {
         const showSubmit = (chosen !== null && !submitted);
 
         return `
-    <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
+            <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
         ${draggableHtml}
         <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
             ${dropZones}
@@ -847,8 +849,8 @@ class UIRenderer {
             </button>
         ` : ''}
 
-        <div id="quiz-${slide.id}-icon" 
-             class="absolute top-0 right-0 text-4xl opacity-0 transition-transform duration-700 ease-out pointer-events-none"></div>
+        <!-- New feedback icon container -->
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
     </div>`;
     }
 
@@ -2127,18 +2129,18 @@ window.handleQuizCategorizeSubmit = (containerId) => {
     const btn = container.querySelector(`#quiz-${containerId}-submit`);
     if (btn) btn.remove();
 
-    // Optional feedback icon behavior (similar to existing carousel)
-    const iconContainer = container.querySelector(`#quiz-${slide.id}-icon`);
-    if (iconContainer) {
-        iconContainer.innerHTML = isCorrect
-            ? '<i class="fas fa-check-circle text-green-400"></i>'
-            : '<i class="fas fa-times-circle text-red-400"></i>';
-        iconContainer.style.opacity = '1';
-        iconContainer.classList.add('quiz-icon-animate');
-        setTimeout(() => {
-            iconContainer.style.opacity = '0';
-            iconContainer.classList.remove('quiz-icon-animate');
-        }, 1500);
+    // Enhanced feedback icon behavior with smooth curved path
+    const feedbackEl = container.querySelector(`#quiz-${slide.id}-feedback`);
+    if (feedbackEl) {
+        // Choose from smooth animations
+        const smoothPaths = ['smooth-curve', 'figure-eight', 'gentle-wave'];
+        const randomPath = smoothPaths[Math.floor(Math.random() * smoothPaths.length)];
+
+        feedbackEl.innerHTML = isCorrect
+            ? '<i class="fas fa-check-circle"></i>'
+            : '<i class="fas fa-times-circle"></i>';
+
+        feedbackEl.className = `quiz-feedback-icon ${isCorrect ? 'correct' : 'incorrect'} animate-${randomPath}`;
     }
 };
 
@@ -2523,22 +2525,23 @@ class UIInteractions {
             this.editor.saveToLocalStorage();
             this.editor.loadSlidePreview(slideId);
 
+            // Show smooth curved path feedback animation
             setTimeout(() => {
-                const iconEl = document.getElementById(`quiz-${slideId}-icon`);
-                const correct = (slide.userChoice === (slide.content.correct - 1));
-                if (iconEl) {
-                    // Set icon type and color
-                    iconEl.innerHTML = correct
-                        ? `<i class="fas fa-star text-yellow-400"></i>`
-                        : `<i class="fas fa-times-circle text-red-500"></i>`;
+                const feedbackEl = document.getElementById(`quiz-${slideId}-feedback`);
+                const isCorrect = (slide.userChoice === (slide.content.correct - 1));
 
-                    // ✅ Trigger the new fly-over animation
-                    iconEl.classList.remove("quiz-icon-animate"); // reset if it played before
-                    void iconEl.offsetWidth; // reflow to restart animation cleanly
-                    iconEl.classList.add("quiz-icon-animate");
+                if (feedbackEl) {
+                    // Choose from smooth animations (you can pick one or keep random)
+                    const smoothPaths = ['smooth-curve', 'figure-eight', 'gentle-wave'];
+                    const randomPath = smoothPaths[Math.floor(Math.random() * smoothPaths.length)];
+
+                    feedbackEl.innerHTML = isCorrect
+                        ? '<i class="fas fa-check-circle"></i>'
+                        : '<i class="fas fa-times-circle"></i>';
+
+                    feedbackEl.className = `quiz-feedback-icon ${isCorrect ? 'correct' : 'incorrect'} animate-${randomPath}`;
                 }
-            }, 300);
-
+            }, 100);
 
             return;
         }
