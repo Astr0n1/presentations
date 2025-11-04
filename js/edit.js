@@ -278,6 +278,60 @@ class SlideManager {
         if (type === 'title') {
             return { title: 'عنوان', subtitle: '', buttonText: 'ابدأ' };
         }
+        // In SlideManager.initializeNewSlideContent method, add:
+        if (type === 'quiz') {
+            if (subtype === 'connect-quiz') {
+                return {
+                    question: 'قم بتوصيل العناصر المتشابهة',
+                    leftColumn: [
+                        { type: 'text', value: 'عنصر 1', correctIndex: 0 },
+                        { type: 'text', value: 'عنصر 2', correctIndex: 1 },
+                        { type: 'text', value: 'عنصر 3', correctIndex: 2 }
+                    ],
+                    rightColumn: [
+                        { type: 'text', value: 'عنصر 1' },
+                        { type: 'text', value: 'عنصر 2' },
+                        { type: 'text', value: 'عنصر 3' }
+                    ],
+                    leftColumnType: 'text',
+                    rightColumnType: 'text'
+                };
+            }
+            if (subtype === 'drag-match-quiz') {
+                return {
+                    question: 'اسحب الصور إلى النصوص المناسبة',
+                    leftColumn: [
+                        { type: 'image', value: '', correctIndex: 0 },
+                        { type: 'image', value: '', correctIndex: 1 },
+                        { type: 'image', value: '', correctIndex: 2 }
+                    ],
+                    rightColumn: [
+                        { type: 'text', value: 'نص 1' },
+                        { type: 'text', value: 'نص 2' },
+                        { type: 'text', value: 'نص 3' }
+                    ],
+                    leftColumnType: 'image',
+                    rightColumnType: 'text'
+                };
+            }
+            if (subtype === 'image-pairs-quiz') {
+                return {
+                    question: 'اختر العناصر الصحيحة من القائمتين',
+                    leftColumn: [
+                        { type: 'text', value: 'عنصر 1', isCorrect: true },
+                        { type: 'text', value: 'عنصر 2', isCorrect: false },
+                        { type: 'text', value: 'عنصر 3', isCorrect: true }
+                    ],
+                    rightColumn: [
+                        { type: 'text', value: 'عنصر أ', isCorrect: true },
+                        { type: 'text', value: 'عنصر ب', isCorrect: false },
+                        { type: 'text', value: 'عنصر ج', isCorrect: true }
+                    ],
+                    leftColumnType: 'text',
+                    rightColumnType: 'text'
+                };
+            }
+        }
         return { title: 'شريحة جديدة', subtitle: '' };
     }
 
@@ -553,6 +607,17 @@ class UIRenderer {
             case 'quiz-categorize':
                 bodyHtml += this.renderQuizCategorize(slide);
                 break;
+            case 'quiz-connect-quiz':
+                bodyHtml += this.renderConnectQuizPreview(slide);
+                break;
+
+            case 'quiz-drag-match-quiz':
+                bodyHtml += this.renderDragMatchQuizPreview(slide);
+                break;
+
+            case 'quiz-image-pairs-quiz':
+                bodyHtml += this.renderImagePairsQuizPreview(slide);
+                break;
 
             default:
                 if (slide.content.text) {
@@ -678,6 +743,734 @@ class UIRenderer {
         </div>
     </div>
 `;
+    }
+
+    // For connect quiz - update the container:
+    renderConnectQuizPreview(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+        const submitted = slide.submitted || false;
+
+        let html = `
+    <div class="quiz-connect-container mt-6 relative w-full h-full flex flex-col">
+        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
+        <div class="flex-1 flex justify-center items-center">
+            <div class="flex gap-8 w-full max-w-4xl h-full">
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">العمود الأيسر</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-center">
+    `;
+
+        // Left column items - max 3
+        leftColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'left', 'connect', submitted);
+        });
+
+        html += `
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">العمود الأيمن</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-center">
+    `;
+
+        // Right column items - max 3
+        rightColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'right', 'connect', submitted);
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="quiz-connections-layer absolute inset-0 pointer-events-none z-10" id="connections-${slide.id}"></div>
+    `;
+
+        // Submit button
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
+        if (showSubmit) {
+            html += `
+        <div class="text-center mt-6 pt-4 border-t border-white/20">
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105" 
+                    id="quiz-${slide.id}-submit">
+                تأكيد الإجابة
+            </button>
+        </div>
+    `;
+        }
+
+        html += `
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>
+    `;
+
+        return html;
+    }
+
+    renderDragMatchQuizPreview(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+        const submitted = slide.submitted || false;
+
+        let html = `
+    <div class="quiz-drag-match-container mt-6 relative w-full h-full flex flex-col">
+        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
+        <div class="flex-1 flex justify-center items-center">
+            <div class="flex gap-8 w-full max-w-4xl h-full">
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">اسحب من هنا</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-center">
+    `;
+
+        // Left column - draggable items - max 3
+        leftColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'left', 'drag', submitted);
+        });
+
+        html += `
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">أسقط هنا</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-center">
+    `;
+
+        // Right column - drop zones - max 3
+        rightColumn.slice(0, 3).forEach((item, index) => {
+            html += `
+        <div class="quiz-drop-zone h-[30%] border-2 border-dashed border-white/40 rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+             data-index="${index}" 
+             ondragover="event.preventDefault()" 
+             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index})">
+            ${this.renderQuizItem(item, index, 'right', 'drag', submitted)}
+        </div>
+    `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Submit button
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
+        if (showSubmit) {
+            html += `
+        <div class="text-center mt-6 pt-4 border-t border-white/20">
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105" 
+                    id="quiz-${slide.id}-submit">
+                تأكيد الإجابة
+            </button>
+        </div>
+    `;
+        }
+
+        html += `
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>
+    `;
+
+        return html;
+    }
+
+
+    // For image pairs quiz - update the container:
+    renderImagePairsQuizPreview(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+        const submitted = slide.submitted || false;
+
+        let html = `
+    <div class="quiz-image-pairs-container mt-6 relative w-full h-full flex flex-col">
+        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
+        <div class="flex-1 flex justify-center items-center">
+            <div class="flex gap-8 w-full max-w-4xl h-full">
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">القائمة اليسرى</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-center">
+    `;
+
+        // Left column - selectable items - max 3
+        leftColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'left', 'pairs', submitted);
+        });
+
+        html += `
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">القائمة اليمنى</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-center">
+    `;
+
+        // Right column - selectable items - max 3
+        rightColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'right', 'pairs', submitted);
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Submit button
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
+        if (showSubmit) {
+            html += `
+        <div class="text-center mt-6 pt-4 border-t border-white/20">
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105" 
+                    id="quiz-${slide.id}-submit">
+                تأكيد الإجابة
+            </button>
+        </div>
+    `;
+        }
+
+        html += `
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>
+    `;
+
+        return html;
+    }
+
+    renderDragMatchQuizPreview(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+        const submitted = slide.submitted || false;
+
+        let html = `
+        <div class="quiz-drag-match-container mt-4">
+            <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
+            <div class="quiz-columns-container">
+                <div class="quiz-column">
+                    <div class="quiz-column-header">اسحب من هنا</div>
+    `;
+
+        // Left column - draggable items
+        leftColumn.forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'left', 'drag', submitted);
+        });
+
+        html += `
+                </div>
+                <div class="quiz-column">
+                    <div class="quiz-column-header">أسقط هنا</div>
+    `;
+
+        // Right column - drop zones
+        rightColumn.forEach((item, index) => {
+            html += `
+            <div class="quiz-drop-zone" data-index="${index}" 
+                 ondragover="event.preventDefault()" 
+                 ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index})">
+                ${this.renderQuizItem(item, index, 'right', 'drag', submitted)}
+            </div>
+        `;
+        });
+
+        html += `
+                </div>
+            </div>
+    `;
+
+        // Submit button
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
+        if (showSubmit) {
+            html += `
+            <div class="text-center mt-4">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
+                        id="quiz-${slide.id}-submit">
+                    تأكيد الإجابة
+                </button>
+            </div>
+        `;
+        }
+
+        html += `
+            <!-- Feedback icon container -->
+            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+        </div>
+    `;
+
+        return html;
+    }
+
+    renderImagePairsQuizPreview(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+        const submitted = slide.submitted || false;
+
+        let html = `
+        <div class="quiz-image-pairs-container mt-4">
+            <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
+            <div class="quiz-columns-container">
+                <div class="quiz-column">
+                    <div class="quiz-column-header">القائمة اليسرى</div>
+    `;
+
+        // Left column - selectable items
+        leftColumn.forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'left', 'pairs', submitted);
+        });
+
+        html += `
+                </div>
+                <div class="quiz-column">
+                    <div class="quiz-column-header">القائمة اليمنى</div>
+    `;
+
+        // Right column - selectable items
+        rightColumn.forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'right', 'pairs', submitted);
+        });
+
+        html += `
+                </div>
+            </div>
+    `;
+
+        // Submit button
+        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
+        if (showSubmit) {
+            html += `
+            <div class="text-center mt-4">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
+                        id="quiz-${slide.id}-submit">
+                    تأكيد الإجابة
+                </button>
+            </div>
+        `;
+        }
+
+        html += `
+            <!-- Feedback icon container -->
+            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+        </div>
+    `;
+
+        return html;
+    }
+
+    // Replace renderQuizItem method:
+    renderQuizItem(item, index, side, quizType, submitted = false) {
+        const isSelected = item._selected || false;
+        const isCorrect = item.isCorrect || false;
+
+        // Base Tailwind classes for all quiz items - 30% height
+        let itemClass = "h-[30%] bg-black/40 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg hover:border-white/50 hover:shadow-xl";
+
+        // Type-specific classes
+        if (quizType === 'pairs' && submitted) {
+            itemClass += isCorrect ? " bg-green-600/30 border-green-500 shadow-green-500/20" : " bg-red-600/30 border-red-500 shadow-red-500/20";
+        }
+        if (quizType === 'pairs' && isSelected && !submitted) {
+            itemClass += " bg-blue-600/40 border-blue-400 transform scale-105";
+        }
+        if (quizType === 'connect') {
+            itemClass += " cursor-pointer";
+        }
+        if (quizType === 'drag' && side === 'left' && !submitted) {
+            itemClass += " bg-blue-600/20 border-blue-400 cursor-grab active:cursor-grabbing hover:bg-blue-600/30 hover:transform hover:scale-105";
+        }
+
+        let content = '';
+        if (item.type === 'text') {
+            content = `<div class="text-white text-center font-semibold text-sm leading-relaxed break-words">${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
+        } else if (item.type === 'image') {
+            if (item.value) {
+                content = `
+            <img src="${Utils.escapeHTML(item.value)}" alt="صورة ${index + 1}" 
+                 class="w-full h-full object-cover rounded-lg"
+                 onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <div class="fallback-placeholder hidden flex-col items-center justify-center text-white/60">
+                <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                <p class="text-xs">تعذر تحميل الصورة</p>
+            </div>
+        `;
+            } else {
+                content = `
+            <div class="flex flex-col items-center justify-center text-white/60">
+                <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                <p class="text-xs">لا توجد صورة</p>
+            </div>
+        `;
+            }
+        }
+
+        // Add interactive elements based on quiz type
+        if (quizType === 'connect') {
+            return `
+        <div class="${itemClass} quiz-connect-item" data-side="${side}" data-index="${index}">
+            ${content}
+        </div>
+    `;
+        } else if (quizType === 'drag') {
+            const draggable = side === 'left' && !submitted;
+            return `
+        <div class="${itemClass} quiz-drag-item" data-side="${side}" data-index="${index}" 
+             ${draggable ? 'draggable="true"' : ''}
+             ondragstart="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}">
+            ${content}
+        </div>
+    `;
+        } else if (quizType === 'pairs') {
+            const selectable = !submitted;
+            return `
+        <div class="${itemClass} quiz-pairs-item" data-side="${side}" data-index="${index}" 
+             ${selectable ? `onclick="window.handleImagePairsSelect(event, '${side}', ${index})"` : ''}>
+            ${content}
+        </div>
+    `;
+        }
+
+        return `<div class="${itemClass}">${content}</div>`;
+    }
+
+    // Replace renderConnectQuizEditor method:
+    renderConnectQuizEditor(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+        const leftColumnType = c.leftColumnType || 'text';
+        const rightColumnType = c.rightColumnType || 'text';
+
+        const leftItemsHtml = leftColumn.map((item, index) => `
+        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">العنصر ${index + 1}</span>
+                <button data-action="delete-connect-left" data-index="${index}" 
+                        ${leftColumn.length <= 1 ? 'disabled' : ''}
+                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                ${leftColumnType === 'text' ? `
+                    <div>
+                        <input type="text" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                            placeholder="النص..." />
+                    </div>
+                ` : `
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                        <input type="url" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                            placeholder="https://example.com/image.jpg" />
+                    </div>
+                `}
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">رقم العنصر الصحيح:</label>
+                    <input type="number" data-connect-left="${index}" data-field="correctIndex" value="${item.correctIndex || 0}" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        min="0" max="${Math.max(0, rightColumn.length - 1)}" />
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+        const rightItemsHtml = rightColumn.map((item, index) => `
+        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">العنصر ${index + 1}</span>
+                <button data-action="delete-connect-right" data-index="${index}" 
+                        ${rightColumn.length <= 1 ? 'disabled' : ''}
+                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${rightColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+            <div>
+                ${rightColumnType === 'text' ? `
+                    <input type="text" data-connect-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        placeholder="النص..." />
+                ` : `
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                        <input type="url" data-connect-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                            placeholder="https://example.com/image.jpg" />
+                    </div>
+                `}
+            </div>
+        </div>
+    `).join('');
+
+        return `
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات اختبار التوصيل</h4>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">السؤال</label>
+            <input type="text" id="connect-quiz-question" value="${Utils.escapeHTML(c.question || '')}" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="أدخل السؤال هنا..." />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">نوع العمود الأيسر</label>
+                <select id="connect-left-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="text" ${leftColumnType === 'text' ? 'selected' : ''}>نص</option>
+                    <option value="image" ${leftColumnType === 'image' ? 'selected' : ''}>صورة</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">نوع العمود الأيمن</label>
+                <select id="connect-right-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="text" ${rightColumnType === 'text' ? 'selected' : ''}>نص</option>
+                    <option value="image" ${rightColumnType === 'image' ? 'selected' : ''}>صورة</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <details class="bg-gray-50 rounded-lg border border-gray-200" open>
+                <summary class="p-3 cursor-pointer flex items-center justify-between">
+                    <h5 class="text-base font-semibold text-gray-800">العمود الأيسر (${leftColumn.length}/3)</h5>
+                    <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                </summary>
+                <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
+                    <div id="connect-left-container" class="space-y-2">
+                        ${leftItemsHtml}
+                    </div>
+                </div>
+            </details>
+            
+            <details class="bg-gray-50 rounded-lg border border-gray-200" open>
+                <summary class="p-3 cursor-pointer flex items-center justify-between">
+                    <h5 class="text-base font-semibold text-gray-800">العمود الأيمن (${rightColumn.length}/3)</h5>
+                    <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                </summary>
+                <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
+                    <div id="connect-right-container" class="space-y-2">
+                        ${rightItemsHtml}
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div class="mt-4">
+            ${leftColumn.length < 3 && rightColumn.length < 3 ? `
+                <button id="add-connect-pair" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm">
+                    <i class="fas fa-plus"></i>
+                    <span>إضافة زوج جديد</span>
+                </button>
+            ` : `
+                <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    الحد الأقصى 3 عناصر في كل عمود
+                </div>
+            `}
+        </div>
+    </div>
+    `;
+    }
+
+    renderDragMatchQuizEditor(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+
+        const leftItemsHtml = leftColumn.map((item, index) => `
+        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">الصورة ${index + 1}</span>
+                <button data-action="delete-drag-left" data-index="${index}" 
+                        ${leftColumn.length <= 1 ? 'disabled' : ''}
+                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <div>
+                    <input type="url" data-drag-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                           placeholder="رابط الصورة..." />
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">رقم النص الصحيح:</label>
+                    <input type="number" data-drag-left="${index}" data-field="correctIndex" value="${item.correctIndex || 0}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                           min="0" max="${Math.max(0, rightColumn.length - 1)}" />
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+        const rightItemsHtml = rightColumn.map((item, index) => `
+        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">النص ${index + 1}</span>
+                <button data-action="delete-drag-right" data-index="${index}" 
+                        ${rightColumn.length <= 1 ? 'disabled' : ''}
+                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${rightColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+            <div>
+                <input type="text" data-drag-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                       placeholder="النص..." />
+            </div>
+        </div>
+    `).join('');
+
+        return `
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات اختبار السحب والتوصيل</h4>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">السؤال</label>
+            <input type="text" id="drag-match-quiz-question" value="${Utils.escapeHTML(c.question || '')}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="أدخل السؤال هنا..." />
+        </div>
+
+        <div class="space-y-4">
+            <details class="bg-gray-50 rounded-lg border border-gray-200" open>
+                <summary class="p-3 cursor-pointer flex items-center justify-between">
+                    <h5 class="text-base font-semibold text-gray-800">الصور (قابلة للسحب) (${leftColumn.length}/3)</h5>
+                    <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                </summary>
+                <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
+                    <div id="drag-left-container" class="space-y-2">
+                        ${leftItemsHtml}
+                    </div>
+                </div>
+            </details>
+            
+            <details class="bg-gray-50 rounded-lg border border-gray-200" open>
+                <summary class="p-3 cursor-pointer flex items-center justify-between">
+                    <h5 class="text-base font-semibold text-gray-800">النصوص (مناطق الإسقاط) (${rightColumn.length}/3)</h5>
+                    <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                </summary>
+                <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
+                    <div id="drag-right-container" class="space-y-2">
+                        ${rightItemsHtml}
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div class="mt-4">
+            ${leftColumn.length < 3 && rightColumn.length < 3 ? `
+                <button id="add-drag-pair" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm">
+                    <i class="fas fa-plus"></i>
+                    <span>إضافة زوج جديد</span>
+                </button>
+            ` : `
+                <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    الحد الأقصى 3 عناصر في كل عمود
+                </div>
+            `}
+        </div>
+    </div>
+    `;
+    }
+
+    renderImagePairsQuizEditor(slide) {
+        const c = slide.content || {};
+        const leftColumn = c.leftColumn || [];
+        const rightColumn = c.rightColumn || [];
+
+        const allItemsHtml = [...leftColumn, ...rightColumn].map((item, index) => {
+            const isLeft = index < leftColumn.length;
+            const actualIndex = isLeft ? index : index - leftColumn.length;
+            const columnType = isLeft ? 'left' : 'right';
+
+            return `
+        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <span class="text-sm font-medium text-gray-700">${isLeft ? 'يسار' : 'يمين'} - العنصر ${actualIndex + 1}</span>
+                    <span class="px-2 py-1 bg-${isLeft ? 'blue' : 'green'}-100 text-${isLeft ? 'blue' : 'green'}-800 text-xs rounded">${isLeft ? 'اليسار' : 'اليمين'}</span>
+                </div>
+                <button data-action="delete-pairs-item" data-column="${columnType}" data-index="${actualIndex}" 
+                        ${(isLeft && leftColumn.length <= 1) || (!isLeft && rightColumn.length <= 1) ? 'disabled' : ''}
+                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${(isLeft && leftColumn.length <= 1) || (!isLeft && rightColumn.length <= 1) ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <div>
+                    <input type="text" data-pairs-item="${columnType}" data-index="${actualIndex}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                           placeholder="النص..." />
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" data-pairs-item="${columnType}" data-index="${actualIndex}" data-field="isCorrect" ${item.isCorrect ? 'checked' : ''} 
+                           class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
+                    <label class="ms-2 text-sm font-medium text-gray-700">هذا العنصر صحيح</label>
+                </div>
+            </div>
+        </div>
+        `;
+        }).join('');
+
+        return `
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات اختبار اختيار الصور</h4>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">السؤال</label>
+            <input type="text" id="image-pairs-quiz-question" value="${Utils.escapeHTML(c.question || '')}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="أدخل السؤال هنا..." />
+        </div>
+
+        <div class="space-y-4">
+            <details class="bg-gray-50 rounded-lg border border-gray-200" open>
+                <summary class="p-3 cursor-pointer flex items-center justify-between">
+                    <h5 class="text-base font-semibold text-gray-800">جميع العناصر (اليسار: ${leftColumn.length}/3, اليمين: ${rightColumn.length}/3)</h5>
+                    <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                </summary>
+                <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
+                    <div id="pairs-all-container" class="space-y-2">
+                        ${allItemsHtml}
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            ${leftColumn.length < 3 ? `
+                <button id="add-pairs-left" class="flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm">
+                    <i class="fas fa-plus"></i>
+                    <span>إضافة لليسار</span>
+                </button>
+            ` : `
+                <div class="text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    حد اليسار
+                </div>
+            `}
+            ${rightColumn.length < 3 ? `
+                <button id="add-pairs-right" class="flex items-center justify-center space-x-2 space-x-reverse bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-150 text-sm">
+                    <i class="fas fa-plus"></i>
+                    <span>إضافة لليمين</span>
+                </button>
+            ` : `
+                <div class="text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                    <i class="fas fa-info-circle ml-1"></i>
+                    حد اليمين
+                </div>
+            `}
+        </div>
+    </div>
+    `;
     }
 
     renderImageCollectionEditor(slide) {
@@ -1554,6 +2347,17 @@ class UIRenderer {
             case 'quiz-categorize':
                 html += this.renderQuizCategorizeEditor(slide);
                 break;
+            case 'quiz-connect-quiz':
+                html += this.renderConnectQuizEditor(slide);
+                break;
+
+            case 'quiz-drag-match-quiz':
+                html += this.renderDragMatchQuizEditor(slide);
+                break;
+
+            case 'quiz-image-pairs-quiz':
+                html += this.renderImagePairsQuizEditor(slide);
+                break;
             default:
                 if (slide.content.text !== undefined) {
                     html += `
@@ -2045,6 +2849,86 @@ window.handleCategorizeDrop = (e, containerId, dropIndex) => {
     }
 };
 
+window.handleImagePairsSelect = function (event, side, index) {
+    event.stopPropagation();
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.getCurrentSlide();
+    if (!slide || slide.submitted) return;
+
+    // Initialize user selections if not exists
+    if (!slide.userSelections) {
+        slide.userSelections = { left: [], right: [] };
+    }
+
+    const currentSelections = slide.userSelections[side];
+    const itemIndex = currentSelections.indexOf(index);
+
+    if (itemIndex > -1) {
+        // Remove selection
+        currentSelections.splice(itemIndex, 1);
+    } else {
+        // Add selection
+        currentSelections.push(index);
+    }
+
+    editor.saveToLocalStorage();
+    editor.loadSlidePreview(slide.id);
+};
+
+// Global function for drag match start
+window.handleDragMatchStart = function (event, side, index) {
+    event.dataTransfer.setData('text/plain', JSON.stringify({
+        side: side,
+        index: index
+    }));
+
+    // Add visual feedback
+    event.target.classList.add('opacity-50', 'scale-95');
+};
+
+// Global function for drag match drop
+window.handleDragMatchDrop = function (event, slideId, dropIndex) {
+    event.preventDefault();
+
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.findSlide(editor.currentLessonId, parseInt(slideId));
+    if (!slide || slide.submitted) return;
+
+    try {
+        const dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+        const draggedSide = dragData.side;
+        const draggedIndex = dragData.index;
+
+        // Initialize user matches if not exists
+        if (!slide.userMatches) {
+            slide.userMatches = [];
+        }
+
+        // Remove any existing match for this dragged item
+        slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
+
+        // Add new match
+        slide.userMatches.push({
+            leftIndex: draggedIndex,
+            rightIndex: dropIndex
+        });
+
+        editor.saveToLocalStorage();
+        editor.loadSlidePreview(slide.id);
+
+    } catch (err) {
+        console.error('Error handling drag drop:', err);
+    }
+
+    // Remove visual feedback from all drag items
+    document.querySelectorAll('.quiz-drag-item').forEach(item => {
+        item.classList.remove('opacity-50', 'scale-95');
+    });
+};
 
 window.handleQuizCategorizeSubmit = (containerId) => {
     const container = document.getElementById(containerId);
@@ -2211,6 +3095,89 @@ class UIInteractions {
                 this.editor.updateNestedContent(this.editor.currentSlideId, 'sections', idx, field, target.value);
             }
         }
+        // Handle connect quiz column type changes
+        if (target.id === 'connect-left-type') {
+            if (this.editor.currentSlideId != null) {
+                this.editor.updateSlideContent(this.editor.currentSlideId, 'leftColumnType', target.value);
+                // Force re-render of edit form to show correct input types
+                this.editor.loadSlideEditContent(this.editor.currentSlideId);
+            }
+        }
+
+        if (target.id === 'connect-right-type') {
+            if (this.editor.currentSlideId != null) {
+                this.editor.updateSlideContent(this.editor.currentSlideId, 'rightColumnType', target.value);
+                // Force re-render of edit form to show correct input types
+                this.editor.loadSlideEditContent(this.editor.currentSlideId);
+            }
+        }
+
+        if (target.id === 'connect-quiz-question') {
+            if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'question', target.value);
+        }
+
+        if (target.id === 'drag-match-quiz-question') {
+            if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'question', target.value);
+        }
+
+        if (target.id === 'image-pairs-quiz-question') {
+            if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'question', target.value);
+        }
+
+        // Handle connect quiz inputs
+        if (target.dataset && target.dataset.connectLeft !== undefined) {
+            const idx = parseInt(target.dataset.connectLeft, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                const value = field === 'correctIndex' ? parseInt(target.value, 10) : target.value;
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, value);
+            }
+        }
+
+        if (target.dataset && target.dataset.connectRight !== undefined) {
+            const idx = parseInt(target.dataset.connectRight, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'rightColumn', idx, field, target.value);
+            }
+        }
+
+        // Handle drag match quiz inputs
+        if (target.dataset && target.dataset.dragLeft !== undefined) {
+            const idx = parseInt(target.dataset.dragLeft, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                const value = field === 'correctIndex' ? parseInt(target.value, 10) : target.value;
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, value);
+            }
+        }
+
+        if (target.dataset && target.dataset.dragRight !== undefined) {
+            const idx = parseInt(target.dataset.dragRight, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'rightColumn', idx, field, target.value);
+            }
+        }
+
+        // Handle image pairs quiz inputs
+        if (target.dataset && target.dataset.pairsLeft !== undefined) {
+            const idx = parseInt(target.dataset.pairsLeft, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                const value = field === 'isCorrect' ? target.checked : target.value;
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, value);
+            }
+        }
+
+        if (target.dataset && target.dataset.pairsRight !== undefined) {
+            const idx = parseInt(target.dataset.pairsRight, 10);
+            const field = target.dataset.field;
+            if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
+                const value = field === 'isCorrect' ? target.checked : target.value;
+                this.editor.updateNestedContent(this.editor.currentSlideId, 'rightColumn', idx, field, value);
+            }
+        }
 
         if (target.dataset && target.dataset.expandable !== undefined) {
             const idx = parseInt(target.dataset.expandable, 10);
@@ -2276,6 +3243,127 @@ class UIInteractions {
             const idx = parseInt(delTextSeriesBtn.dataset.index, 10);
             if (!isNaN(idx) && this.editor.currentSlideId != null) {
                 this.editor.deleteTextSeriesItem(this.editor.currentSlideId, idx);
+            }
+            return;
+        }
+
+        // Add connect pair
+        const addConnectPairBtn = target.closest('#add-connect-pair');
+        if (addConnectPairBtn && this.editor.currentSlideId != null) {
+            const slide = this.editor.getCurrentSlide();
+            if (!slide.content.leftColumn) slide.content.leftColumn = [];
+            if (!slide.content.rightColumn) slide.content.rightColumn = [];
+
+            // Check limits
+            if (slide.content.leftColumn.length >= 3 || slide.content.rightColumn.length >= 3) {
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في كل عمود.', 'warning');
+                return;
+            }
+
+            const leftType = slide.content.leftColumnType || 'text';
+            const rightType = slide.content.rightColumnType || 'text';
+
+            slide.content.leftColumn.push({
+                type: leftType,
+                value: leftType === 'text' ? 'عنصر جديد' : '',
+                correctIndex: slide.content.rightColumn.length
+            });
+            slide.content.rightColumn.push({
+                type: rightType,
+                value: rightType === 'text' ? 'عنصر جديد' : ''
+            });
+
+            this.editor.saveToLocalStorage();
+            this.editor.loadSlideEditContent(this.editor.currentSlideId);
+            return;
+        }
+
+        // Add drag pair with limits
+        const addDragPairBtn = target.closest('#add-drag-pair');
+        if (addDragPairBtn && this.editor.currentSlideId != null) {
+            const slide = this.editor.getCurrentSlide();
+            if (!slide.content.leftColumn) slide.content.leftColumn = [];
+            if (!slide.content.rightColumn) slide.content.rightColumn = [];
+
+            // Check limits
+            if (slide.content.leftColumn.length >= 3 || slide.content.rightColumn.length >= 3) {
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في كل عمود.', 'warning');
+                return;
+            }
+
+            slide.content.leftColumn.push({ type: 'image', value: '', correctIndex: slide.content.rightColumn.length });
+            slide.content.rightColumn.push({ type: 'text', value: 'نص جديد' });
+
+            this.editor.saveToLocalStorage();
+            this.editor.loadSlideEditContent(this.editor.currentSlideId);
+            return;
+        }
+
+        // Add pairs left with limits
+        const addPairsLeftBtn = target.closest('#add-pairs-left');
+        if (addPairsLeftBtn && this.editor.currentSlideId != null) {
+            const slide = this.editor.getCurrentSlide();
+            if (!slide.content.leftColumn) slide.content.leftColumn = [];
+
+            // Check limit
+            if (slide.content.leftColumn.length >= 3) {
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في القائمة اليسرى.', 'warning');
+                return;
+            }
+
+            slide.content.leftColumn.push({ type: 'text', value: 'عنصر جديد', isCorrect: false });
+            this.editor.saveToLocalStorage();
+            this.editor.loadSlideEditContent(this.editor.currentSlideId);
+            return;
+        }
+
+        // Add pairs right with limits
+        const addPairsRightBtn = target.closest('#add-pairs-right');
+        if (addPairsRightBtn && this.editor.currentSlideId != null) {
+            const slide = this.editor.getCurrentSlide();
+            if (!slide.content.rightColumn) slide.content.rightColumn = [];
+
+            // Check limit
+            if (slide.content.rightColumn.length >= 3) {
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في القائمة اليمنى.', 'warning');
+                return;
+            }
+
+            slide.content.rightColumn.push({ type: 'text', value: 'عنصر جديد', isCorrect: false });
+            this.editor.saveToLocalStorage();
+            this.editor.loadSlideEditContent(this.editor.currentSlideId);
+            return;
+        }
+
+        // In handleInput method, add column type handlers:
+        if (target.id === 'connect-left-type') {
+            if (this.editor.currentSlideId != null) {
+                this.editor.updateSlideContent(this.editor.currentSlideId, 'leftColumnType', target.value);
+            }
+        }
+
+        if (target.id === 'connect-right-type') {
+            if (this.editor.currentSlideId != null) {
+                this.editor.updateSlideContent(this.editor.currentSlideId, 'rightColumnType', target.value);
+            }
+        }
+
+        // Delete pairs item
+        const deletePairsItemBtn = target.closest('[data-action="delete-pairs-item"]');
+        if (deletePairsItemBtn && this.editor.currentSlideId != null) {
+            const column = deletePairsItemBtn.dataset.column;
+            const index = parseInt(deletePairsItemBtn.dataset.index, 10);
+            const slide = this.editor.getCurrentSlide();
+
+            if (slide.content[column === 'left' ? 'leftColumn' : 'rightColumn']) {
+                const columnArray = slide.content[column === 'left' ? 'leftColumn' : 'rightColumn'];
+                if (columnArray.length > 1) {
+                    columnArray.splice(index, 1);
+                    this.editor.saveToLocalStorage();
+                    this.editor.loadSlideEditContent(this.editor.currentSlideId);
+                } else {
+                    Swal.fire('تنبيه', 'يجب أن تبقى عنصر واحد على الأقل في كل قائمة.', 'warning');
+                }
             }
             return;
         }
@@ -2647,6 +3735,21 @@ class QuizManager {
                     return { isValid: false, message: 'يجب تحديد التصنيف الصحيح' };
                 }
                 break;
+            case 'connect-quiz':
+                if (!c.leftColumn || !c.rightColumn || c.leftColumn.length === 0 || c.rightColumn.length === 0) {
+                    return { isValid: false, message: 'يجب إدخال عناصر في كلا العمودين' };
+                }
+                break;
+            case 'drag-match-quiz':
+                if (!c.leftColumn || !c.rightColumn || c.leftColumn.length === 0 || c.rightColumn.length === 0) {
+                    return { isValid: false, message: 'يجب إدخال عناصر في كلا العمودين' };
+                }
+                break;
+            case 'image-pairs-quiz':
+                if (!c.leftColumn || !c.rightColumn || c.leftColumn.length === 0 || c.rightColumn.length === 0) {
+                    return { isValid: false, message: 'يجب إدخال عناصر في كلا العمودين' };
+                }
+                break;
         }
 
         return { isValid: true };
@@ -2709,6 +3812,32 @@ class QuizManager {
 
             case 'categorize':
                 return slide.userChoice === c.correct;
+            case 'connect-quiz':
+                // Check if all connections are correct
+                const userConnections = slide.userConnections || [];
+                return userConnections.every(conn => {
+                    const leftItem = c.leftColumn[conn.leftIndex];
+                    const rightItem = c.rightColumn[conn.rightIndex];
+                    return leftItem && rightItem && leftItem.correctIndex === conn.rightIndex;
+                });
+            case 'drag-match-quiz':
+                // Check if all drag matches are correct
+                const userMatches = slide.userMatches || [];
+                return userMatches.every(match => {
+                    const leftItem = c.leftColumn[match.leftIndex];
+                    const rightItem = c.rightColumn[match.rightIndex];
+                    return leftItem && rightItem && leftItem.correctIndex === match.rightIndex;
+                });
+            case 'image-pairs-quiz':
+                // Check if all selected items are correct and all correct items are selected
+                const userSelections = slide.userSelections || { left: [], right: [] };
+                const allLeftCorrect = c.leftColumn.every((item, index) =>
+                    item.isCorrect === userSelections.left.includes(index)
+                );
+                const allRightCorrect = c.rightColumn.every((item, index) =>
+                    item.isCorrect === userSelections.right.includes(index)
+                );
+                return allLeftCorrect && allRightCorrect;
 
             default:
                 return false;
@@ -2746,6 +3875,15 @@ class QuizManager {
 
             case 'categorize':
                 return slide.userChoice !== null && slide.userChoice !== undefined;
+            case 'connect-quiz':
+                const userConnections = slide.userConnections || [];
+                return userConnections.length === (slide.content?.leftColumn?.length || 0);
+            case 'drag-match-quiz':
+                const userMatches = slide.userMatches || [];
+                return userMatches.length === (slide.content?.leftColumn?.length || 0);
+            case 'image-pairs-quiz':
+                const userSelections = slide.userSelections || { left: [], right: [] };
+                return userSelections.left.length > 0 || userSelections.right.length > 0;
 
             default:
                 return false;
@@ -2792,7 +3930,10 @@ export default class CourseEditor {
             video: [{ subtype: 'video', title: 'فيديو', description: '', icon: 'fa-video' }],
             quiz: [
                 { subtype: 'multiple-choice-carousel', title: 'اختبار من متعدد', description: 'قم باختيار الاجابة الصحيحة', icon: 'fa-layer-group' },
-                { subtype: 'categorize', title: 'اختبار تصنيفي', description: 'صنف العبارة التالية', icon: 'fa-layer-group' }
+                { subtype: 'categorize', title: 'اختبار تصنيفي', description: 'صنف العبارة التالية', icon: 'fa-layer-group' },
+                { subtype: 'connect-quiz', title: 'اختبار التوصيل', description: 'قم بتوصيل العناصر المتشابهة', icon: 'fa-link' },
+                { subtype: 'drag-match-quiz', title: 'اختبار السحب والتوصيل', description: 'اسحب الصور إلى النصوص المناسبة', icon: 'fa-hand-paper' },
+                { subtype: 'image-pairs-quiz', title: 'اختبار اختيار الصور', description: 'اختر العناصر الصحيحة من القائمتين', icon: 'fa-check-double' }
             ]
         };
 
@@ -2837,6 +3978,16 @@ export default class CourseEditor {
         return;
     }
     ensureInitialState() { return this.slideManager.ensureInitialState(); }
+    getQuizTypeText(subtype) {
+        const types = {
+            'multiple-choice-carousel': 'اختبار من متعدد',
+            'categorize': 'اختبار تصنيفي',
+            'connect-quiz': 'اختبار التوصيل',
+            'drag-match-quiz': 'اختبار السحب والتوصيل',
+            'image-pairs-quiz': 'اختبار اختيار الصور'
+        };
+        return types[subtype] || subtype;
+    }
 
     // re-expose slide manager methods so old callers still work
     addNewLesson() { return this.slideManager.addNewLesson(); }
