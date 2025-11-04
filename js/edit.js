@@ -315,16 +315,16 @@ class SlideManager {
             }
             if (subtype === 'image-pairs-quiz') {
                 return {
-                    question: 'اختر العناصر الصحيحة من القائمتين',
+                    question: 'اختر الصور الصحيحة من القائمتين',
                     leftColumn: [
-                        { type: 'text', value: 'عنصر 1', isCorrect: true }
+                        { type: 'image', value: '', isCorrect: true }
                     ],
                     rightColumn: [
-                        { type: 'text', value: 'عنصر أ', isCorrect: true },
-                        { type: 'text', value: 'عنصر ب', isCorrect: false }
+                        { type: 'image', value: '', isCorrect: true },
+                        { type: 'image', value: '', isCorrect: false }
                     ],
-                    leftColumnType: 'text',
-                    rightColumnType: 'text'
+                    leftColumnType: 'image',  // Force image type
+                    rightColumnType: 'image'  // Force image type
                 };
             }
         }
@@ -624,7 +624,7 @@ class UIRenderer {
         }
 
         previewContent.innerHTML = `
-            <div class="slide-content w-full h-full overflow-y-auto break-words hyphens-auto">
+            <div class="slide-content w-full  overflow-y-auto break-words hyphens-auto">
                 ${headerHtml + bodyHtml}
             </div>
         `;
@@ -754,10 +754,10 @@ class UIRenderer {
     <div class="quiz-connect-container mt-6 relative w-full h-full flex flex-col">
         <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
         <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-8 w-full max-w-4xl h-full">
+            <div class="flex gap-10 w-full max-w-4xl ">
                 <div class="flex-1 flex flex-col h-full">
                     <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">العمود الأيسر</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center">
+                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
         // Left column items - max 3, using column type
@@ -770,7 +770,7 @@ class UIRenderer {
                 </div>
                 <div class="flex-1 flex flex-col h-full">
                     <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">العمود الأيمن</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center">
+                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
         // Right column items - max 3, using column type
@@ -819,10 +819,10 @@ class UIRenderer {
     <div class="quiz-drag-match-container mt-6 relative w-full h-full flex flex-col">
         <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
         <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-8 w-full max-w-4xl h-full">
+            <div class="flex gap-10 w-full max-w-4xl h-full">
                 <div class="flex-1 flex flex-col h-full">
                     <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">اسحب من هنا</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center">
+                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
         // Left column - draggable items - max 3, using column type
@@ -835,7 +835,7 @@ class UIRenderer {
                 </div>
                 <div class="flex-1 flex flex-col h-full">
                     <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">أسقط هنا</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center">
+                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
         // Right column - drop zones - max 3, using column type
@@ -884,22 +884,30 @@ class UIRenderer {
         const c = slide.content || {};
         const leftColumn = c.leftColumn || [];
         const rightColumn = c.rightColumn || [];
-        const leftColumnType = c.leftColumnType || 'text';
-        const rightColumnType = c.rightColumnType || 'text';
+        const leftColumnType = c.leftColumnType || 'image'; // Force image type
+        const rightColumnType = c.rightColumnType || 'image'; // Force image type
         const submitted = slide.submitted || false;
+
+        console.log('Image Pairs Debug:', {
+            leftColumn,
+            rightColumn,
+            leftColumnType,
+            rightColumnType
+        });
 
         let html = `
     <div class="quiz-image-pairs-container mt-6 relative w-full h-full flex flex-col">
-        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
+        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اختر الصور الصحيحة من القائمتين')}</h3>
         <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-8 w-full max-w-4xl h-full">
+            <div class="flex gap-10 w-full max-w-4xl h-full">
                 <div class="flex-1 flex flex-col h-full">
                     <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">القائمة اليسرى</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center">
+                    <div class="flex-1 flex flex-col gap-4 justify-center items-center">
     `;
 
         // Left column - selectable items - max 3, using column type
         leftColumn.slice(0, 3).forEach((item, index) => {
+            console.log('Left item:', item, 'Type:', leftColumnType);
             html += this.renderQuizItem(item, index, 'left', 'pairs', submitted, leftColumnType);
         });
 
@@ -908,11 +916,12 @@ class UIRenderer {
                 </div>
                 <div class="flex-1 flex flex-col h-full">
                     <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">القائمة اليمنى</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center">
+                    <div class="flex-1 flex flex-col gap-4 justify-center items-center">
     `;
 
         // Right column - selectable items - max 3, using column type
         rightColumn.slice(0, 3).forEach((item, index) => {
+            console.log('Right item:', item, 'Type:', rightColumnType);
             html += this.renderQuizItem(item, index, 'right', 'pairs', submitted, rightColumnType);
         });
 
@@ -953,7 +962,7 @@ class UIRenderer {
         let html = `
         <div class="quiz-drag-match-container mt-4">
             <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
-            <div class="quiz-columns-container">
+            <div class="quiz-columns-container gap-20">
                 <div class="quiz-column">
                     <div class="quiz-column-header">اسحب من هنا</div>
     `;
@@ -1014,9 +1023,9 @@ class UIRenderer {
         const submitted = slide.submitted || false;
 
         let html = `
-        <div class="quiz-image-pairs-container mt-4">
+        <div class="quiz-image-pairs-container mt-4 mx-auto">
             <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
-            <div class="quiz-columns-container">
+            <div class="quiz-columns-container gap-20">
                 <div class="quiz-column">
                     <div class="quiz-column-header">القائمة اليسرى</div>
     `;
@@ -1064,15 +1073,14 @@ class UIRenderer {
         return html;
     }
 
-    // Replace renderQuizItem method:
     renderQuizItem(item, index, side, quizType, submitted = false, columnType = null) {
         // Use column type if provided, otherwise fall back to item.type
         const type = columnType || item.type;
         const isSelected = item._selected || false;
         const isCorrect = item.isCorrect || false;
 
-        // Base Tailwind classes for all quiz items - consistent sizing
-        let itemClass = "flex-1 min-h-0 bg-black/40 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
+        // Base Tailwind classes for all quiz items - FIXED sizing
+        let itemClass = "w-32 h-32 bg-black/40 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
 
         // Hover effects for interactive items
         if (quizType === 'connect' || quizType === 'pairs') {
@@ -1184,9 +1192,12 @@ class UIRenderer {
                 `}
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">رقم العنصر الصحيح:</label>
-                    <input type="number" data-connect-left="${index}" data-field="correctIndex" value="${item.correctIndex || 0}" 
+                    <input type="number" data-connect-left="${index}" data-field="correctIndex" 
+                        value="${item.correctIndex !== undefined ? item.correctIndex + 1 : 1}" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                        min="0" max="${Math.max(0, rightColumn.length - 1)}" />
+                        min="1" max="${Math.max(1, rightColumn.length)}" 
+                        oninput="this.value = Math.max(1, Math.min(parseInt(this.value) || 1, ${Math.max(1, rightColumn.length)}))" />
+                    <p class="text-xs text-gray-500 mt-1">(من 1 إلى ${rightColumn.length})</p>
                 </div>
             </div>
         </div>
@@ -1313,9 +1324,11 @@ class UIRenderer {
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">رقم النص الصحيح:</label>
-                    <input type="number" data-drag-left="${index}" data-field="correctIndex" value="${item.correctIndex || 0}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           min="0" max="${Math.max(0, rightColumn.length - 1)}" />
+                    <input type="number" data-drag-left="${index}" data-field="correctIndex" value="${item.correctIndex !== undefined ? item.correctIndex + 1 : 1}" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        min="1" max="${Math.max(1, rightColumn.length)}" 
+                        oninput="this.value = Math.max(1, Math.min(parseInt(this.value) || 1, ${Math.max(1, rightColumn.length)}))" />
+                    <p class="text-xs text-gray-500 mt-1">(من 1 إلى ${rightColumn.length})</p>
                 </div>
             </div>
         </div>
@@ -1397,13 +1410,14 @@ class UIRenderer {
         const c = slide.content || {};
         const leftColumn = c.leftColumn || [];
         const rightColumn = c.rightColumn || [];
-        const leftColumnType = c.leftColumnType || 'text';
-        const rightColumnType = c.rightColumnType || 'text';
+        // Force image pairs to use images only
+        const leftColumnType = 'image';
+        const rightColumnType = 'image';
 
         const leftItemsHtml = leftColumn.map((item, index) => `
     <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-700">العنصر ${index + 1}</span>
+            <span class="text-sm font-medium text-gray-700">الصورة ${index + 1}</span>
             <button data-action="delete-pairs-item" data-column="left" data-index="${index}" 
                     ${leftColumn.length <= 1 ? 'disabled' : ''}
                     class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
@@ -1411,24 +1425,27 @@ class UIRenderer {
             </button>
         </div>
         <div class="space-y-2">
-            ${leftColumnType === 'text' ? `
-                <div>
-                    <input type="text" data-pairs-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="النص..." />
-                </div>
-            ` : `
-                <div>
-                    <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                    <input type="url" data-pairs-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="https://example.com/image.jpg" />
-                </div>
-            `}
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                <input type="url" data-pairs-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                       placeholder="https://example.com/image.jpg" />
+                ${item.value ? `
+                    <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
+                        <img src="${Utils.escapeHTML(item.value)}" alt="معاينة" 
+                             class="max-h-32 mx-auto rounded" 
+                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
+                            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
+                            <p class="text-xs">تعذر تحميل الصورة</p>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
             <div class="flex items-center">
                 <input type="checkbox" data-pairs-left="${index}" data-field="isCorrect" ${item.isCorrect ? 'checked' : ''} 
                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
-                <label class="ms-2 text-sm font-medium text-gray-700">هذا العنصر صحيح</label>
+                <label class="ms-2 text-sm font-medium text-gray-700">هذه الصورة صحيحة</label>
             </div>
         </div>
     </div>
@@ -1437,7 +1454,7 @@ class UIRenderer {
         const rightItemsHtml = rightColumn.map((item, index) => `
     <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-700">العنصر ${index + 1}</span>
+            <span class="text-sm font-medium text-gray-700">الصورة ${index + 1}</span>
             <button data-action="delete-pairs-item" data-column="right" data-index="${index}" 
                     ${rightColumn.length <= 1 ? 'disabled' : ''}
                     class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${rightColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
@@ -1445,24 +1462,27 @@ class UIRenderer {
             </button>
         </div>
         <div class="space-y-2">
-            ${rightColumnType === 'text' ? `
-                <div>
-                    <input type="text" data-pairs-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="النص..." />
-                </div>
-            ` : `
-                <div>
-                    <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                    <input type="url" data-pairs-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="https://example.com/image.jpg" />
-                </div>
-            `}
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                <input type="url" data-pairs-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                       placeholder="https://example.com/image.jpg" />
+                ${item.value ? `
+                    <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
+                        <img src="${Utils.escapeHTML(item.value)}" alt="معاينة" 
+                             class="max-h-32 mx-auto rounded" 
+                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
+                            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
+                            <p class="text-xs">تعذر تحميل الصورة</p>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
             <div class="flex items-center">
                 <input type="checkbox" data-pairs-right="${index}" data-field="isCorrect" ${item.isCorrect ? 'checked' : ''} 
                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
-                <label class="ms-2 text-sm font-medium text-gray-700">هذا العنصر صحيح</label>
+                <label class="ms-2 text-sm font-medium text-gray-700">هذه الصورة صحيحة</label>
             </div>
         </div>
     </div>
@@ -1483,7 +1503,7 @@ class UIRenderer {
         ${leftColumn.length < 3 ? `
             <button id="add-image-pairs-left" class="flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm">
                 <i class="fas fa-plus"></i>
-                <span>إضافة لليسار</span>
+                <span>إضافة صورة لليسار</span>
             </button>
         ` : `
             <div class="text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
@@ -1494,7 +1514,7 @@ class UIRenderer {
         ${rightColumn.length < 3 ? `
             <button id="add-image-pairs-right" class="flex items-center justify-center space-x-2 space-x-reverse bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-150 text-sm">
                 <i class="fas fa-plus"></i>
-                <span>إضافة لليمين</span>
+                <span>إضافة صورة لليمين</span>
             </button>
         ` : `
             <div class="text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
@@ -1507,7 +1527,7 @@ class UIRenderer {
     <div class="space-y-4">
         <details class="bg-gray-50 rounded-lg border border-gray-200" open>
             <summary class="p-3 cursor-pointer flex items-center justify-between">
-                <h5 class="text-base font-semibold text-gray-800">العمود الأيسر (${leftColumn.length}/3)</h5>
+                <h5 class="text-base font-semibold text-gray-800">الصور اليسرى (${leftColumn.length}/3)</h5>
                 <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
             </summary>
             <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
@@ -1519,7 +1539,7 @@ class UIRenderer {
         
         <details class="bg-gray-50 rounded-lg border border-gray-200" open>
             <summary class="p-3 cursor-pointer flex items-center justify-between">
-                <h5 class="text-base font-semibold text-gray-800">العمود الأيمن (${rightColumn.length}/3)</h5>
+                <h5 class="text-base font-semibold text-gray-800">الصور اليمنى (${rightColumn.length}/3)</h5>
                 <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
             </summary>
             <div class="p-3 border-t border-gray-200 max-h-60 overflow-y-auto">
@@ -1534,15 +1554,32 @@ class UIRenderer {
     ${leftColumn.length < 3 && rightColumn.length < 3 ? `
         <button id="add-image-pairs-pair" class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm">
             <i class="fas fa-plus"></i>
-            <span>إضافة زوج جديد</span>
+            <span>إضافة زوج صور جديد</span>
         </button>
     ` : `
         <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
             <i class="fas fa-info-circle ml-1"></i>
-            الحد الأقصى 3 عناصر في كل عمود
+            الحد الأقصى 3 صور في كل عمود
         </div>
     `}
     </div>
+
+    <!-- Add validation warning -->
+    ${(() => {
+                const hasLeftCorrect = leftColumn.some(item => item.isCorrect);
+                const hasRightCorrect = rightColumn.some(item => item.isCorrect);
+                if (!hasLeftCorrect && !hasRightCorrect) {
+                    return `
+            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 ml-2"></i>
+                    <span class="text-yellow-700 text-sm">يجب اختيار صورة صحيحة واحدة على الأقل من أحد العمودين</span>
+                </div>
+            </div>
+            `;
+                }
+                return '';
+            })()}
 </div>
 `;
     }
@@ -3243,7 +3280,22 @@ class UIInteractions {
             const idx = parseInt(target.dataset.connectLeft, 10);
             const field = target.dataset.field;
             if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
-                const value = field === 'correctIndex' ? parseInt(target.value, 10) : target.value;
+                let value = field === 'correctIndex' ? parseInt(target.value, 10) : target.value;
+
+                // ADD VALIDATION FOR CORRECT INDEX (1-BASED TO 0-BASED CONVERSION)
+                if (field === 'correctIndex') {
+                    const slide = this.editor.getCurrentSlide();
+                    const rightColumnLength = slide.content.rightColumn?.length || 0;
+                    // Convert 1-based input to 0-based storage and validate
+                    value = Math.max(1, Math.min(value, Math.max(1, rightColumnLength)));
+                    // Store as 0-based internally
+                    const storageValue = value - 1;
+                    // Update the input field with validated 1-based value
+                    target.value = value;
+                    this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, storageValue);
+                    return; // Skip the regular update below
+                }
+
                 this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, value);
             }
         }
@@ -3261,7 +3313,22 @@ class UIInteractions {
             const idx = parseInt(target.dataset.dragLeft, 10);
             const field = target.dataset.field;
             if (!isNaN(idx) && field && this.editor.currentSlideId != null) {
-                const value = field === 'correctIndex' ? parseInt(target.value, 10) : target.value;
+                let value = field === 'correctIndex' ? parseInt(target.value, 10) : target.value;
+
+                // ADD VALIDATION FOR CORRECT INDEX (1-BASED TO 0-BASED CONVERSION)
+                if (field === 'correctIndex') {
+                    const slide = this.editor.getCurrentSlide();
+                    const rightColumnLength = slide.content.rightColumn?.length || 0;
+                    // Convert 1-based input to 0-based storage
+                    value = Math.max(1, Math.min(value, rightColumnLength));
+                    // Store as 0-based internally
+                    const storageValue = value - 1;
+                    // Update the input field with validated 1-based value
+                    target.value = value;
+                    this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, storageValue);
+                    return; // Skip the regular update below
+                }
+
                 this.editor.updateNestedContent(this.editor.currentSlideId, 'leftColumn', idx, field, value);
             }
         }
@@ -3401,14 +3468,13 @@ class UIInteractions {
 
             // Check limit
             if (slide.content.leftColumn.length >= 3) {
-                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في القائمة اليسرى.', 'warning');
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 صور في القائمة اليسرى.', 'warning');
                 return;
             }
 
-            const leftType = slide.content.leftColumnType || 'text';
             slide.content.leftColumn.push({
-                type: leftType,
-                value: leftType === 'text' ? 'عنصر جديد' : '',
+                type: 'image',  // Force image type
+                value: '',      // Empty image URL
                 isCorrect: false
             });
 
@@ -3417,7 +3483,7 @@ class UIInteractions {
             return;
         }
 
-        // Add to image pairs right column
+        // Update the add image pairs right button handler
         const addImagePairsRightBtn = target.closest('#add-image-pairs-right');
         if (addImagePairsRightBtn && this.editor.currentSlideId != null) {
             const slide = this.editor.getCurrentSlide();
@@ -3425,14 +3491,13 @@ class UIInteractions {
 
             // Check limit
             if (slide.content.rightColumn.length >= 3) {
-                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في القائمة اليمنى.', 'warning');
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 صور في القائمة اليمنى.', 'warning');
                 return;
             }
 
-            const rightType = slide.content.rightColumnType || 'text';
             slide.content.rightColumn.push({
-                type: rightType,
-                value: rightType === 'text' ? 'عنصر جديد' : '',
+                type: 'image',  // Force image type
+                value: '',      // Empty image URL
                 isCorrect: false
             });
 
@@ -3449,22 +3514,19 @@ class UIInteractions {
 
             // Check limits
             if (slide.content.leftColumn.length >= 3 || slide.content.rightColumn.length >= 3) {
-                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 عناصر في كل عمود.', 'warning');
+                Swal.fire('حد أقصى', 'لا يمكن إضافة أكثر من 3 صور في كل عمود.', 'warning');
                 return;
             }
 
-            const leftType = slide.content.leftColumnType || 'text';
-            const rightType = slide.content.rightColumnType || 'text';
-
             // Add to both columns to maintain equal numbers
             slide.content.leftColumn.push({
-                type: leftType,
-                value: leftType === 'text' ? 'عنصر جديد' : '',
+                type: 'image',
+                value: '',
                 isCorrect: false
             });
             slide.content.rightColumn.push({
-                type: rightType,
-                value: rightType === 'text' ? 'عنصر جديد' : '',
+                type: 'image',
+                value: '',
                 isCorrect: false
             });
 
@@ -3656,6 +3718,22 @@ class UIInteractions {
 
             if (slide.content[column === 'left' ? 'leftColumn' : 'rightColumn']) {
                 const columnArray = slide.content[column === 'left' ? 'leftColumn' : 'rightColumn'];
+
+                // CHECK IF THIS IS THE LAST CORRECT ANSWER
+                const currentItem = columnArray[index];
+                if (currentItem && currentItem.isCorrect) {
+                    const allCorrectAnswers = [
+                        ...(slide.content.leftColumn || []).filter(item => item.isCorrect),
+                        ...(slide.content.rightColumn || []).filter(item => item.isCorrect)
+                    ];
+
+                    // If this is the only correct answer, prevent deletion
+                    if (allCorrectAnswers.length <= 1) {
+                        Swal.fire('تنبيه', 'لا يمكن حذف الإجابة الصحيحة الوحيدة. يجب أن تبقى إجابة صحيحة واحدة على الأقل.', 'warning');
+                        return;
+                    }
+                }
+
                 if (columnArray.length > 1) {
                     columnArray.splice(index, 1);
                     this.editor.saveToLocalStorage();
@@ -4048,6 +4126,14 @@ class QuizManager {
                 if (!c.leftColumn || !c.rightColumn || c.leftColumn.length === 0 || c.rightColumn.length === 0) {
                     return { isValid: false, message: 'يجب إدخال عناصر في كلا العمودين' };
                 }
+
+                // ADD VALIDATION: At least one correct answer must exist
+                const hasLeftCorrect = c.leftColumn.some(item => item.isCorrect);
+                const hasRightCorrect = c.rightColumn.some(item => item.isCorrect);
+                if (!hasLeftCorrect && !hasRightCorrect) {
+                    return { isValid: false, message: 'يجب اختيار إجابة صحيحة واحدة على الأقل من أحد العمودين' };
+                }
+
                 break;
         }
 
