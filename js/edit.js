@@ -676,7 +676,7 @@ class UIRenderer {
                          onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
                     <div class="fallback-placeholder hidden text-center text-white/70 py-8">
                         <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
-                        <p>تعذر تحميل الصورة</p>
+                        <p class="text-center">تعذر تحميل الصورة</p>
                     </div>
                 </div>
                 ${selectedSection.description ? `
@@ -718,7 +718,7 @@ class UIRenderer {
                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                 <div class="fallback-placeholder hidden h-full w-full items-center justify-center text-white/70 bg-black/10 rounded-lg">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                    <p class="text-xs">تعذر تحميل الصورة</p>
+                    <p class="text-xs text-center">تعذر تحميل الصورة</p>
                 </div>
             </div>
         ` : `
@@ -754,9 +754,8 @@ class UIRenderer {
     <div class="quiz-connect-container mt-6 relative w-full h-full flex flex-col">
         <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
         <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-10 w-full max-w-4xl ">
+            <div class="flex gap-10 w-full max-w-4xl dir-ltr">
                 <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">العمود الأيسر</div>
                     <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
@@ -769,7 +768,6 @@ class UIRenderer {
                     </div>
                 </div>
                 <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">العمود الأيمن</div>
                     <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
@@ -960,11 +958,10 @@ class UIRenderer {
         const submitted = slide.submitted || false;
 
         let html = `
-        <div class="quiz-drag-match-container mt-4">
+        <div class="quiz-drag-match-container mt-4 mx-auto">
             <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
-            <div class="quiz-columns-container gap-20">
+            <div class="quiz-columns-container gap-20 dir-ltr">
                 <div class="quiz-column">
-                    <div class="quiz-column-header">اسحب من هنا</div>
     `;
 
         // Left column - draggable items
@@ -975,7 +972,6 @@ class UIRenderer {
         html += `
                 </div>
                 <div class="quiz-column">
-                    <div class="quiz-column-header">أسقط هنا</div>
     `;
 
         // Right column - drop zones
@@ -1025,9 +1021,8 @@ class UIRenderer {
         let html = `
         <div class="quiz-image-pairs-container mt-4 mx-auto">
             <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
-            <div class="quiz-columns-container gap-20">
+            <div class="quiz-columns-container gap-20 dir-ltr">
                 <div class="quiz-column">
-                    <div class="quiz-column-header">القائمة اليسرى</div>
     `;
 
         // Left column - selectable items
@@ -1038,7 +1033,6 @@ class UIRenderer {
         html += `
                 </div>
                 <div class="quiz-column">
-                    <div class="quiz-column-header">القائمة اليمنى</div>
     `;
 
         // Right column - selectable items
@@ -1114,7 +1108,7 @@ class UIRenderer {
                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                 <div class="fallback-placeholder hidden flex-col items-center justify-center text-white/60">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                    <p class="text-xs">تعذر تحميل الصورة</p>
+                    <p class="text-xs text-center">تعذر تحميل الصورة</p>
                 </div>
             </div>
         `;
@@ -1431,16 +1425,14 @@ class UIRenderer {
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
                        placeholder="https://example.com/image.jpg" />
                 ${item.value ? `
-                    <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
-                        <img src="${Utils.escapeHTML(item.value)}" alt="معاينة" 
-                             class="max-h-32 mx-auto rounded" 
-                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                        <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
-                            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
-                            <p class="text-xs">تعذر تحميل الصورة</p>
-                        </div>
-                    </div>
-                ` : ''}
+    <div class="mt-2 p-2 bg-gray-100 rounded-lg text-center">
+        <div class="text-gray-500 text-sm">
+            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
+            <p class="text-xs">تم إدخال رابط الصورة</p>
+            <p class="text-xs text-gray-400 break-all mt-1">${Utils.escapeHTML(item.value)}</p>
+        </div>
+    </div>
+` : ''}
             </div>
             <div class="flex items-center">
                 <input type="checkbox" data-pairs-left="${index}" data-field="isCorrect" ${item.isCorrect ? 'checked' : ''} 
@@ -1468,16 +1460,14 @@ class UIRenderer {
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
                        placeholder="https://example.com/image.jpg" />
                 ${item.value ? `
-                    <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
-                        <img src="${Utils.escapeHTML(item.value)}" alt="معاينة" 
-                             class="max-h-32 mx-auto rounded" 
-                             onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                        <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
-                            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
-                            <p class="text-xs">تعذر تحميل الصورة</p>
-                        </div>
-                    </div>
-                ` : ''}
+    <div class="mt-2 p-2 bg-gray-100 rounded-lg text-center">
+        <div class="text-gray-500 text-sm">
+            <i class="fas fa-image text-lg mb-1 opacity-50"></i>
+            <p class="text-xs">تم إدخال رابط الصورة</p>
+            <p class="text-xs text-gray-400 break-all mt-1">${Utils.escapeHTML(item.value)}</p>
+        </div>
+    </div>
+` : ''}
             </div>
             <div class="flex items-center">
                 <input type="checkbox" data-pairs-right="${index}" data-field="isCorrect" ${item.isCorrect ? 'checked' : ''} 
@@ -1610,7 +1600,7 @@ class UIRenderer {
                              onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
                         <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
                             <i class="fas fa-image text-lg mb-1 opacity-50"></i>
-                            <p class="text-xs">تعذر تحميل الصورة</p>
+                            <p class="text-xs text-center">تعذر تحميل الصورة</p>
                         </div>
                     </div>
                 ` : ''}
@@ -1782,7 +1772,7 @@ class UIRenderer {
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                  <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center text-white/70">
                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                   <p class="text-xs">تعذر تحميل الصورة</p>
+                   <p class="text-xs text-center">تعذر تحميل الصورة</p>
                  </div>
                </div>`
                 : `<div class="text-white/70 text-center py-8">الصورة الأولى غير محددة</div>`)
@@ -1795,7 +1785,7 @@ class UIRenderer {
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                  <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center text-white/70">
                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                   <p class="text-xs">تعذر تحميل الصورة</p>
+                   <p class="text-xs text-center">تعذر تحميل الصورة</p>
                  </div>
                </div>`
                 : `<div class="text-white/70 text-center py-8">الصورة الثانية غير محددة</div>`)
@@ -1973,7 +1963,7 @@ class UIRenderer {
                          onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
                     <div class="fallback-placeholder hidden text-center text-gray-500 py-4">
                         <i class="fas fa-image text-lg mb-1 opacity-50"></i>
-                        <p class="text-xs">تعذر تحميل الصورة</p>
+                        <p class="text-xs text-center">تعذر تحميل الصورة</p>
                     </div>
                 </div>
             ` : ''}

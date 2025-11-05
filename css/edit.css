@@ -1668,3 +1668,11 @@ body {
 	background: rgba(239, 68, 68, 0.3) !important;
 	border-color: #ef4444 !important;
 }
+
+.dir-ltr {
+	direction: ltr;
+}
+
+.dir-rtl {
+	direction: rtl;
+}
