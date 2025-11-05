@@ -1704,3 +1704,16 @@ body {
 	z-index: 6;
 	pointer-events: none;
 }
+
+/* Add to edit.css */
+.temp-drawing-canvas {
+	cursor: crosshair;
+}
+
+.quiz-connect-item[data-side="left"] {
+	cursor: crosshair;
+}
+
+.quiz-connect-item[data-side="right"] {
+	cursor: default;
+}

@@ -827,7 +827,13 @@ class UIRenderer {
         // Left column - make them drop zones too
         leftColumn.slice(0, 3).forEach((item, index) => {
             const isPlaced = slide.userMatches?.some(match => match.leftIndex === index);
-            const itemHtml = isPlaced ? '' : this.renderQuizItem(item, index, 'left', 'drag', submitted, leftColumnType);
+
+            // FIX: If item is placed in right column, show empty zone in left
+            let itemHtml = '';
+            if (!isPlaced) {
+                itemHtml = this.renderQuizItem(item, index, 'left', 'drag', submitted, leftColumnType);
+            }
+
             const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
 
             html += `
@@ -852,9 +858,22 @@ class UIRenderer {
 
         // Right column - drop zones
         rightColumn.slice(0, 3).forEach((item, index) => {
-            const hasItem = slide.userMatches?.some(match => match.rightIndex === index);
-            const itemHtml = hasItem ? '' : this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType);
-            const zoneClass = hasItem ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
+            // FIX: Find which left item is placed in this right zone
+            const match = slide.userMatches?.find(match => match.rightIndex === index);
+            let itemHtml = '';
+
+            if (match) {
+                // If there's a match, render the left item in the right zone
+                const leftItem = leftColumn[match.leftIndex];
+                if (leftItem) {
+                    itemHtml = this.renderQuizItem(leftItem, match.leftIndex, 'left', 'drag', submitted, leftColumnType);
+                }
+            } else {
+                // If no match, render the original right item
+                itemHtml = this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType);
+            }
+
+            const zoneClass = match ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
 
             html += `
         <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
@@ -1149,13 +1168,24 @@ class UIRenderer {
             );
             const connectionClass = isConnected ? 'ring-2 ring-blue-400 bg-blue-500/20' : '';
 
-            return `
+            // For left items, use the new drawing system
+            if (side === 'left') {
+                const slideId = this.editor.getCurrentSlide()?.id;
+                return `
         <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}"
-             onmousedown="window.handleConnectQuizStart(event, '${side}', ${index})"
-             onmouseup="window.handleConnectQuizEnd(event, '${side}', ${index})">
+             onmousedown="window.startConnectDrawing(event, '${side}', ${index}, '${slideId}')"
+             ontouchstart="window.startConnectDrawing(event, '${side}', ${index}, '${slideId}')">
             ${content}
         </div>
     `;
+            } else {
+                // Right items don't need interactive events for drawing
+                return `
+        <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}">
+            ${content}
+        </div>
+    `;
+            }
         } else if (quizType === 'drag') {
             const draggable = side === 'left' && !submitted && type === 'image';
             return `
@@ -2929,51 +2959,22 @@ class DragDropManager {
 window.handleCategorizeDrag = (e, containerId) => {
     e.dataTransfer.setData('text/plain', containerId);
     const questionEl = document.getElementById(`${containerId}-question`);
-    if (questionEl) questionEl.classList.add('opacity-50', 'scale-95');
+    if (questionEl) questionEl.classList.add('scale-95');
 };
 
 window.handleCategorizeDrop = function (e, containerId, dropIndex) {
     e.preventDefault();
-    const questionEl = document.getElementById(`${containerId}-question`);
-    const container = document.getElementById(containerId);
-    if (!container || !questionEl) return;
-
-    // Reset drag visual
-    questionEl.classList.remove('opacity-50', 'scale-95');
-
-    // Append into zone if empty
-    const zone = container.querySelector(`.quiz-category-zone[data-index="${dropIndex}"]`);
-    if (zone && !zone.querySelector('.quiz-draggable')) {
-        zone.appendChild(questionEl);
-    }
-
-    // Style dropped question
-    questionEl.classList.remove('bg-white/80', 'text-gray-900');
-    questionEl.classList.add('bg-blue-500/70', 'text-white', 'shadow-lg', 'scale-100', 'transition-all');
-
-    // Save choice using common function
     const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slideId = parseInt(containerId.split('-')[1]);
+
+    // Save choice using common function - this updates the data model
     if (editor && typeof editor.setQuizUserChoice === 'function') {
-        const slideId = parseInt(containerId.split('-')[1]);
         editor.setQuizUserChoice(slideId, Number(dropIndex));
 
-        // Show submit button if not already shown
-        let btn = container.querySelector(`#quiz-${slideId}-submit`);
-        if (!btn && editor) {
-            const slide = editor.getCurrentSlide();
-            if (slide && editor.shouldShowQuizSubmit(slide)) {
-                btn = document.createElement('button');
-                btn.id = `quiz-${slideId}-submit`;
-                btn.textContent = 'إرسال الإجابة';
-                btn.className = 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3';
-                btn.style.display = 'block';
-                btn.style.margin = '1rem auto 0 auto';
-                btn.addEventListener('click', () => {
-                    editor.handleQuizSubmit(slideId, containerId);
-                });
-                container.appendChild(btn);
-            }
-        }
+        // The re-render will now show the correct state based on userChoice
+        editor.loadSlidePreview(slideId);
     }
 };
 
@@ -3143,10 +3144,8 @@ window.handleDragMatchStart = function (event, side, index) {
         slideId: slide.id
     }));
 
-    // Visual feedback
-    event.target.classList.add('opacity-50', 'scale-95', 'ring-2', 'ring-blue-400');
+    event.target.classList.add('scale-95', 'ring-2', 'ring-blue-400');
 
-    // Store original position for potential return
     window.dragOriginalPosition = {
         element: event.target,
         parent: event.target.parentNode,
@@ -3179,7 +3178,7 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
 
         // Remove visual feedback
         document.querySelectorAll('.quiz-drag-item').forEach(item => {
-            item.classList.remove('opacity-50', 'scale-95', 'ring-2', 'ring-blue-400');
+            item.classList.remove('scale-95', 'ring-2', 'ring-blue-400');
         });
         document.querySelectorAll('.quiz-drop-zone').forEach(zone => {
             zone.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
@@ -3191,24 +3190,6 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
         }
 
         if (draggedSide === 'left' && dropSide === 'right') {
-            // Moving from left to right
-            const draggedElement = window.dragOriginalPosition.element;
-            const dropZone = event.currentTarget;
-
-            // Remove from original parent and clear its content
-            if (window.dragOriginalPosition.parent) {
-                window.dragOriginalPosition.parent.removeChild(draggedElement);
-                // Clear the original drop zone
-                window.dragOriginalPosition.parent.innerHTML = '';
-                window.dragOriginalPosition.parent.classList.remove('border-blue-400');
-            }
-
-            // Clear drop zone and add dragged element
-            dropZone.innerHTML = '';
-            dropZone.appendChild(draggedElement);
-            dropZone.classList.add('border-green-400', 'bg-green-500/10');
-            draggedElement.classList.add('opacity-100', 'scale-100');
-
             // Remove any existing match for this dragged item
             slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
 
@@ -3219,29 +3200,15 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
             });
 
         } else if (draggedSide === 'right' && dropSide === 'left') {
-            // Returning from right to left
-            const draggedElement = window.dragOriginalPosition.element;
-            const dropZone = event.currentTarget;
-
-            // Remove from current parent and clear it
-            if (draggedElement.parentNode) {
-                draggedElement.parentNode.removeChild(draggedElement);
-                draggedElement.parentNode.classList.remove('border-green-400', 'bg-green-500/10');
-            }
-
-            // Add to left drop zone
-            dropZone.innerHTML = '';
-            dropZone.appendChild(draggedElement);
-            draggedElement.classList.remove('opacity-50', 'scale-95');
-            dropZone.classList.add('border-blue-400', 'bg-blue-500/10');
-
-            // Remove the match
+            // Remove the match when returning to left
             slide.userMatches = slide.userMatches.filter(match =>
                 !(match.leftIndex === draggedIndex && match.rightIndex === dropIndex)
             );
         }
 
         editor.saveToLocalStorage();
+
+        // Re-render based on the updated data model
         editor.loadSlidePreview(slide.id);
 
         // Update submit button visibility
@@ -3296,6 +3263,201 @@ window.handleQuizCategorizeSubmit = (containerId) => {
     // Remove submit button
     const btn = container.querySelector(`#quiz-${slideId}-submit`);
     if (btn) btn.remove();
+};
+
+// Add these new functions to handle connect quiz drawing
+window.startConnectDrawing = function (event, side, index, slideId) {
+    if (side !== 'left') return;
+
+    event.preventDefault();
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.getCurrentSlide();
+    if (!slide || slide.submitted) return;
+
+    // Initialize drawing state
+    window.connectDrawing = {
+        isDrawing: true,
+        startSide: side,
+        startIndex: index,
+        slideId: slideId,
+        points: [],
+        tempLine: null
+    };
+
+    // Create temporary canvas for drawing
+    const connectionsLayer = document.getElementById(`connections-${slideId}`);
+    if (!connectionsLayer) return;
+
+    // Remove any existing temp canvas
+    const existingCanvas = connectionsLayer.querySelector('.temp-drawing-canvas');
+    if (existingCanvas) existingCanvas.remove();
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'temp-drawing-canvas';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '5';
+    canvas.style.pointerEvents = 'none';
+
+    // Set canvas size to match container
+    const rect = connectionsLayer.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    connectionsLayer.appendChild(canvas);
+
+    window.connectDrawing.canvas = canvas;
+    window.connectDrawing.ctx = canvas.getContext('2d');
+    window.connectDrawing.rect = rect;
+
+    // Get start position from the left item
+    const leftItem = event.currentTarget;
+    const leftRect = leftItem.getBoundingClientRect();
+    const startX = leftRect.left + leftRect.width / 2 - rect.left;
+    const startY = leftRect.top + leftRect.height / 2 - rect.top;
+
+    window.connectDrawing.startX = startX;
+    window.connectDrawing.startY = startY;
+    window.connectDrawing.points = [{ x: startX, y: startY }];
+
+    // Start drawing
+    updateConnectDrawing(event);
+
+    // Add event listeners
+    document.addEventListener('mousemove', updateConnectDrawing);
+    document.addEventListener('mouseup', finishConnectDrawing);
+    document.addEventListener('touchmove', updateConnectDrawing, { passive: false });
+    document.addEventListener('touchend', finishConnectDrawing);
+};
+
+window.updateConnectDrawing = function (event) {
+    if (!window.connectDrawing || !window.connectDrawing.isDrawing) return;
+
+    event.preventDefault();
+    const drawing = window.connectDrawing;
+    const rect = drawing.rect;
+
+    // Get current position
+    let clientX, clientY;
+    if (event.type.includes('touch')) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+    } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+    }
+
+    const currentX = clientX - rect.left;
+    const currentY = clientY - rect.top;
+
+    // Add point to drawing path
+    drawing.points.push({ x: currentX, y: currentY });
+
+    // Draw the freehand line
+    const ctx = drawing.ctx;
+    ctx.clearRect(0, 0, drawing.canvas.width, drawing.canvas.height);
+
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(drawing.startX, drawing.startY);
+
+    // Draw smooth curve through points
+    for (let i = 1; i < drawing.points.length; i++) {
+        ctx.lineTo(drawing.points[i].x, drawing.points[i].y);
+    }
+
+    ctx.stroke();
+};
+
+window.finishConnectDrawing = function (event) {
+    if (!window.connectDrawing || !window.connectDrawing.isDrawing) return;
+
+    event.preventDefault();
+    const drawing = window.connectDrawing;
+    drawing.isDrawing = false;
+
+    // Remove event listeners
+    document.removeEventListener('mousemove', updateConnectDrawing);
+    document.removeEventListener('mouseup', finishConnectDrawing);
+    document.removeEventListener('touchmove', updateConnectDrawing);
+    document.removeEventListener('touchend', finishConnectDrawing);
+
+    const rect = drawing.rect;
+    let clientX, clientY;
+
+    if (event.type.includes('touch')) {
+        clientX = event.changedTouches[0].clientX;
+        clientY = event.changedTouches[0].clientY;
+    } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+    }
+
+    const endX = clientX - rect.left;
+    const endY = clientY - rect.top;
+
+    // Check if we ended on a right item
+    const rightItems = document.querySelectorAll('.quiz-connect-item[data-side="right"]');
+    let targetRightIndex = -1;
+
+    rightItems.forEach((item, index) => {
+        const itemRect = item.getBoundingClientRect();
+        const itemCenterX = itemRect.left + itemRect.width / 2;
+        const itemCenterY = itemRect.top + itemRect.height / 2;
+
+        // Check if end point is near this right item
+        const distance = Math.sqrt(
+            Math.pow(clientX - itemCenterX, 2) +
+            Math.pow(clientY - itemCenterY, 2)
+        );
+
+        if (distance < Math.max(itemRect.width, itemRect.height) * 0.8) {
+            targetRightIndex = index;
+        }
+    });
+
+    // Remove temporary canvas
+    if (drawing.canvas) {
+        drawing.canvas.remove();
+    }
+
+    // If we found a valid right item, create the connection
+    if (targetRightIndex !== -1) {
+        const editor = window.courseEditor || window.editor;
+        if (!editor) return;
+
+        const slide = editor.findSlide(editor.currentLessonId, parseInt(drawing.slideId));
+        if (!slide || slide.submitted) return;
+
+        // Initialize user connections if not exists
+        if (!slide.userConnections) {
+            slide.userConnections = [];
+        }
+
+        // Remove any existing connection for this left item
+        slide.userConnections = slide.userConnections.filter(conn => conn.leftIndex !== drawing.startIndex);
+
+        // Add new connection
+        slide.userConnections.push({
+            leftIndex: drawing.startIndex,
+            rightIndex: targetRightIndex
+        });
+
+        editor.saveToLocalStorage();
+        editor.loadSlidePreview(slide.id);
+    }
+
+    // Clean up
+    window.connectDrawing = null;
 };
 
 ////////////////////////////////////////////////////
