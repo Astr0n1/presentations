@@ -2932,7 +2932,7 @@ window.handleCategorizeDrag = (e, containerId) => {
     if (questionEl) questionEl.classList.add('opacity-50', 'scale-95');
 };
 
-window.handleCategorizeDrop = (e, containerId, dropIndex) => {
+window.handleCategorizeDrop = function (e, containerId, dropIndex) {
     e.preventDefault();
     const questionEl = document.getElementById(`${containerId}-question`);
     const container = document.getElementById(containerId);
@@ -2956,23 +2956,23 @@ window.handleCategorizeDrop = (e, containerId, dropIndex) => {
     if (editor && typeof editor.setQuizUserChoice === 'function') {
         const slideId = parseInt(containerId.split('-')[1]);
         editor.setQuizUserChoice(slideId, Number(dropIndex));
-    }
 
-    // Show submit button if not already shown
-    let btn = container.querySelector(`#quiz-${slideId}-submit`);
-    if (!btn && editor) {
-        const slide = editor.getCurrentSlide();
-        if (slide && editor.shouldShowQuizSubmit(slide)) {
-            btn = document.createElement('button');
-            btn.id = `quiz-${slideId}-submit`;
-            btn.textContent = 'إرسال الإجابة';
-            btn.className = 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3';
-            btn.style.display = 'block';
-            btn.style.margin = '1rem auto 0 auto';
-            btn.addEventListener('click', () => {
-                editor.handleQuizSubmit(slideId, containerId);
-            });
-            container.appendChild(btn);
+        // Show submit button if not already shown
+        let btn = container.querySelector(`#quiz-${slideId}-submit`);
+        if (!btn && editor) {
+            const slide = editor.getCurrentSlide();
+            if (slide && editor.shouldShowQuizSubmit(slide)) {
+                btn = document.createElement('button');
+                btn.id = `quiz-${slideId}-submit`;
+                btn.textContent = 'إرسال الإجابة';
+                btn.className = 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3';
+                btn.style.display = 'block';
+                btn.style.margin = '1rem auto 0 auto';
+                btn.addEventListener('click', () => {
+                    editor.handleQuizSubmit(slideId, containerId);
+                });
+                container.appendChild(btn);
+            }
         }
     }
 };
