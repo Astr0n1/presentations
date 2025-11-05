@@ -1,4 +1,4 @@
-
+'use strict'
 ////////////////////////////////////////////////////
 // Utils
 ////////////////////////////////////////////////////
@@ -806,116 +806,6 @@ class UIRenderer {
         return html;
     }
 
-    renderDragMatchQuizPreview(slide) {
-        const c = slide.content || {};
-        const leftColumn = c.leftColumn || [];
-        const rightColumn = c.rightColumn || [];
-        const leftColumnType = c.leftColumnType || 'image';
-        const rightColumnType = c.rightColumnType || 'text';
-        const submitted = slide.submitted || false;
-
-        let html = `
-    <div class="quiz-drag-match-container mt-6 relative w-full h-full flex flex-col">
-        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
-        <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-10 w-full max-w-4xl h-full">
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">اسحب من هنا</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
-    `;
-
-        // Left column - make them drop zones too
-        leftColumn.slice(0, 3).forEach((item, index) => {
-            const isPlaced = slide.userMatches?.some(match => match.leftIndex === index);
-
-            // FIX: If item is placed in right column, show empty zone in left
-            let itemHtml = '';
-            if (!isPlaced) {
-                itemHtml = this.renderQuizItem(item, index, 'left', 'drag', submitted, leftColumnType);
-            }
-
-            const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
-
-            html += `
-        <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
-             data-index="${index}" 
-             data-side="left"
-             ondragover="window.handleDragMatchOver(event)"
-             ondragleave="window.handleDragMatchLeave(event)"
-             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')">
-            ${itemHtml}
-        </div>
-    `;
-        });
-
-        html += `
-                    </div>
-                </div>
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">أسقط هنا</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
-    `;
-
-        // Right column - drop zones
-        rightColumn.slice(0, 3).forEach((item, index) => {
-            // FIX: Find which left item is placed in this right zone
-            const match = slide.userMatches?.find(match => match.rightIndex === index);
-            let itemHtml = '';
-
-            if (match) {
-                // If there's a match, render the left item in the right zone
-                const leftItem = leftColumn[match.leftIndex];
-                if (leftItem) {
-                    itemHtml = this.renderQuizItem(leftItem, match.leftIndex, 'left', 'drag', submitted, leftColumnType);
-                }
-            } else {
-                // If no match, render the original right item
-                itemHtml = this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType);
-            }
-
-            const zoneClass = match ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
-
-            html += `
-        <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
-             data-index="${index}" 
-             data-side="right"
-             ondragover="window.handleDragMatchOver(event)"
-             ondragleave="window.handleDragMatchLeave(event)"
-             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')">
-            ${itemHtml}
-        </div>
-    `;
-        });
-
-        html += `
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-        // Submit button
-        const showSubmit = this.editor.shouldShowQuizSubmit(slide);
-        if (showSubmit) {
-            html += `
-        <div class="text-center mt-6 pt-4 border-t border-white/20">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105 ${showSubmit ? '' : 'hidden'}" 
-                    id="quiz-${slide.id}-submit">
-                تأكيد الإجابة
-            </button>
-        </div>
-    `;
-        }
-
-        html += `
-        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-    </div>
-    `;
-
-        return html;
-    }
-
-
     // For image pairs quiz - update the container:
     renderImagePairsQuizPreview(slide) {
         const c = slide.content || {};
@@ -994,58 +884,105 @@ class UIRenderer {
         const c = slide.content || {};
         const leftColumn = c.leftColumn || [];
         const rightColumn = c.rightColumn || [];
+        const leftColumnType = c.leftColumnType || 'image';
+        const rightColumnType = c.rightColumnType || 'text';
         const submitted = slide.submitted || false;
 
         let html = `
-        <div class="quiz-drag-match-container mt-4 mx-auto">
-            <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
-            <div class="quiz-columns-container gap-20 dir-ltr">
-                <div class="quiz-column">
+    <div class="quiz-drag-match-container mt-6 relative w-full h-full flex flex-col">
+        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
+        <div class="flex-1 flex justify-center items-center">
+            <div class="flex gap-10 w-full max-w-4xl h-full">
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">اسحب من هنا</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
-        // Left column - draggable items
-        leftColumn.forEach((item, index) => {
-            html += this.renderQuizItem(item, index, 'left', 'drag', submitted);
-        });
+        // Left column - show only items that are NOT placed in right column
+        leftColumn.slice(0, 3).forEach((item, index) => {
+            const isPlaced = slide.userMatches?.some(match => match.leftIndex === index);
 
-        html += `
-                </div>
-                <div class="quiz-column">
-    `;
+            let itemHtml = '';
+            if (!isPlaced) {
+                itemHtml = this.renderQuizItem(item, index, 'left', 'drag', submitted, leftColumnType);
+            }
 
-        // Right column - drop zones
-        rightColumn.forEach((item, index) => {
+            const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
+
             html += `
-            <div class="quiz-drop-zone" data-index="${index}" 
-                 ondragover="event.preventDefault()" 
-                 ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index})">
-                ${this.renderQuizItem(item, index, 'right', 'drag', submitted)}
-            </div>
-        `;
+        <div class="${zoneClass} h-[30%] min-w-[75%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
+             data-index="${index}" 
+             data-side="left"
+             ondragover="window.handleDragMatchOver(event)"
+             ondragleave="window.handleDragMatchLeave(event)"
+             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')">
+            ${itemHtml}
+        </div>
+    `;
         });
 
         html += `
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col h-full">
+                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">أسقط هنا</div>
+                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
+    `;
+
+        // Right column - show items that ARE placed in right column
+        rightColumn.slice(0, 3).forEach((item, index) => {
+            // Find which left item is placed in this right zone
+            const match = slide.userMatches?.find(match => match.rightIndex === index);
+            let itemHtml = '';
+
+            if (match) {
+                // If there's a match, render the left item in the right zone
+                const leftItem = leftColumn[match.leftIndex];
+                if (leftItem) {
+                    itemHtml = this.renderQuizItem(leftItem, match.leftIndex, 'left', 'drag', submitted, leftColumnType);
+                }
+            } else {
+                // If no match, show the original right item as placeholder
+                itemHtml = this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType);
+            }
+
+            const zoneClass = match ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
+
+            html += `
+        <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+             data-index="${index}" 
+             data-side="right"
+             ondragover="window.handleDragMatchOver(event)"
+             ondragleave="window.handleDragMatchLeave(event)"
+             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')">
+            ${itemHtml}
+        </div>
+    `;
+        });
+
+        html += `
+                    </div>
                 </div>
             </div>
+        </div>
     `;
 
         // Submit button
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-            <div class="text-center mt-4">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
-                        id="quiz-${slide.id}-submit">
-                    تأكيد الإجابة
-                </button>
-            </div>
-        `;
+        <div class="text-center mt-6 pt-4 border-t border-white/20">
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105 ${showSubmit ? '' : 'hidden'}" 
+                    id="quiz-${slide.id}-submit">
+                تأكيد الإجابة
+            </button>
+        </div>
+    `;
         }
 
         html += `
-            <!-- Feedback icon container -->
-            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-        </div>
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>
     `;
 
         return html;
@@ -1188,6 +1125,7 @@ class UIRenderer {
             }
         } else if (quizType === 'drag') {
             const draggable = side === 'left' && !submitted && type === 'image';
+
             return `
         <div class="${itemClass} quiz-drag-item" data-side="${side}" data-index="${index}" 
              ${draggable ? 'draggable="true"' : ''}
@@ -1786,35 +1724,43 @@ class UIRenderer {
          ondragover="event.preventDefault()"
          ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
         <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
+        ${chosen === i ? `
+            <div class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md transition select-none max-w-xs text-center">
+                ${Utils.escapeHTML(question)}
+            </div>
+        ` : ''}
     </div>`;
         }).join('');
 
-        // 🧱 Build draggable question box
-        const draggableHtml = `
-    <div id="${containerId}-question"
-         draggable="${!submitted}"
-         class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
-                transition select-none mb-6 max-w-xs text-center"
-         ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
-        ${Utils.escapeHTML(question)}
-    </div>`;
+        // 🧱 Build draggable question box (only show if not placed in a category)
+        let draggableHtml = '';
+        if (!submitted && chosen === null) {
+            draggableHtml = `
+        <div id="${containerId}-question"
+             draggable="true"
+             class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
+                    transition select-none mb-6 max-w-xs text-center"
+             ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
+            ${Utils.escapeHTML(question)}
+        </div>`;
+        }
 
         return `
         <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
-    ${draggableHtml}
-    <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
-        ${dropZones}
-    </div>
-    ${showSubmit ? `
-        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
-                id="quiz-${slide.id}-submit">
-            إرسال الإجابة
-        </button>
-    ` : ''}
+            ${draggableHtml}
+            <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
+                ${dropZones}
+            </div>
+            ${showSubmit ? `
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
+                        id="quiz-${slide.id}-submit">
+                    إرسال الإجابة
+                </button>
+            ` : ''}
 
-    <!-- New feedback icon container -->
-    <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-</div>`;
+            <!-- New feedback icon container -->
+            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+        </div>`;
     }
 
     renderUniversalComparison(slide, type = 'text') {
@@ -2973,8 +2919,11 @@ window.handleCategorizeDrop = function (e, containerId, dropIndex) {
     if (editor && typeof editor.setQuizUserChoice === 'function') {
         editor.setQuizUserChoice(slideId, Number(dropIndex));
 
-        // The re-render will now show the correct state based on userChoice
-        editor.loadSlidePreview(slideId);
+        // Force immediate UI update by re-rendering the preview
+        const slide = editor.getCurrentSlide();
+        if (slide) {
+            editor.renderSlidePreview(slide);
+        }
     }
 };
 
@@ -3146,6 +3095,7 @@ window.handleDragMatchStart = function (event, side, index) {
 
     event.target.classList.add('scale-95', 'ring-2', 'ring-blue-400');
 
+    // Store original position for potential return
     window.dragOriginalPosition = {
         element: event.target,
         parent: event.target.parentNode,
@@ -3176,7 +3126,7 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
         const draggedSide = dragData.side;
         const draggedIndex = dragData.index;
 
-        // Remove visual feedback
+        // Remove visual feedback from all elements
         document.querySelectorAll('.quiz-drag-item').forEach(item => {
             item.classList.remove('scale-95', 'ring-2', 'ring-blue-400');
         });
@@ -3190,8 +3140,12 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
         }
 
         if (draggedSide === 'left' && dropSide === 'right') {
+            // Moving from left to right
             // Remove any existing match for this dragged item
             slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
+
+            // Also remove any match that uses the target right slot
+            slide.userMatches = slide.userMatches.filter(match => match.rightIndex !== dropIndex);
 
             // Add new match
             slide.userMatches.push({
@@ -3200,16 +3154,19 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
             });
 
         } else if (draggedSide === 'right' && dropSide === 'left') {
-            // Remove the match when returning to left
+            // Moving from right back to left - remove the match
             slide.userMatches = slide.userMatches.filter(match =>
                 !(match.leftIndex === draggedIndex && match.rightIndex === dropIndex)
             );
+        } else if (draggedSide === 'left' && dropSide === 'left') {
+            // Moving within left column - remove any match for this item
+            slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
         }
 
         editor.saveToLocalStorage();
 
-        // Re-render based on the updated data model
-        editor.loadSlidePreview(slide.id);
+        // Force complete re-render by using the editor's render method
+        editor.renderSlidePreview(slide);
 
         // Update submit button visibility
         window.updateDragMatchSubmitButton(slide);
