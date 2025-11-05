@@ -605,6 +605,7 @@ class UIRenderer {
                 break;
             case 'quiz-connect-quiz':
                 bodyHtml += this.renderConnectQuizPreview(slide);
+                setTimeout(() => window.drawConnectQuizLines(slide.id), 100);
                 break;
 
             case 'quiz-drag-match-quiz':
@@ -823,9 +824,22 @@ class UIRenderer {
                     <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
-        // Left column - draggable items - max 3, using column type
+        // Left column - make them drop zones too
         leftColumn.slice(0, 3).forEach((item, index) => {
-            html += this.renderQuizItem(item, index, 'left', 'drag', submitted, leftColumnType);
+            const isPlaced = slide.userMatches?.some(match => match.leftIndex === index);
+            const itemHtml = isPlaced ? '' : this.renderQuizItem(item, index, 'left', 'drag', submitted, leftColumnType);
+            const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
+
+            html += `
+        <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
+             data-index="${index}" 
+             data-side="left"
+             ondragover="window.handleDragMatchOver(event)"
+             ondragleave="window.handleDragMatchLeave(event)"
+             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')">
+            ${itemHtml}
+        </div>
+    `;
         });
 
         html += `
@@ -836,14 +850,20 @@ class UIRenderer {
                     <div class="flex-1 flex flex-col gap-4 justify-start items-center">
     `;
 
-        // Right column - drop zones - max 3, using column type
+        // Right column - drop zones
         rightColumn.slice(0, 3).forEach((item, index) => {
+            const hasItem = slide.userMatches?.some(match => match.rightIndex === index);
+            const itemHtml = hasItem ? '' : this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType);
+            const zoneClass = hasItem ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
+
             html += `
-        <div class="quiz-drop-zone h-[30%] border-2 border-dashed border-white/40 rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+        <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
              data-index="${index}" 
-             ondragover="event.preventDefault()" 
-             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index})">
-            ${this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType)}
+             data-side="right"
+             ondragover="window.handleDragMatchOver(event)"
+             ondragleave="window.handleDragMatchLeave(event)"
+             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')">
+            ${itemHtml}
         </div>
     `;
         });
@@ -860,7 +880,7 @@ class UIRenderer {
         if (showSubmit) {
             html += `
         <div class="text-center mt-6 pt-4 border-t border-white/20">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105" 
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105 ${showSubmit ? '' : 'hidden'}" 
                     id="quiz-${slide.id}-submit">
                 تأكيد الإجابة
             </button>
@@ -1080,13 +1100,13 @@ class UIRenderer {
         if (quizType === 'connect' || quizType === 'pairs') {
             itemClass += " cursor-pointer hover:border-white/50 hover:shadow-xl";
         }
-        if (quizType === 'drag' && side === 'left' && !submitted) {
+        if (quizType === 'drag' && side === 'left' && !submitted && type === 'image') {
             itemClass += " cursor-grab active:cursor-grabbing hover:bg-blue-600/20 hover:border-blue-400";
         }
 
         // Selected state for image pairs
         if (quizType === 'pairs' && isSelected && !submitted) {
-            itemClass += " bg-blue-600/40 border-blue-400 shadow-blue-500/30 transform scale-105";
+            itemClass += " bg-blue-500/40 border-blue-400 shadow-blue-500/30 transform scale-105";
         }
 
         // Submitted state styling
@@ -1124,13 +1144,20 @@ class UIRenderer {
 
         // Add interactive elements based on quiz type
         if (quizType === 'connect') {
+            const isConnected = this.editor.getCurrentSlide()?.userConnections?.some(conn =>
+                conn.leftIndex === index && side === 'left'
+            );
+            const connectionClass = isConnected ? 'ring-2 ring-blue-400 bg-blue-500/20' : '';
+
             return `
-        <div class="${itemClass} quiz-connect-item" data-side="${side}" data-index="${index}">
+        <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}"
+             onmousedown="window.handleConnectQuizStart(event, '${side}', ${index})"
+             onmouseup="window.handleConnectQuizEnd(event, '${side}', ${index})">
             ${content}
         </div>
     `;
         } else if (quizType === 'drag') {
-            const draggable = side === 'left' && !submitted;
+            const draggable = side === 'left' && !submitted && type === 'image';
             return `
         <div class="${itemClass} quiz-drag-item" data-side="${side}" data-index="${index}" 
              ${draggable ? 'draggable="true"' : ''}
@@ -2950,6 +2977,129 @@ window.handleCategorizeDrop = (e, containerId, dropIndex) => {
     }
 };
 
+// ========== CONNECT QUIZ FUNCTIONS ==========
+
+window.handleConnectQuizStart = function (event, side, index) {
+    event.preventDefault();
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.getCurrentSlide();
+    if (!slide || slide.submitted) return;
+
+    // Initialize user connections if not exists
+    if (!slide.userConnections) {
+        slide.userConnections = [];
+    }
+
+    // Store starting point for line drawing
+    window.connectQuizStart = { side, index };
+
+    // Add visual feedback
+    event.target.classList.add('ring-2', 'ring-blue-400', 'ring-opacity-70');
+};
+
+window.handleConnectQuizEnd = function (event, side, index) {
+    event.preventDefault();
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.getCurrentSlide();
+    if (!slide || slide.submitted || !window.connectQuizStart) return;
+
+    const start = window.connectQuizStart;
+
+    // Only allow connections from left to right
+    if (start.side === 'left' && side === 'right') {
+        // Remove any existing connection for this left item
+        slide.userConnections = slide.userConnections.filter(conn => conn.leftIndex !== start.index);
+
+        // Add new connection
+        slide.userConnections.push({
+            leftIndex: start.index,
+            rightIndex: index
+        });
+
+        editor.saveToLocalStorage();
+        editor.loadSlidePreview(slide.id);
+    }
+
+    // Clean up
+    window.connectQuizStart = null;
+    document.querySelectorAll('.quiz-connect-item').forEach(item => {
+        item.classList.remove('ring-2', 'ring-blue-400', 'ring-opacity-70');
+    });
+};
+
+window.drawConnectQuizLines = function (slideId) {
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.findSlide(editor.currentLessonId, parseInt(slideId));
+    if (!slide) return;
+
+    const connectionsLayer = document.getElementById(`connections-${slideId}`);
+    if (!connectionsLayer) return;
+
+    // Clear existing lines
+    connectionsLayer.innerHTML = '';
+
+    const leftItems = document.querySelectorAll(`.quiz-connect-container .quiz-connect-item[data-side="left"]`);
+    const rightItems = document.querySelectorAll(`.quiz-connect-container .quiz-connect-item[data-side="right"]`);
+
+    slide.userConnections?.forEach(connection => {
+        const leftItem = leftItems[connection.leftIndex];
+        const rightItem = rightItems[connection.rightIndex];
+
+        if (leftItem && rightItem) {
+            const leftRect = leftItem.getBoundingClientRect();
+            const rightRect = rightItem.getBoundingClientRect();
+            const containerRect = connectionsLayer.getBoundingClientRect();
+
+            const startX = leftRect.right - containerRect.left;
+            const startY = leftRect.top + leftRect.height / 2 - containerRect.top;
+            const endX = rightRect.left - containerRect.left;
+            const endY = rightRect.top + rightRect.height / 2 - containerRect.top;
+
+            // Calculate line length and angle
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+            // Create line element
+            const line = document.createElement('div');
+            line.className = 'quiz-connection-line user-connection';
+            line.style.cssText = `
+                left: ${startX}px;
+                top: ${startY}px;
+                width: ${length}px;
+                transform: rotate(${angle}deg);
+            `;
+
+            connectionsLayer.appendChild(line);
+
+            // Add dots at connection points
+            const startDot = document.createElement('div');
+            startDot.className = 'connection-dot';
+            startDot.style.cssText = `
+                left: ${startX - 6}px;
+                top: ${startY - 6}px;
+            `;
+
+            const endDot = document.createElement('div');
+            endDot.className = 'connection-dot';
+            endDot.style.cssText = `
+                left: ${endX - 6}px;
+                top: ${endY - 6}px;
+            `;
+
+            connectionsLayer.appendChild(startDot);
+            connectionsLayer.appendChild(endDot);
+        }
+    });
+};
+
+// ========== IMAGE PAIRS FUNCTION ==========
+
 window.handleImagePairsSelect = function (event, side, index) {
     event.stopPropagation();
     const editor = window.courseEditor || window.editor;
@@ -2978,21 +3128,44 @@ window.handleImagePairsSelect = function (event, side, index) {
     editor.loadSlidePreview(slide.id);
 };
 
-// Global function for drag match start
+// ========== DRAG & DROP FUNCTIONS ==========
+
 window.handleDragMatchStart = function (event, side, index) {
+    const editor = window.courseEditor || window.editor;
+    if (!editor) return;
+
+    const slide = editor.getCurrentSlide();
+    if (!slide || slide.submitted) return;
+
     event.dataTransfer.setData('text/plain', JSON.stringify({
         side: side,
-        index: index
+        index: index,
+        slideId: slide.id
     }));
 
-    // Add visual feedback
-    event.target.classList.add('opacity-50', 'scale-95');
+    // Visual feedback
+    event.target.classList.add('opacity-50', 'scale-95', 'ring-2', 'ring-blue-400');
+
+    // Store original position for potential return
+    window.dragOriginalPosition = {
+        element: event.target,
+        parent: event.target.parentNode,
+        side: side,
+        index: index
+    };
 };
 
-// Global function for drag match drop
-window.handleDragMatchDrop = function (event, slideId, dropIndex) {
+window.handleDragMatchOver = function (event) {
     event.preventDefault();
+    event.currentTarget.classList.add('border-blue-400', 'bg-blue-500/10', 'scale-105');
+};
 
+window.handleDragMatchLeave = function (event) {
+    event.currentTarget.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
+};
+
+window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'right') {
+    event.preventDefault();
     const editor = window.courseEditor || window.editor;
     if (!editor) return;
 
@@ -3004,31 +3177,97 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex) {
         const draggedSide = dragData.side;
         const draggedIndex = dragData.index;
 
+        // Remove visual feedback
+        document.querySelectorAll('.quiz-drag-item').forEach(item => {
+            item.classList.remove('opacity-50', 'scale-95', 'ring-2', 'ring-blue-400');
+        });
+        document.querySelectorAll('.quiz-drop-zone').forEach(zone => {
+            zone.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
+        });
+
         // Initialize user matches if not exists
         if (!slide.userMatches) {
             slide.userMatches = [];
         }
 
-        // Remove any existing match for this dragged item
-        slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
+        if (draggedSide === 'left' && dropSide === 'right') {
+            // Moving from left to right
+            const draggedElement = window.dragOriginalPosition.element;
+            const dropZone = event.currentTarget;
 
-        // Add new match
-        slide.userMatches.push({
-            leftIndex: draggedIndex,
-            rightIndex: dropIndex
-        });
+            // Remove from original parent and clear its content
+            if (window.dragOriginalPosition.parent) {
+                window.dragOriginalPosition.parent.removeChild(draggedElement);
+                // Clear the original drop zone
+                window.dragOriginalPosition.parent.innerHTML = '';
+                window.dragOriginalPosition.parent.classList.remove('border-blue-400');
+            }
+
+            // Clear drop zone and add dragged element
+            dropZone.innerHTML = '';
+            dropZone.appendChild(draggedElement);
+            dropZone.classList.add('border-green-400', 'bg-green-500/10');
+            draggedElement.classList.add('opacity-100', 'scale-100');
+
+            // Remove any existing match for this dragged item
+            slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
+
+            // Add new match
+            slide.userMatches.push({
+                leftIndex: draggedIndex,
+                rightIndex: dropIndex
+            });
+
+        } else if (draggedSide === 'right' && dropSide === 'left') {
+            // Returning from right to left
+            const draggedElement = window.dragOriginalPosition.element;
+            const dropZone = event.currentTarget;
+
+            // Remove from current parent and clear it
+            if (draggedElement.parentNode) {
+                draggedElement.parentNode.removeChild(draggedElement);
+                draggedElement.parentNode.classList.remove('border-green-400', 'bg-green-500/10');
+            }
+
+            // Add to left drop zone
+            dropZone.innerHTML = '';
+            dropZone.appendChild(draggedElement);
+            draggedElement.classList.remove('opacity-50', 'scale-95');
+            dropZone.classList.add('border-blue-400', 'bg-blue-500/10');
+
+            // Remove the match
+            slide.userMatches = slide.userMatches.filter(match =>
+                !(match.leftIndex === draggedIndex && match.rightIndex === dropIndex)
+            );
+        }
 
         editor.saveToLocalStorage();
         editor.loadSlidePreview(slide.id);
+
+        // Update submit button visibility
+        window.updateDragMatchSubmitButton(slide);
 
     } catch (err) {
         console.error('Error handling drag drop:', err);
     }
 
-    // Remove visual feedback from all drag items
-    document.querySelectorAll('.quiz-drag-item').forEach(item => {
-        item.classList.remove('opacity-50', 'scale-95');
-    });
+    // Clean up
+    window.dragOriginalPosition = null;
+};
+
+window.updateDragMatchSubmitButton = function (slide) {
+    const submitButton = document.getElementById(`quiz-${slide.id}-submit`);
+    if (!submitButton) return;
+
+    const leftColumnLength = slide.content?.leftColumn?.length || 0;
+    const userMatchesLength = slide.userMatches?.length || 0;
+
+    // Show submit button only when ALL left items are placed in right column
+    if (leftColumnLength > 0 && userMatchesLength === leftColumnLength) {
+        submitButton.classList.remove('hidden');
+    } else {
+        submitButton.classList.add('hidden');
+    }
 };
 
 window.handleQuizCategorizeSubmit = (containerId) => {
@@ -4255,7 +4494,8 @@ class QuizManager {
                 return userConnections.length === (slide.content?.leftColumn?.length || 0);
             case 'drag-match-quiz':
                 const userMatches = slide.userMatches || [];
-                return userMatches.length === (slide.content?.leftColumn?.length || 0);
+                const leftColumnLength = slide.content?.leftColumn?.length || 0;
+                return leftColumnLength > 0 && userMatches.length === leftColumnLength;
             case 'image-pairs-quiz':
                 const userSelections = slide.userSelections || { left: [], right: [] };
                 return userSelections.left.length > 0 || userSelections.right.length > 0;

@@ -1676,3 +1676,31 @@ body {
 .dir-rtl {
 	direction: rtl;
 }
+
+/* Connect quiz line styles - REQUIRED CSS for dynamic positioning */
+.quiz-connection-line {
+	position: absolute;
+	background: linear-gradient(90deg, #3b82f6, #60a5fa);
+	height: 3px;
+	pointer-events: none;
+	z-index: 5;
+	transform-origin: left center;
+	box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.quiz-connection-line.user-connection {
+	background: linear-gradient(90deg, #10b981, #34d399);
+	box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.connection-dot {
+	position: absolute;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: #3b82f6;
+	border: 2px solid white;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	z-index: 6;
+	pointer-events: none;
+}
