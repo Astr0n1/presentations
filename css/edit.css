@@ -2017,3 +2017,21 @@ body {
 .slide-content button:not(.quiz-option) {
 	color: initial !important; /* Reset for other buttons */
 }
+/* Normal mode - 2×2 grid layout */
+.image-collection-grid {
+	height: 100%;
+}
+
+.image-collection-grid .grid {
+	height: 100%;
+}
+
+.image-collection-item {
+	aspect-ratio: 1/1; /* Make items square */
+	min-height: 0;
+}
+
+.image-collection-item .image-container {
+	height: 100%;
+	width: 100%;
+}

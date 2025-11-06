@@ -579,7 +579,7 @@ class UIRenderer {
 
         const headerHtml = `
     <div class="slide-header w-full">
-        <h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
+        ${slide.content.title ? `<h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title)}</h1>` : ''}
         ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
     </div>
 `;
@@ -744,12 +744,11 @@ class UIRenderer {
 `;
         }
 
-        // Normal mode - Use fixed aspect ratio containers to prevent stretching
+        // Normal mode - 2×2 grid layout
         const sectionsHtml = sections.map((section, index) => `
-    <div class="image-collection-item cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl w-4/5 mx-auto" 
+    <div class="image-collection-item cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl" 
          data-action="open-detail" 
-         data-index="${index}"
-         style="flex: 1; min-height: 0; max-height: calc((100% - 4rem) / ${sections.length});">
+         data-index="${index}">
         ${section.imageUrl ? `
             <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full h-full flex items-center justify-center p-2">
                 <img src="${Utils.escapeHTML(section.imageUrl)}" 
@@ -775,7 +774,7 @@ class UIRenderer {
 
         return `
     <div class="image-collection-grid w-full h-full">
-        <div class="flex flex-col items-center justify-center h-full space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent py-1" style="max-height: 100%;">
+        <div class="grid grid-cols-2 gap-3 h-full w-full p-3 overflow-y-auto">
             ${sectionsHtml}
         </div>
     </div>
@@ -1148,12 +1147,12 @@ class UIRenderer {
         }
 
         // Base Tailwind classes for all quiz items - FIXED sizing
-        let itemClass = "w-32 h-32 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
+        let itemClass = "w-28 h-28 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
 
         // Different background for image pairs vs other quiz types
         if (quizType === 'pairs') {
             // For image pairs, use a solid background that will be clearly visible when selected
-            itemClass += " bg-gray-700";
+            itemClass += " bg-black/30";
 
             // Debug: Force blue background for testing
             if (isSelected && !submitted) {
