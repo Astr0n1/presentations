@@ -375,11 +375,6 @@ body {
 	margin-bottom: 0.25rem;
 }
 
-/* ✅ Center elements like images, videos, or quiz blocks neatly */
-.slide-content > *:not(:last-child) {
-	margin-bottom: 1rem;
-}
-
 /* ✅ Buttons / call-to-action (exclude quiz-option buttons) */
 .slide-content button:not(.quiz-option) {
 	align-self: center;
@@ -2008,4 +2003,17 @@ body {
 .slide-content .text-series-nav-dot,
 .slide-content .image-series-nav-dot {
 	color: initial !important;
+}
+
+/* Ensure quiz answers inherit text color but maintain button contrast */
+.slide-content .quiz-option {
+	color: inherit !important;
+}
+
+.slide-content .quiz-option-selected {
+	color: white !important; /* Maintain contrast for selected state */
+}
+
+.slide-content button:not(.quiz-option) {
+	color: initial !important; /* Reset for other buttons */
 }

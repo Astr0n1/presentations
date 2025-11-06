@@ -439,10 +439,11 @@ class SlideManager {
         if (!slide) return;
 
         if (field === 'slideTitle') {
-            slide.title = value;
+            // Handle empty slide title - use empty string instead of default
+            slide.title = value.trim() === '' ? '' : value;
             const slideItem = document.querySelector(`.slide-item[data-slide-id="${slideId}"] h5`);
             if (slideItem) {
-                slideItem.textContent = value;
+                slideItem.textContent = slide.title || ''; // Show empty if title is empty
             } else {
                 this.editor.renderLessonsSidebar();
             }
@@ -748,7 +749,7 @@ class UIRenderer {
     <div class="image-collection-item cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl w-4/5 mx-auto" 
          data-action="open-detail" 
          data-index="${index}"
-         style="flex: 1; min-height: 0; max-height: calc((100% - 2rem) / ${sections.length});">
+         style="flex: 1; min-height: 0; max-height: calc((100% - 4rem) / ${sections.length});">
         ${section.imageUrl ? `
             <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full h-full flex items-center justify-center p-2">
                 <img src="${Utils.escapeHTML(section.imageUrl)}" 
@@ -955,8 +956,7 @@ class UIRenderer {
     <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
     <div class="flex-1 flex justify-center items-center min-h-0">
         <div class="flex gap-6 w-full max-w-3xl h-full">
-            <div class="flex-1 flex flex-col h-full max-h-64">
-                <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">اسحب من هنا</div>
+            <div class="flex-1 flex flex-col h-full max-h-full">
                 <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
 `;
 
@@ -986,8 +986,7 @@ class UIRenderer {
         html += `
                 </div>
             </div>
-            <div class="flex-1 flex flex-col h-full max-h-64">
-                <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">أسقط هنا</div>
+            <div class="flex-1 flex flex-col h-full max-h-full">
                 <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
 `;
 
@@ -1091,7 +1090,7 @@ class UIRenderer {
         let html = `
         <div class="quiz-image-pairs-container mt-4 mx-auto">
             <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
-            <div class="quiz-columns-container gap-20 dir-ltr">
+            <div class="quiz-columns-container gap-10 dir-ltr">
                 <div class="quiz-column">
     `;
 
@@ -1763,7 +1762,7 @@ class UIRenderer {
                 else classes += "border-gray-300 bg-white/10";
             } else {
                 classes += isChosen
-                    ? "border-blue-500 quiz-option-selected"
+                    ? "border-blue-500 quiz-option-selected bg-blue-600/30"
                     : "border-gray-300 bg-white/10 hover:bg-white/20";
             }
 
@@ -1790,7 +1789,7 @@ class UIRenderer {
     </div>
     ${showSubmit ? `
         <div class="text-center mt-4">
-            <button class="bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
                     id="quiz-${slide.id}-submit">
                 تأكيد الإجابة
             </button>
@@ -2453,22 +2452,22 @@ class UIRenderer {
                 slideItem.dataset.lessonId = lesson.id;
                 slideItem.draggable = true;
                 slideItem.innerHTML = `
-                    <div class="flex items-center space-x-3 space-x-reverse">
-                        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded text-xs flex items-center justify-center">${index + 1}</div>
-                        <div>
-                            <h5 class="text-sm font-medium text-gray-900">${Utils.escapeHTML(slide.title)}</h5>
-                            <p class="text-xs text-gray-500">${this.editor.getSlideTypeText(slide.type)}</p>
-                        </div>
-                    </div>
-                    <div class="slide-actions flex space-x-1 space-x-reverse">
-                        <button class="edit-slide p-1 text-gray-400 hover:text-blue-600" data-slide-id="${slide.id}">
-                            <i class="fas fa-edit text-xs"></i>
-                        </button>
-                        <button class="delete-slide p-1 text-gray-400 hover:text-red-600" data-slide-id="${slide.id}">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
-                `;
+    <div class="flex items-center space-x-3 space-x-reverse">
+        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded text-xs flex items-center justify-center">${index + 1}</div>
+        <div>
+            <h5 class="text-sm font-medium text-gray-900">${Utils.escapeHTML(slide.title || '')}</h5>
+            <p class="text-xs text-gray-500">${this.editor.getSlideTypeText(slide.type)}</p>
+        </div>
+    </div>
+    <div class="slide-actions flex space-x-1 space-x-reverse">
+        <button class="edit-slide p-1 text-gray-400 hover:text-blue-600" data-slide-id="${slide.id}">
+            <i class="fas fa-edit text-xs"></i>
+        </button>
+        <button class="delete-slide p-1 text-gray-400 hover:text-red-600" data-slide-id="${slide.id}">
+            <i class="fas fa-trash text-xs"></i>
+        </button>
+    </div>
+`;
                 listZone.appendChild(slideItem);
             });
 
