@@ -1160,7 +1160,7 @@ class UIRenderer {
         // Different background for image pairs vs other quiz types
         if (quizType === 'pairs') {
             // For image pairs, use a solid background that will be clearly visible when selected
-            itemClass += " bg-gray-700";
+            itemClass += " bg-black/30";
 
             // Debug: Force blue background for testing
             if (isSelected && !submitted) {
@@ -1910,7 +1910,7 @@ class UIRenderer {
 
         // unified background + fully opaque top layer
         return `
-    <div id="${id}" class="comparison-wrapper relative w-full rounded-lg overflow-hidden bg-gray-700 text-white" style="min-height:250px;">
+    <div id="${id}" class="comparison-wrapper relative w-full rounded-lg overflow-hidden bg-black/30 text-white" style="min-height:250px;">
         <!-- Unified background already on wrapper -->
 
         <!-- Bottom (right) layer -->
@@ -1919,7 +1919,7 @@ class UIRenderer {
         </div>
 
         <!-- Top (left) layer, completely opaque -->
-        <div class="comparison-layer top absolute inset-0 z-10 bg-gray-700" 
+        <div class="comparison-layer top absolute inset-0 z-10 bg-black/30" 
              style="clip-path: inset(0 50% 0 0); transition: clip-path 0.12s linear;">
             ${leftHtml}
         </div>
