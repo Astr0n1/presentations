@@ -1789,3 +1789,121 @@ body {
 	border-color: #3b82f6 !important;
 	background-color: rgba(59, 130, 246, 0.1) !important;
 }
+
+/* Text Size Classes with Better Specificity */
+.slide-content.text-size-xs {
+	font-size: 0.75rem !important;
+}
+.slide-content.text-size-s {
+	font-size: 0.875rem !important;
+}
+.slide-content.text-size-m {
+	font-size: 1rem !important;
+}
+.slide-content.text-size-l {
+	font-size: 1.125rem !important;
+}
+.slide-content.text-size-xl {
+	font-size: 1.25rem !important;
+}
+
+/* Size multipliers for different text elements */
+.slide-content.text-size-xs .slide-header h1 {
+	font-size: clamp(0.9rem, 2vw, 1.5rem) !important;
+}
+.slide-content.text-size-xs .slide-header h2 {
+	font-size: clamp(0.8rem, 1.6vw, 1.1rem) !important;
+}
+.slide-content.text-size-xs .slide-content p,
+.slide-content.text-size-xs .slide-content li,
+.slide-content.text-size-xs .slide-content div:not(.slide-header) {
+	font-size: clamp(0.7rem, 1.1vw, 0.9rem) !important;
+}
+
+.slide-content.text-size-s .slide-header h1 {
+	font-size: clamp(1rem, 2vw, 1.6rem) !important;
+}
+.slide-content.text-size-s .slide-header h2 {
+	font-size: clamp(0.85rem, 1.6vw, 1.2rem) !important;
+}
+.slide-content.text-size-s .slide-content p,
+.slide-content.text-size-s .slide-content li,
+.slide-content.text-size-s .slide-content div:not(.slide-header) {
+	font-size: clamp(0.75rem, 1.1vw, 0.95rem) !important;
+}
+
+.slide-content.text-size-m .slide-header h1 {
+	font-size: clamp(1.1rem, 2vw, 1.75rem) !important;
+}
+.slide-content.text-size-m .slide-header h2 {
+	font-size: clamp(0.9rem, 1.6vw, 1.3rem) !important;
+}
+.slide-content.text-size-m .slide-content p,
+.slide-content.text-size-m .slide-content li,
+.slide-content.text-size-m .slide-content div:not(.slide-header) {
+	font-size: clamp(0.8rem, 1.1vw, 1rem) !important;
+}
+
+.slide-content.text-size-l .slide-header h1 {
+	font-size: clamp(1.25rem, 2vw, 2rem) !important;
+}
+.slide-content.text-size-l .slide-header h2 {
+	font-size: clamp(1rem, 1.6vw, 1.5rem) !important;
+}
+.slide-content.text-size-l .slide-content p,
+.slide-content.text-size-l .slide-content li,
+.slide-content.text-size-l .slide-content div:not(.slide-header) {
+	font-size: clamp(0.9rem, 1.1vw, 1.1rem) !important;
+}
+
+.slide-content.text-size-xl .slide-header h1 {
+	font-size: clamp(1.4rem, 2vw, 2.25rem) !important;
+}
+.slide-content.text-size-xl .slide-header h2 {
+	font-size: clamp(1.1rem, 1.6vw, 1.7rem) !important;
+}
+.slide-content.text-size-xl .slide-content p,
+.slide-content.text-size-xl .slide-content li,
+.slide-content.text-size-xl .slide-content div:not(.slide-header) {
+	font-size: clamp(1rem, 1.1vw, 1.2rem) !important;
+}
+
+/* Arabic Font Classes with Better Specificity */
+.slide-content.font-tajawal {
+	font-family: "Tajawal", sans-serif !important;
+}
+.slide-content.font-cairo {
+	font-family: "Cairo", sans-serif !important;
+}
+.slide-content.font-amiri {
+	font-family: "Amiri", serif !important;
+}
+.slide-content.font-lateef {
+	font-family: "Lateef", serif !important;
+}
+.slide-content.font-scheherazade {
+	font-family: "Scheherazade", serif !important;
+}
+
+/* Italic text with Better Specificity */
+.slide-content.text-italic {
+	font-style: italic !important;
+}
+
+/* Color override for all text elements */
+.slide-content[style*="color"] .slide-header h1,
+.slide-content[style*="color"] .slide-header h2,
+.slide-content[style*="color"] .slide-header h3,
+.slide-content[style*="color"] .slide-content p,
+.slide-content[style*="color"] .slide-content li,
+.slide-content[style*="color"] .slide-content div:not(.slide-header),
+.slide-content[style*="color"] .slide-content span {
+	color: inherit !important;
+}
+
+/* Background image handling */
+.slide-preview.has-background-image {
+	background-size: cover !important;
+	background-position: center !important;
+	background-repeat: no-repeat !important;
+}
