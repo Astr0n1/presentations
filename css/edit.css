@@ -2035,3 +2035,54 @@ body {
 	height: 100%;
 	width: 100%;
 }
+
+/* Center content containers and use content-based height */
+.quiz-connect-container,
+.quiz-drag-match-container,
+.quiz-image-pairs-container,
+.image-collection-grid {
+	min-height: auto !important;
+	height: auto !important;
+}
+
+/* Ensure quiz items maintain their sizing */
+.quiz-connect-item,
+.quiz-drag-item,
+.quiz-pairs-item {
+	width: 120px !important;
+	height: 120px !important;
+	flex-shrink: 0;
+}
+
+/* Image collection items square aspect ratio */
+.image-collection-item {
+	aspect-ratio: 1/1;
+	min-height: 0;
+}
+
+.image-collection-item .image-container {
+	height: 100%;
+	width: 100%;
+}
+
+/* Drag match quiz column sizing */
+.quiz-drag-match-container .flex.gap-6 {
+	width: auto;
+	max-width: none;
+}
+
+.quiz-drag-match-container .flex.flex-col {
+	width: auto;
+	flex: none;
+}
+
+.quiz-drop-zone {
+	width: 140px;
+	min-width: 140px;
+}
+
+.quiz-drag-item {
+	width: 120px !important;
+	height: 120px !important;
+	flex-shrink: 0;
+}

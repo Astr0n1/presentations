@@ -773,8 +773,8 @@ class UIRenderer {
 `).join('');
 
         return `
-    <div class="image-collection-grid w-full h-full">
-        <div class="grid grid-cols-2 gap-3 h-full w-full p-3 overflow-y-auto">
+    <div class="image-collection-grid w-full flex items-center justify-center">
+        <div class="grid grid-cols-2 gap-3 w-full max-w-4xl p-3">
             ${sectionsHtml}
         </div>
     </div>
@@ -794,9 +794,9 @@ class UIRenderer {
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
 
         let html = `
-<div class="quiz-connect-container mt-4 relative w-full h-full flex flex-col">
+<div class="quiz-connect-container relative w-full flex flex-col items-center justify-center">
     <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
-    <div class="flex-1 flex justify-center items-center min-h-0">
+    <div class="flex justify-center items-center w-full">
         <div class="flex gap-6 w-full max-w-3xl dir-ltr">
             <div class="flex-1 flex flex-col h-full">
                 <div class="flex-1 flex flex-col gap-3 justify-center items-center min-h-0">
@@ -882,10 +882,10 @@ class UIRenderer {
         });
 
         let html = `
-    <div class="quiz-image-pairs-container mt-2 relative w-full flex flex-col" style="max-height: 80vh; overflow: hidden;">
+    <div class="quiz-image-pairs-container relative w-full flex flex-col items-center justify-center">
         <h3 class="text-xl font-bold text-center mb-2">${Utils.escapeHTML(c.question || 'اختر الصور الصحيحة من القائمتين')}</h3>
-        <div class="flex-1 flex justify-center items-center min-h-0">
-            <div class="flex gap-4 w-full max-w-2xl h-full items-center justify-center">
+        <div class="flex justify-center items-center w-full">
+            <div class="flex gap-4 w-full max-w-2xl items-center justify-center">
                 <div class="flex-1 flex flex-col h-full max-h-64">
                     <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">القائمة اليسرى</div>
                     <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
@@ -951,12 +951,12 @@ class UIRenderer {
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
 
         let html = `
-<div class="quiz-drag-match-container mt-4 relative w-full h-full flex flex-col">
+<div class="quiz-drag-match-container relative w-full flex flex-col items-center justify-center">
     <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
-    <div class="flex-1 flex justify-center items-center min-h-0">
-        <div class="flex gap-6 w-full max-w-3xl h-full">
-            <div class="flex-1 flex flex-col h-full max-h-full">
-                <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
+    <div class="flex justify-center items-center w-full">
+        <div class="flex gap-6 items-start">
+            <div class="flex flex-col">
+                <div class="flex flex-col gap-2 justify-center items-center">
 `;
 
         // Left column - show only items that are NOT placed in right column
@@ -971,7 +971,7 @@ class UIRenderer {
             const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
 
             html += `
-    <div class="${zoneClass} min-h-[80px] w-full border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
+    <div class="${zoneClass} min-h-[80px] w-28 border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
          data-index="${index}" 
          data-side="left"
          ondragover="window.handleDragMatchOver(event)"
@@ -985,8 +985,8 @@ class UIRenderer {
         html += `
                 </div>
             </div>
-            <div class="flex-1 flex flex-col h-full max-h-full">
-                <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
+            <div class="flex flex-col">
+                <div class="flex flex-col gap-2 justify-center items-center">
 `;
 
         // Right column - show items that ARE placed in right column
@@ -1020,7 +1020,7 @@ class UIRenderer {
             }
 
             html += `
-    <div class="${zoneClass} min-h-[80px] border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+    <div class="${zoneClass} w-28 min-h-[80px] border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
          data-index="${index}" 
          data-side="right"
          ondragover="window.handleDragMatchOver(event)"
@@ -1781,9 +1781,9 @@ class UIRenderer {
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
 
         return `
-<div class="mt-4 relative overflow-visible w-full">
+<div class="relative w-full flex flex-col items-center justify-center">
     <h2 class="text-lg font-bold text-center mb-3 break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
-    <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">
+    <div class="space-y-2 max-w-md w-full" id="quiz-${slide.id}-answers">
         ${answersHTML}
     </div>
     ${showSubmit ? `
@@ -1852,7 +1852,7 @@ class UIRenderer {
         }
 
         return `
-    <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
+    <div id="${containerId}" class="w-full flex flex-col items-center justify-center text-center">
         ${draggableHtml}
         <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
             ${dropZones}
@@ -3709,6 +3709,20 @@ class UIInteractions {
         const cancelAddSlide = document.getElementById('cancel-add-slide');
         if (cancelAddSlide) cancelAddSlide.addEventListener('click', () => this.editor.hideAddSlideModal());
 
+        // Close modal button
+        const closeAddSlideModal = document.getElementById('close-add-slide-modal');
+        if (closeAddSlideModal) closeAddSlideModal.addEventListener('click', () => this.editor.hideAddSlideModal());
+
+        // Close modal when clicking outside
+        const addSlideModal = document.getElementById('add-slide-modal');
+        if (addSlideModal) {
+            addSlideModal.addEventListener('click', (e) => {
+                if (e.target === addSlideModal) {
+                    this.editor.hideAddSlideModal();
+                }
+            });
+        }
+
         const slideCategoryNav = document.getElementById('slide-category-nav');
         if (slideCategoryNav) {
             slideCategoryNav.addEventListener('click', (e) => {
@@ -3751,6 +3765,13 @@ class UIInteractions {
         // global document handlers (delegated)
         document.addEventListener('click', this.handleDocumentClick);
         document.addEventListener('input', this.handleInput);
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.editor.dom.addSlideModal && !this.editor.dom.addSlideModal.classList.contains('hidden')) {
+                this.editor.hideAddSlideModal();
+            }
+        });
 
         const mobileHandle = document.getElementById('mobile-lessons-handle');
         const mobileNav = document.getElementById('mobile-slide-nav');
