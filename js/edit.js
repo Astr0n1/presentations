@@ -22,7 +22,7 @@ class Utils {
 // Models
 ////////////////////////////////////////////////////
 class Slide {
-    constructor({ id, title = 'سلايد جديد', type = 'content', subtype = 'undefined', content = {}, textStyle = null } = {}) {
+    constructor({ id, title = 'سلايد جديد', type = 'content', subtype = 'undefined', content = {} } = {}) {
         this.id = id;
         this.title = title;
         this.type = type;
@@ -30,17 +30,15 @@ class Slide {
         this.content = content;
         this.userChoice = this.userChoice ?? null;
         this.submitted = this.submitted ?? false;
-        this.textStyle = textStyle;
     }
 }
 
 class Lesson {
-    constructor({ id, title = 'درس جديد', code = '', slides = [], background = null } = {}) {
+    constructor({ id, title = 'درس جديد', code = '', slides = [] } = {}) {
         this.id = id;
         this.title = title;
         this.code = code;
         this.slides = slides.map(s => new Slide(s));
-        this.background = background;
     }
 
     nextSlideId() {
@@ -95,20 +93,9 @@ class SlideManager {
                         title: 'مرحباً',
                         type: 'title',
                         subtype: 'undefined',
-                        content: {
-                            title: 'مرحباً بكم!',
-                            subtitle: 'مرحبا بكم في الدرس الجديد قم باضافة بعد الشرائح للدرس',
-                            buttonText: 'ابدأ التعلم'
-                        },
-                        textStyle: {
-                            size: 'm',
-                            fontFamily: 'tajawal',
-                            color: '#ffffff',
-                            italic: false
-                        }
+                        content: { title: 'مرحباً بكم!', subtitle: 'مرحبا بكم في الدرس الجديد قم باضافة بعد الشرائح للدرس', buttonText: 'ابدأ التعلم' }
                     })
-                ],
-                background: null
+                ]
             });
             this.editor.lessons = [sample];
             this.editor.currentLessonId = sample.id;
@@ -551,37 +538,18 @@ class UIRenderer {
             <p class="text-sm">انقر على أي سلايد لرؤية محتواه هنا</p>
         </div>`;
             previewContainer.className = 'slide-preview rounded-t-xl fixed-slide-size mx-auto flex items-center justify-center';
-            previewContainer.style.backgroundImage = '';
-            previewContainer.style.backgroundColor = '';
             return;
         }
 
         previewContent.innerHTML = '';
-
-        // Apply background and text styling
-        const lesson = this.editor.findLessonById(this.editor.currentLessonId);
-        let containerClasses = `slide-preview rounded-t-xl fixed-slide-size mx-auto slide-${slide.type}`;
-
-        // Apply background
-        if (lesson && lesson.background) {
-            containerClasses += ' has-background-image';
-            previewContainer.style.backgroundImage = `url("${Utils.escapeHTML(lesson.background)}")`;
-            previewContainer.style.backgroundColor = 'transparent';
-        } else {
-            previewContainer.style.backgroundImage = '';
-            previewContainer.style.backgroundColor = '';
-            // Remove the class if no background image
-            containerClasses = containerClasses.replace(' has-background-image', '');
-        }
-
-        previewContainer.className = containerClasses;
+        previewContainer.className = `slide-preview rounded-t-xl fixed-slide-size mx-auto slide-${slide.type}`;
 
         const headerHtml = `
-        <div class="slide-header w-full">
-            <h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
-            ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
-        </div>
-    `;
+            <div class="slide-header w-full">
+                <h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
+                ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+            </div>
+        `;
 
         let bodyHtml = '';
         const key = `${slide.type}-${slide.subtype}`;
@@ -612,10 +580,10 @@ class UIRenderer {
 
             case 'title-undefined':
                 bodyHtml += `<div class="mt-4 text-center self-center">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg px-6 py-2">
-                                ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
-                            </button>
-                        </div>`;
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg px-6 py-2">
+                                    ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
+                                </button>
+                            </div>`;
                 break;
 
             case 'image-comparison':
@@ -656,24 +624,11 @@ class UIRenderer {
                 }
         }
 
-        // Apply text styling with better CSS classes
-        const textStyle = slide.textStyle || {};
-        const textSizeClass = textStyle.size ? `text-size-${textStyle.size.toLowerCase()}` : '';
-        const fontFamilyClass = textStyle.fontFamily ? `font-${textStyle.fontFamily}` : '';
-        const italicClass = textStyle.italic ? 'text-italic' : '';
-
-        // Build style attribute
-        let styleAttribute = '';
-        if (textStyle.color) {
-            styleAttribute = `style="color: ${textStyle.color} !important;"`;
-        }
-
         previewContent.innerHTML = `
-        <div class="slide-content w-full overflow-y-auto break-words hyphens-auto ${textSizeClass} ${fontFamilyClass} ${italicClass}" ${styleAttribute}>
-            ${headerHtml + bodyHtml}
-        </div>
-    `;
-
+            <div class="slide-content w-full  overflow-y-auto break-words hyphens-auto">
+                ${headerHtml + bodyHtml}
+            </div>
+        `;
         const preview = document.getElementById("slide-preview-container");
         if (preview) preview.classList.add("fixed-slide-size");
     }
@@ -2515,23 +2470,23 @@ class UIRenderer {
         this.editor.loadSlidePreview(slideId);
 
         let html = `
-        <div class="space-y-4">
-            <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
-                <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات الشريحة الأساسية</h4>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">اسم الشريحة (الشريط الجانبي)</label>
-                    <input type="text" id="edit-slide-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="${Utils.escapeHTML(slide.title)}" />
+            <div class="space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+                    <h4 class="text-lg font-semibold mb-3 text-gray-800">إعدادات الشريحة الأساسية</h4>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">اسم الشريحة (الشريط الجانبي)</label>
+                        <input type="text" id="edit-slide-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="${Utils.escapeHTML(slide.title)}" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">العنوان الرئيسي للشريحة</label>
+                        <input type="text" id="edit-main-title" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="${Utils.escapeHTML(slide.content.title || '')}" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">العنوان الفرعي للشريحة (اختياري)</label>
+                        <input type="text" id="edit-subtitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="${Utils.escapeHTML(slide.content.subtitle || '')}" />
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">العنوان الرئيسي للشريحة</label>
-                    <input type="text" id="edit-main-title" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="${Utils.escapeHTML(slide.content.title || '')}" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">العنوان الفرعي للشريحة (اختياري)</label>
-                    <input type="text" id="edit-subtitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg" value="${Utils.escapeHTML(slide.content.subtitle || '')}" />
-                </div>
-            </div>
-    `;
+        `;
 
         const key = `${slide.type}-${slide.subtype}`;
         switch (key) {
@@ -2568,126 +2523,31 @@ class UIRenderer {
             case 'quiz-connect-quiz':
                 html += this.renderConnectQuizEditor(slide);
                 break;
+
             case 'quiz-drag-match-quiz':
                 html += this.renderDragMatchQuizEditor(slide);
                 break;
+
             case 'quiz-image-pairs-quiz':
                 html += this.renderImagePairsQuizEditor(slide);
                 break;
             default:
                 if (slide.content.text !== undefined) {
                     html += `
-                    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-                        <h4 class="text-lg font-semibold mb-3 text-gray-800">المحتوى</h4>
-                        <textarea id="edit-generic-text" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Utils.escapeHTML(slide.content.text || '')}</textarea>
-                    </div>
-                `;
+                        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+                            <h4 class="text-lg font-semibold mb-3 text-gray-800">المحتوى</h4>
+                            <textarea id="edit-generic-text" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Utils.escapeHTML(slide.content.text || '')}</textarea>
+                        </div>
+                    `;
                 } else {
                     html += `
-                    <div class="text-center text-gray-500 py-12">
-                        <i class="fas fa-tools text-4xl mb-4"></i>
-                        <p>لا توجد واجهة تحرير مخصصة لهذا النوع حتى الآن.</p>
-                    </div>
-                `;
+                        <div class="text-center text-gray-500 py-12">
+                            <i class="fas fa-tools text-4xl mb-4"></i>
+                            <p>لا توجد واجهة تحرير مخصصة لهذا النوع حتى الآن.</p>
+                        </div>
+                    `;
                 }
         }
-
-        // Add Styling Controls Section
-        html += `
-        <!-- Styling Controls Section -->
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-            <details class="styling-controls-section">
-                <summary class="cursor-pointer flex items-center justify-between">
-                    <h4 class="text-lg font-semibold text-gray-800">إعدادات التنسيق</h4>
-                    <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
-                </summary>
-                
-                <div class="mt-4 space-y-4">
-                    <!-- Lesson Background -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <h5 class="text-sm font-medium text-gray-700 mb-2">خلفية الدرس (لجميع الشرائح)</h5>
-                        <div class="space-y-2">
-                            <div class="flex items-center space-x-2 space-x-reverse">
-                                <input type="radio" id="bg-default" name="lesson-background" value="default" 
-                                       ${(!lesson.background) ? 'checked' : ''} class="text-blue-600">
-                                <label for="bg-default" class="text-sm text-gray-700">الخلفية الافتراضية</label>
-                            </div>
-                            <div class="flex items-center space-x-2 space-x-reverse">
-                                <input type="radio" id="bg-custom" name="lesson-background" value="custom" 
-                                       ${(lesson.background) ? 'checked' : ''} class="text-blue-600">
-                                <label for="bg-custom" class="text-sm text-gray-700">صورة مخصصة</label>
-                            </div>
-                            <div id="bg-image-input" class="${lesson.background ? '' : 'hidden'}">
-                                <input type="url" id="lesson-bg-image" value="${Utils.escapeHTML(lesson.background || '')}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
-                                       placeholder="أدخل رابط الصورة...">
-                                <button id="test-bg-image" class="w-full mt-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
-                                    اختبار الصورة
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Slide Text Styling -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق النص (لهذه الشريحة فقط)</h5>
-                        <div class="grid grid-cols-2 gap-3">
-                            <!-- Text Size -->
-                            <div>
-                                <label class="block text-xs text-gray-600 mb-1">حجم النص</label>
-                                <select id="text-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                    <option value="xs" ${(slide.textStyle && slide.textStyle.size === 'xs') ? 'selected' : ''}>صغير جداً</option>
-                                    <option value="s" ${(slide.textStyle && slide.textStyle.size === 's') ? 'selected' : ''}>صغير</option>
-                                    <option value="m" ${(!slide.textStyle || slide.textStyle.size === 'm') ? 'selected' : ''}>متوسط</option>
-                                    <option value="l" ${(slide.textStyle && slide.textStyle.size === 'l') ? 'selected' : ''}>كبير</option>
-                                    <option value="xl" ${(slide.textStyle && slide.textStyle.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
-                                </select>
-                            </div>
-
-                            <!-- Font Family -->
-                            <div>
-                                <label class="block text-xs text-gray-600 mb-1">نوع الخط</label>
-                                <select id="font-family" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                    <option value="tajawal" ${(!slide.textStyle || slide.textStyle.fontFamily === 'tajawal') ? 'selected' : ''}>تاجوال</option>
-                                    <option value="cairo" ${(slide.textStyle && slide.textStyle.fontFamily === 'cairo') ? 'selected' : ''}>القاهرة</option>
-                                    <option value="amiri" ${(slide.textStyle && slide.textStyle.fontFamily === 'amiri') ? 'selected' : ''}>أميري</option>
-                                    <option value="lateef" ${(slide.textStyle && slide.textStyle.fontFamily === 'lateef') ? 'selected' : ''}>لطيف</option>
-                                    <option value="scheherazade" ${(slide.textStyle && slide.textStyle.fontFamily === 'scheherazade') ? 'selected' : ''}>شهرزاد</option>
-                                </select>
-                            </div>
-
-                            <!-- Text Color -->
-                            <div>
-                                <label class="block text-xs text-gray-600 mb-1">لون النص</label>
-                                <div class="flex items-center space-x-2 space-x-reverse">
-                                    <input type="color" id="text-color" 
-                                           value="${(slide.textStyle && slide.textStyle.color) ? slide.textStyle.color : '#ffffff'}" 
-                                           class="w-8 h-8 border border-gray-300 rounded">
-                                    <input type="text" id="text-color-hex" 
-                                           value="${(slide.textStyle && slide.textStyle.color) ? slide.textStyle.color : '#ffffff'}" 
-                                           class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" 
-                                           placeholder="#ffffff" maxlength="7">
-                                </div>
-                            </div>
-
-                            <!-- Italic -->
-                            <div class="flex items-center">
-                                <input type="checkbox" id="text-italic" 
-                                       ${(slide.textStyle && slide.textStyle.italic) ? 'checked' : ''} 
-                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded">
-                                <label for="text-italic" class="mr-2 text-xs text-gray-700">مائل</label>
-                            </div>
-                        </div>
-
-                        <!-- Reset Button -->
-                        <button id="reset-text-style" class="w-full mt-3 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
-                            إعادة التعيين إلى الافتراضي
-                        </button>
-                    </div>
-                </div>
-            </details>
-        </div>
-    `;
 
         html += '</div>';
         if (this.editor.dom.slideEditContent) this.editor.dom.slideEditContent.innerHTML = html;
@@ -3777,149 +3637,6 @@ class UIInteractions {
         // setup resize handles (kept mostly same as original)
         this.editor.setupResizeHandles();
         this.editor.applySidebarStateForLesson(this.editor.currentLessonId);
-
-        // Add these event listeners in the setupEventListeners method:
-
-        // Lesson background controls
-        document.addEventListener('change', (e) => {
-            if (e.target.name === 'lesson-background') {
-                const lesson = this.editor.findLessonById(this.editor.currentLessonId);
-                if (!lesson) return;
-
-                if (e.target.value === 'default') {
-                    lesson.background = null;
-                    const bgImageInput = document.getElementById('bg-image-input');
-                    if (bgImageInput) bgImageInput.classList.add('hidden');
-                } else {
-                    const bgImageInput = document.getElementById('bg-image-input');
-                    if (bgImageInput) bgImageInput.classList.remove('hidden');
-                    // Keep existing background if any, or wait for URL input
-                }
-                this.editor.saveToLocalStorage();
-                this.editor.loadSlidePreview(this.editor.currentSlideId);
-            }
-        });
-
-        // Background image URL input
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'lesson-bg-image') {
-                const lesson = this.editor.findLessonById(this.editor.currentLessonId);
-                if (!lesson) return;
-
-                lesson.background = e.target.value.trim();
-                this.editor.saveToLocalStorage();
-                this.editor.loadSlidePreview(this.editor.currentSlideId);
-            }
-        });
-
-        // Test background image button
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'test-bg-image') {
-                const urlInput = document.getElementById('lesson-bg-image');
-                if (!urlInput) return;
-
-                const testUrl = urlInput.value.trim();
-
-                if (!testUrl) {
-                    Swal.fire('تنبيه', 'يرجى إدخال رابط الصورة أولاً', 'warning');
-                    return;
-                }
-
-                const img = new Image();
-                img.onload = () => {
-                    Swal.fire('نجاح', 'تم تحميل الصورة بنجاح!', 'success');
-                };
-                img.onerror = () => {
-                    Swal.fire('خطأ', 'تعذر تحميل الصورة. يرجى التحقق من الرابط.', 'error');
-                    urlInput.focus();
-                };
-                img.src = testUrl;
-            }
-        });
-
-        document.addEventListener('change', (e) => {
-            const slide = this.editor.getCurrentSlide();
-            if (!slide || !this.editor.currentSlideId) return;
-
-            if (['text-size', 'font-family', 'text-color', 'text-italic'].includes(e.target.id)) {
-                slide.textStyle = slide.textStyle || {};
-
-                switch (e.target.id) {
-                    case 'text-size':
-                        slide.textStyle.size = e.target.value;
-                        break;
-                    case 'font-family':
-                        slide.textStyle.fontFamily = e.target.value;
-                        break;
-                    case 'text-color':
-                        slide.textStyle.color = e.target.value;
-                        // Sync hex input
-                        const hexInput = document.getElementById('text-color-hex');
-                        if (hexInput) hexInput.value = e.target.value;
-                        break;
-                    case 'text-italic':
-                        slide.textStyle.italic = e.target.checked;
-                        break;
-                }
-
-                this.editor.saveToLocalStorage();
-                // Force complete re-render of the preview
-                this.editor.renderSlidePreview(slide);
-            }
-        });
-
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'lesson-bg-image') {
-                const lesson = this.editor.findLessonById(this.editor.currentLessonId);
-                if (!lesson) return;
-
-                lesson.background = e.target.value.trim();
-                this.editor.saveToLocalStorage();
-                // Force re-render of current slide preview
-                const currentSlide = this.editor.getCurrentSlide();
-                if (currentSlide) {
-                    this.editor.renderSlidePreview(currentSlide);
-                }
-            }
-        });
-
-        // Hex color input sync
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'text-color-hex') {
-                const colorInput = document.getElementById('text-color');
-                if (!colorInput) return;
-
-                const hexValue = e.target.value;
-
-                // Basic hex validation - allow both with and without #
-                let validHex = hexValue;
-                if (hexValue && !hexValue.startsWith('#')) {
-                    validHex = '#' + hexValue;
-                }
-
-                if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(validHex)) {
-                    colorInput.value = validHex;
-                    e.target.value = validHex;
-                    // Trigger the change event
-                    colorInput.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-        });
-
-        // Reset text style button
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'reset-text-style') {
-                const slide = this.editor.getCurrentSlide();
-                if (!slide) return;
-
-                slide.textStyle = null;
-                this.editor.saveToLocalStorage();
-                this.editor.loadSlideEditContent(this.editor.currentSlideId);
-                this.editor.loadSlidePreview(this.editor.currentSlideId);
-
-                Swal.fire('تم', 'تم إعادة تعيين التنسيق إلى الافتراضي', 'success');
-            }
-        });
     }
 
     handleInput(e) {

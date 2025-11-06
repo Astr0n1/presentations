@@ -1907,3 +1907,89 @@ body {
 	background-position: center !important;
 	background-repeat: no-repeat !important;
 }
+
+.slide-content.font-normal {
+	font-weight: normal !important;
+}
+
+.slide-content.font-bold {
+	font-weight: bold !important;
+}
+
+.slide-content.font-bolder {
+	font-weight: 800 !important;
+}
+
+.slide-content.text-size-xxl {
+	font-size: 1.5rem !important;
+}
+
+.slide-content.text-size-xxl .slide-header h1 {
+	font-size: clamp(1.6rem, 2.5vw, 2.5rem) !important;
+}
+
+.slide-content.text-size-xxl .slide-header h2 {
+	font-size: clamp(1.3rem, 2vw, 2rem) !important;
+}
+
+.slide-content.text-size-xxl .slide-content p,
+.slide-content.text-size-xxl .slide-content li,
+.slide-content.text-size-xxl .slide-content div:not(.slide-header) {
+	font-size: clamp(1.1rem, 1.3vw, 1.4rem) !important;
+}
+
+/* Extra Extra Extra Large (xxxl) */
+.slide-content.text-size-xxxl {
+	font-size: 1.75rem !important;
+}
+
+.slide-content.text-size-xxxl .slide-header h1 {
+	font-size: clamp(1.8rem, 3vw, 3rem) !important;
+}
+
+.slide-content.text-size-xxxl .slide-header h2 {
+	font-size: clamp(1.5rem, 2.5vw, 2.5rem) !important;
+}
+
+.slide-content.text-size-xxxl .slide-content p,
+.slide-content.text-size-xxxl .slide-content li,
+.slide-content.text-size-xxxl .slide-content div:not(.slide-header) {
+	font-size: clamp(1.3rem, 1.5vw, 1.6rem) !important;
+}
+
+/* Also update the existing large sizes for consistency */
+.slide-content.text-size-l {
+	font-size: 1.25rem !important;
+}
+
+.slide-content.text-size-l .slide-header h1 {
+	font-size: clamp(1.4rem, 2.2vw, 2.2rem) !important;
+}
+
+.slide-content.text-size-l .slide-header h2 {
+	font-size: clamp(1.2rem, 1.8vw, 1.8rem) !important;
+}
+
+.slide-content.text-size-l .slide-content p,
+.slide-content.text-size-l .slide-content li,
+.slide-content.text-size-l .slide-content div:not(.slide-header) {
+	font-size: clamp(1rem, 1.2vw, 1.3rem) !important;
+}
+
+.slide-content.text-size-xl {
+	font-size: 1.4rem !important;
+}
+
+.slide-content.text-size-xl .slide-header h1 {
+	font-size: clamp(1.5rem, 2.3vw, 2.4rem) !important;
+}
+
+.slide-content.text-size-xl .slide-header h2 {
+	font-size: clamp(1.3rem, 1.9vw, 2rem) !important;
+}
+
+.slide-content.text-size-xl .slide-content p,
+.slide-content.text-size-xl .slide-content li,
+.slide-content.text-size-xl .slide-content div:not(.slide-header) {
+	font-size: clamp(1.1rem, 1.25vw, 1.35rem) !important;
+}
