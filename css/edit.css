@@ -1727,3 +1727,49 @@ body {
 	background-color: #2563eb40;
 	border-color: #60a5fa;
 }
+
+/* Add to edit.css - Connect Quiz Line Styles */
+.quiz-connection-line.active-connection {
+	background: linear-gradient(90deg, #3b82f6, #60a5fa) !important;
+	box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.quiz-connection-line.correct-connection {
+	background: linear-gradient(90deg, #10b981, #34d399) !important;
+	box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.quiz-connection-line.wrong-connection {
+	background: linear-gradient(90deg, #ef4444, #f87171) !important;
+	box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+.connection-dot.active-connection {
+	background: #3b82f6 !important;
+	box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+}
+
+.connection-dot.correct-connection {
+	background: #10b981 !important;
+	box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.connection-dot.wrong-connection {
+	background: #ef4444 !important;
+	box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+.quiz-feedback-message {
+	animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+	from {
+		transform: translateY(10px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}

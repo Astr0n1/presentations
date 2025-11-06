@@ -751,6 +751,9 @@ class UIRenderer {
         const rightColumnType = c.rightColumnType || 'text';
         const submitted = slide.submitted || false;
 
+        // Check if answer is correct
+        const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
+
         let html = `
     <div class="quiz-connect-container mt-6 relative w-full h-full flex flex-col">
         <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
@@ -795,6 +798,23 @@ class UIRenderer {
                 تأكيد الإجابة
             </button>
         </div>
+    `;
+        }
+
+        // Feedback message - only show if submitted and wrong
+        if (submitted && !isCorrect) {
+            html += `
+    <div id="connect-quiz-feedback-${slide.id}" class="quiz-feedback-message mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg relative">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle ml-2"></i>
+                <span class="font-medium">اجابة خاطئة</span>
+            </div>
+            <button class="close-feedback-message text-red-500 hover:text-red-700" onclick="this.parentElement.parentElement.style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
     `;
         }
 
@@ -3011,7 +3031,11 @@ window.drawConnectQuizLines = function (slideId) {
     const leftItems = document.querySelectorAll(`.quiz-connect-container .quiz-connect-item[data-side="left"]`);
     const rightItems = document.querySelectorAll(`.quiz-connect-container .quiz-connect-item[data-side="right"]`);
 
-    slide.userConnections?.forEach(connection => {
+    const userConnections = slide.userConnections || [];
+    const leftColumn = slide.content.leftColumn || [];
+    const rightColumn = slide.content.rightColumn || [];
+
+    userConnections.forEach(connection => {
         const leftItem = leftItems[connection.leftIndex];
         const rightItem = rightItems[connection.rightIndex];
 
@@ -3029,31 +3053,48 @@ window.drawConnectQuizLines = function (slideId) {
             const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
             const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
 
+            // Check if connection is correct
+            const leftItemData = leftColumn[connection.leftIndex];
+            const isCorrect = leftItemData && leftItemData.correctIndex === connection.rightIndex;
+
+            // Use blue for active connections, green/red only after submission
+            let lineColor, lineClass;
+            if (slide.submitted) {
+                lineColor = isCorrect ? '#10B981' : '#EF4444'; // Green for correct, red for incorrect
+                lineClass = isCorrect ? 'correct-connection' : 'wrong-connection';
+            } else {
+                lineColor = '#3B82F6'; // Blue for active connections
+                lineClass = 'active-connection';
+            }
+
             // Create line element
             const line = document.createElement('div');
-            line.className = 'quiz-connection-line user-connection';
+            line.className = `quiz-connection-line ${lineClass}`;
             line.style.cssText = `
                 left: ${startX}px;
                 top: ${startY}px;
                 width: ${length}px;
                 transform: rotate(${angle}deg);
+                background: linear-gradient(90deg, ${lineColor}, ${lineColor});
             `;
 
             connectionsLayer.appendChild(line);
 
             // Add dots at connection points
             const startDot = document.createElement('div');
-            startDot.className = 'connection-dot';
+            startDot.className = `connection-dot ${lineClass}`;
             startDot.style.cssText = `
                 left: ${startX - 6}px;
                 top: ${startY - 6}px;
+                background: ${lineColor};
             `;
 
             const endDot = document.createElement('div');
-            endDot.className = 'connection-dot';
+            endDot.className = `connection-dot ${lineClass}`;
             endDot.style.cssText = `
                 left: ${endX - 6}px;
                 top: ${endY - 6}px;
+                background: ${lineColor};
             `;
 
             connectionsLayer.appendChild(startDot);
@@ -4514,7 +4555,7 @@ class QuizManager {
         return { isValid: true };
     }
 
-    // Common submit handler
+    // In QuizManager.handleQuizSubmit, add this after the existing code:
     handleQuizSubmit(slideId, containerId = null) {
         const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
         if (!slide || slide.submitted) return;
@@ -4529,6 +4570,13 @@ class QuizManager {
         slide.submitted = true;
         this.editor.saveToLocalStorage();
         this.editor.loadSlidePreview(slideId);
+
+        // Redraw connect quiz lines with correct colors
+        if (slide.subtype === 'connect-quiz') {
+            setTimeout(() => {
+                window.drawConnectQuizLines(slideId);
+            }, 100);
+        }
 
         // Show feedback animation
         this.showQuizFeedback(slide, containerId);
