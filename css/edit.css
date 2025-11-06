@@ -1993,3 +1993,19 @@ body {
 .slide-content.text-size-xl .slide-content div:not(.slide-header) {
 	font-size: clamp(1.1rem, 1.25vw, 1.35rem) !important;
 }
+
+.slide-content,
+.slide-content *:not(button):not(input):not(textarea):not(select) {
+	color: inherit !important;
+}
+
+/* Override for specific elements that should maintain their own colors */
+.slide-content button,
+.slide-content input,
+.slide-content textarea,
+.slide-content select,
+.slide-content .quiz-feedback-icon,
+.slide-content .text-series-nav-dot,
+.slide-content .image-series-nav-dot {
+	color: initial !important;
+}

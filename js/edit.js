@@ -545,7 +545,7 @@ class UIRenderer {
 
         if (!slide) {
             previewContent.innerHTML = `
-        <div class="flex flex-col items-center justify-center text-center h-full text-white opacity-80">
+        <div class="flex flex-col items-center justify-center text-center h-full opacity-80">
             <i class="fas fa-sliders-h text-5xl mb-4"></i>
             <h2 class="text-xl font-bold mb-2">اختر سلايداً للمعاينة</h2>
             <p class="text-sm">انقر على أي سلايد لرؤية محتواه هنا</p>
@@ -577,11 +577,11 @@ class UIRenderer {
         previewContainer.className = containerClasses;
 
         const headerHtml = `
-        <div class="slide-header w-full">
-            <h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
-            ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
-        </div>
-    `;
+    <div class="slide-header w-full">
+        <h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title || slide.title)}</h1>
+        ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+    </div>
+`;
 
         let bodyHtml = '';
         const key = `${slide.type}-${slide.subtype}`;
@@ -591,7 +591,7 @@ class UIRenderer {
                 bodyHtml += `<ul class="space-y-2 mt-2 max-h-96 overflow-y-auto break-words">`;
                 if (Array.isArray(slide.content.items)) {
                     slide.content.items.forEach(it => {
-                        bodyHtml += `<li class="text-white">${Utils.escapeHTML(it)}</li>`;
+                        bodyHtml += `<li>${Utils.escapeHTML(it)}</li>`;
                     });
                 }
                 bodyHtml += `</ul>`;
@@ -612,10 +612,10 @@ class UIRenderer {
 
             case 'title-undefined':
                 bodyHtml += `<div class="mt-4 text-center self-center">
-                            <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg px-6 py-2">
-                                ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
-                            </button>
-                        </div>`;
+                        <button class="bg-blue-600 hover:bg-blue-700 font-bold rounded-lg shadow-lg px-6 py-2">
+                            ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
+                        </button>
+                    </div>`;
                 break;
 
             case 'image-comparison':
@@ -650,9 +650,9 @@ class UIRenderer {
 
             default:
                 if (slide.content.text) {
-                    bodyHtml += `<div class="prose max-w-none text-base text-white mt-3 max-h-96 overflow-y-auto break-words hyphens-auto">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml += `<div class="prose max-w-none text-base mt-3 max-h-96 overflow-y-auto break-words hyphens-auto">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
                 } else {
-                    bodyHtml += `<div class="text-center text-gray-200 py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
+                    bodyHtml += `<div class="text-center py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
                 }
         }
 
@@ -669,10 +669,10 @@ class UIRenderer {
         }
 
         previewContent.innerHTML = `
-        <div class="slide-content w-full overflow-y-auto break-words hyphens-auto ${textSizeClass} ${fontFamilyClass} ${italicClass}" ${styleAttribute}>
-            ${headerHtml + bodyHtml}
-        </div>
-    `;
+    <div class="slide-content w-full overflow-y-auto break-words hyphens-auto ${textSizeClass} ${fontFamilyClass} ${italicClass}" ${styleAttribute}>
+        ${headerHtml + bodyHtml}
+    </div>
+`;
 
         const preview = document.getElementById("slide-preview-container");
         if (preview) preview.classList.add("fixed-slide-size");
@@ -684,15 +684,15 @@ class UIRenderer {
 
         items.forEach((item, idx) => {
             html += `
-            <div class="expandable-item bg-black/40 p-3 rounded-lg shadow cursor-pointer text-white" data-index="${idx}">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-base font-semibold text-white">${Utils.escapeHTML(item.title || 'العنوان')}</h3>
-                    <i class="fas fa-chevron-down text-gray-200 transition-transform duration-300"></i>
-                </div>
-                <div class="expandable-content mt-2 text-gray-200 hidden">
-                    <p class="text-sm leading-relaxed">${Utils.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
-                </div>
-            </div>`;
+        <div class="expandable-item bg-black/40 p-3 rounded-lg shadow cursor-pointer" data-index="${idx}">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-semibold">${Utils.escapeHTML(item.title || 'العنوان')}</h3>
+                <i class="fas fa-chevron-down transition-transform duration-300"></i>
+            </div>
+            <div class="expandable-content mt-2 hidden">
+                <p class="text-sm leading-relaxed">${Utils.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
+            </div>
+        </div>`;
         });
 
         html += `</div>`;
@@ -702,7 +702,7 @@ class UIRenderer {
     renderImageCollectionPreview(slide) {
         const sections = slide.content.sections || [];
         if (!sections.length) {
-            return `<div class="text-center text-white/70 py-12">لا توجد صور في المجموعة</div>`;
+            return `<div class="text-center py-12">لا توجد صور في المجموعة</div>`;
         }
 
         const isDetailView = slide.content._selectedSection !== undefined && slide.content._selectedSection !== null;
@@ -712,63 +712,57 @@ class UIRenderer {
             const selectedSection = sections[selectedIndex];
 
             return `
-        <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center p-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
-             data-action="close-detail">
-            ${selectedSection.imageUrl ? `
-                <div class="image-container flex-1 flex items-center justify-center w-full max-w-4xl overflow-hidden">
-                    <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
-                         alt="الصورة المحددة" 
-                         class="max-h-full max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
-                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                    <div class="fallback-placeholder hidden text-center text-white/70 py-8">
-                        <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
-                        <p class="text-center">تعذر تحميل الصورة</p>
-                    </div>
-                </div>
-                ${selectedSection.description ? `
-                    <div class="description-container bg-black/40 rounded-xl p-4 max-w-2xl w-full border border-white/20 overflow-y-auto mt-2" style="max-height: min(300px, 30vh);">
-                        <p class="text-white text-lg leading-relaxed text-center font-medium break-words">${Utils.escapeHTML(selectedSection.description)}</p>
-                    </div>
-                ` : ''}
-            ` : `
-                <div class="text-white/70 text-center py-8">
+    <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center p-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
+         data-action="close-detail">
+        ${selectedSection.imageUrl ? `
+            <div class="image-container flex-1 flex items-center justify-center w-full max-w-4xl overflow-hidden">
+                <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
+                     alt="الصورة المحددة" 
+                     class="max-h-full max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
+                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <div class="fallback-placeholder hidden text-center py-8">
                     <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
-                    <p>لم يتم إدخال رابط الصورة بعد</p>
+                    <p class="text-center">تعذر تحميل الصورة</p>
                 </div>
-            `}
-            <div class="absolute bottom-4 text-white/60 text-sm">
-                انقر في أي مكان للعودة
             </div>
+            ${selectedSection.description ? `
+                <div class="description-container bg-black/40 rounded-xl p-4 max-w-2xl w-full border border-white/20 overflow-y-auto mt-2" style="max-height: min(300px, 30vh);">
+                    <p class="text-lg leading-relaxed text-center font-medium break-words">${Utils.escapeHTML(selectedSection.description)}</p>
+                </div>
+            ` : ''}
+        ` : `
+            <div class="text-center py-8">
+                <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                <p>لم يتم إدخال رابط الصورة بعد</p>
+            </div>
+        `}
+        <div class="absolute bottom-4 text-sm">
+            انقر في أي مكان للعودة
         </div>
-    `;
+    </div>
+`;
         }
 
-        // Normal mode - Calculate dynamic heights with extra space
-        const sectionsCount = sections.length;
-        const gapHeight = 0.75;
-        const totalGapsHeight = (sectionsCount - 1) * gapHeight;
-        const extraPadding = 2;
-        const availableHeight = `calc((100% - ${totalGapsHeight}rem - ${extraPadding}rem) / ${sectionsCount})`;
-
+        // Normal mode - Use fixed aspect ratio containers to prevent stretching
         const sectionsHtml = sections.map((section, index) => `
     <div class="image-collection-item cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:brightness-110 hover:shadow-xl w-4/5 mx-auto" 
          data-action="open-detail" 
          data-index="${index}"
-         style="height: ${availableHeight}; max-height: ${availableHeight};">
+         style="flex: 1; min-height: 0; max-height: calc((100% - 2rem) / ${sections.length});">
         ${section.imageUrl ? `
             <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full h-full flex items-center justify-center p-2">
                 <img src="${Utils.escapeHTML(section.imageUrl)}" 
                      alt="صورة ${index + 1}" 
-                     class="w-full h-full object-contain rounded-lg max-w-full"
-                     style="max-width: 80%; max-height: 100%;"
+                     class="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
+                     style="max-width: 100%; max-height: 100%;"
                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                <div class="fallback-placeholder hidden h-full w-full items-center justify-center text-white/70 bg-black/10 rounded-lg">
+                <div class="fallback-placeholder hidden h-full w-full items-center justify-center bg-black/10 rounded-lg">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
                     <p class="text-xs text-center">تعذر تحميل الصورة</p>
                 </div>
             </div>
         ` : `
-            <div class="h-full bg-black/20 rounded-xl flex items-center justify-center text-white/70 border-2 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full p-2">
+            <div class="h-full bg-black/20 rounded-xl flex items-center justify-center border-2 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full p-2">
                 <div class="text-center">
                     <i class="fas fa-image text-xl mb-1 opacity-50"></i>
                     <p class="text-xs">لا توجد صورة</p>
@@ -780,7 +774,7 @@ class UIRenderer {
 
         return `
     <div class="image-collection-grid w-full h-full">
-        <div class="flex flex-col items-center justify-center h-full space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent py-2">
+        <div class="flex flex-col items-center justify-center h-full space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent py-1" style="max-height: 100%;">
             ${sectionsHtml}
         </div>
     </div>
@@ -800,13 +794,13 @@ class UIRenderer {
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
 
         let html = `
-    <div class="quiz-connect-container mt-6 relative w-full h-full flex flex-col">
-        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
-        <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-10 w-full max-w-4xl dir-ltr">
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
-    `;
+<div class="quiz-connect-container mt-4 relative w-full h-full flex flex-col">
+    <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
+    <div class="flex-1 flex justify-center items-center min-h-0">
+        <div class="flex gap-6 w-full max-w-3xl dir-ltr">
+            <div class="flex-1 flex flex-col h-full">
+                <div class="flex-1 flex flex-col gap-3 justify-center items-center min-h-0">
+`;
 
         // Left column items - max 3, using column type
         leftColumn.slice(0, 3).forEach((item, index) => {
@@ -814,11 +808,11 @@ class UIRenderer {
         });
 
         html += `
-                    </div>
                 </div>
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
-    `;
+            </div>
+            <div class="flex-1 flex flex-col h-full">
+                <div class="flex-1 flex flex-col gap-3 justify-center items-center min-h-0">
+`;
 
         // Right column items - max 3, using column type
         rightColumn.slice(0, 3).forEach((item, index) => {
@@ -826,47 +820,47 @@ class UIRenderer {
         });
 
         html += `
-                    </div>
                 </div>
             </div>
         </div>
-        <div class="quiz-connections-layer absolute inset-0 pointer-events-none z-10" id="connections-${slide.id}"></div>
-    `;
+    </div>
+    <div class="quiz-connections-layer absolute inset-0 pointer-events-none z-10" id="connections-${slide.id}"></div>
+`;
 
         // Submit button
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-        <div class="text-center mt-6 pt-4 border-t border-white/20">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105" 
-                    id="quiz-${slide.id}-submit">
-                تأكيد الإجابة
-            </button>
-        </div>
-    `;
+    <div class="text-center mt-4 pt-3 border-t border-white/20">
+        <button class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm" 
+                id="quiz-${slide.id}-submit">
+            تأكيد الإجابة
+        </button>
+    </div>
+`;
         }
 
         // Feedback message - only show if submitted and wrong
         if (submitted && !isCorrect) {
             html += `
-    <div id="connect-quiz-feedback-${slide.id}" class="quiz-feedback-message mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg relative">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-triangle ml-2"></i>
-                <span class="font-medium">اجابة خاطئة</span>
-            </div>
-            <button class="close-feedback-message text-red-500 hover:text-red-700" onclick="this.parentElement.parentElement.style.display='none'">
-                <i class="fas fa-times"></i>
-            </button>
+<div id="connect-quiz-feedback-${slide.id}" class="quiz-feedback-message mt-3 p-3 bg-red-100 border border-red-400 rounded-lg relative">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle ml-2"></i>
+            <span class="font-medium">اجابة خاطئة</span>
         </div>
+        <button class="close-feedback-message text-red-500 hover:text-red-700" onclick="this.parentElement.parentElement.style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
-    `;
+</div>
+`;
         }
 
         html += `
-        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-    </div>
-    `;
+    <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+</div>
+`;
 
         return html;
     }
@@ -888,13 +882,13 @@ class UIRenderer {
         });
 
         let html = `
-    <div class="quiz-image-pairs-container mt-6 relative w-full h-full flex flex-col">
-        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اختر الصور الصحيحة من القائمتين')}</h3>
-        <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-10 w-full max-w-4xl h-full">
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">القائمة اليسرى</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center items-center">
+    <div class="quiz-image-pairs-container mt-2 relative w-full flex flex-col" style="max-height: 80vh; overflow: hidden;">
+        <h3 class="text-xl font-bold text-center mb-2">${Utils.escapeHTML(c.question || 'اختر الصور الصحيحة من القائمتين')}</h3>
+        <div class="flex-1 flex justify-center items-center min-h-0">
+            <div class="flex gap-4 w-full max-w-2xl h-full items-center justify-center">
+                <div class="flex-1 flex flex-col h-full max-h-64">
+                    <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">القائمة اليسرى</div>
+                    <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
     `;
 
         // Left column - selectable items - max 3, using column type
@@ -906,9 +900,9 @@ class UIRenderer {
         html += `
                     </div>
                 </div>
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">القائمة اليمنى</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-center items-center">
+                <div class="flex-1 flex flex-col h-full max-h-64">
+                    <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">القائمة اليمنى</div>
+                    <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
     `;
 
         // Right column - selectable items - max 3, using column type
@@ -928,9 +922,9 @@ class UIRenderer {
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-        <div class="text-center mt-6 pt-4 border-t border-white/20">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105" 
-                    id="quiz-${slide.id}-submit">
+        <div class="text-center mt-3 pt-2 border-t border-white/20">
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm" 
+                id="quiz-${slide.id}-submit">
                 تأكيد الإجابة
             </button>
         </div>
@@ -957,14 +951,14 @@ class UIRenderer {
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
 
         let html = `
-    <div class="quiz-drag-match-container mt-6 relative w-full h-full flex flex-col">
-        <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
-        <div class="flex-1 flex justify-center items-center">
-            <div class="flex gap-10 w-full max-w-4xl h-full">
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">اسحب من هنا</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
-    `;
+<div class="quiz-drag-match-container mt-4 relative w-full h-full flex flex-col">
+    <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
+    <div class="flex-1 flex justify-center items-center min-h-0">
+        <div class="flex gap-6 w-full max-w-3xl h-full">
+            <div class="flex-1 flex flex-col h-full max-h-64">
+                <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">اسحب من هنا</div>
+                <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
+`;
 
         // Left column - show only items that are NOT placed in right column
         leftColumn.slice(0, 3).forEach((item, index) => {
@@ -978,24 +972,24 @@ class UIRenderer {
             const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
 
             html += `
-        <div class="${zoneClass} h-[30%] min-w-[75%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
-             data-index="${index}" 
-             data-side="left"
-             ondragover="window.handleDragMatchOver(event)"
-             ondragleave="window.handleDragMatchLeave(event)"
-             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')">
-            ${itemHtml}
-        </div>
-    `;
+    <div class="${zoneClass} min-h-[80px] w-full border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
+         data-index="${index}" 
+         data-side="left"
+         ondragover="window.handleDragMatchOver(event)"
+         ondragleave="window.handleDragMatchLeave(event)"
+         ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')">
+        ${itemHtml}
+    </div>
+`;
         });
 
         html += `
-                    </div>
                 </div>
-                <div class="flex-1 flex flex-col h-full">
-                    <div class="text-white text-center font-bold text-lg bg-black/40 py-2 px-4 rounded-lg border border-white/20 mb-4">أسقط هنا</div>
-                    <div class="flex-1 flex flex-col gap-4 justify-start items-center">
-    `;
+            </div>
+            <div class="flex-1 flex flex-col h-full max-h-64">
+                <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">أسقط هنا</div>
+                <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
+`;
 
         // Right column - show items that ARE placed in right column
         rightColumn.slice(0, 3).forEach((item, index) => {
@@ -1028,62 +1022,62 @@ class UIRenderer {
             }
 
             html += `
-        <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
-             data-index="${index}" 
-             data-side="right"
-             ondragover="window.handleDragMatchOver(event)"
-             ondragleave="window.handleDragMatchLeave(event)"
-             ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')">
-            ${itemHtml}
-        </div>
-    `;
+    <div class="${zoneClass} min-h-[80px] border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+         data-index="${index}" 
+         data-side="right"
+         ondragover="window.handleDragMatchOver(event)"
+         ondragleave="window.handleDragMatchLeave(event)"
+         ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')">
+        ${itemHtml}
+    </div>
+`;
         });
 
         html += `
-                    </div>
                 </div>
             </div>
         </div>
-    `;
+    </div>
+`;
 
         // Submit button
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-        <div class="text-center mt-6 pt-4 border-t border-white/20">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-105 ${showSubmit ? '' : 'hidden'}" 
-                    id="quiz-${slide.id}-submit">
-                تأكيد الإجابة
-            </button>
-        </div>
-    `;
+    <div class="text-center mt-3 pt-2 border-t border-white/20">
+        <button class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm ${showSubmit ? '' : 'hidden'}" 
+                id="quiz-${slide.id}-submit">
+            تأكيد الإجابة
+        </button>
+    </div>
+`;
         }
 
         // Feedback message - show only after submission
         if (submitted) {
-            const feedbackClass = isCorrect ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+            const feedbackClass = isCorrect ? 'bg-green-100 border-green-400' : 'bg-red-100 border-red-400';
             const feedbackIcon = isCorrect ? 'fa-check-circle' : 'fa-exclamation-triangle';
             const feedbackText = isCorrect ? 'إجابة صحيحة' : 'اجابة خاطئة';
 
             html += `
-        <div id="drag-quiz-feedback-${slide.id}" class="quiz-feedback-message mt-4 p-4 ${feedbackClass} rounded-lg relative">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <i class="fas ${feedbackIcon} ml-2"></i>
-                    <span class="font-medium">${feedbackText}</span>
-                </div>
-                <button class="close-feedback-message text-${isCorrect ? 'green' : 'red'}-500 hover:text-${isCorrect ? 'green' : 'red'}-700" onclick="this.parentElement.parentElement.style.display='none'">
-                    <i class="fas fa-times"></i>
-                </button>
+    <div id="drag-quiz-feedback-${slide.id}" class="quiz-feedback-message mt-3 p-3 ${feedbackClass} rounded-lg relative">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas ${feedbackIcon} ml-2"></i>
+                <span class="font-medium">${feedbackText}</span>
             </div>
+            <button class="close-feedback-message" onclick="this.parentElement.parentElement.style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        `;
+    </div>
+    `;
         }
 
         html += `
-        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-    </div>
-    `;
+    <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+</div>
+`;
 
         return html;
     }
@@ -1160,7 +1154,7 @@ class UIRenderer {
         // Different background for image pairs vs other quiz types
         if (quizType === 'pairs') {
             // For image pairs, use a solid background that will be clearly visible when selected
-            itemClass += " bg-black/30";
+            itemClass += " bg-gray-700";
 
             // Debug: Force blue background for testing
             if (isSelected && !submitted) {
@@ -1188,27 +1182,27 @@ class UIRenderer {
 
         let content = '';
         if (type === 'text') {
-            content = `<div class="text-white text-center font-semibold text-sm leading-relaxed break-words hyphens-auto px-2">${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
+            content = `<div class="text-center font-semibold text-sm leading-relaxed break-words hyphens-auto px-2">${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
         } else if (type === 'image') {
             if (item.value) {
                 content = `
-            <div class="w-full h-full flex items-center justify-center">
-                <img src="${Utils.escapeHTML(item.value)}" alt="صورة ${index + 1}" 
-                     class="max-w-full max-h-full object-contain rounded-lg"
-                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                <div class="fallback-placeholder hidden flex-col items-center justify-center text-white/60">
-                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                    <p class="text-xs text-center">تعذر تحميل الصورة</p>
-                </div>
+        <div class="w-full h-full flex items-center justify-center">
+            <img src="${Utils.escapeHTML(item.value)}" alt="صورة ${index + 1}" 
+                 class="max-w-full max-h-full object-contain rounded-lg"
+                 onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <div class="fallback-placeholder hidden flex-col items-center justify-center">
+                <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+                <p class="text-xs text-center">تعذر تحميل الصورة</p>
             </div>
-        `;
+        </div>
+    `;
             } else {
                 content = `
-            <div class="flex flex-col items-center justify-center text-white/60">
-                <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                <p class="text-xs">لا توجد صورة</p>
-            </div>
-        `;
+        <div class="flex flex-col items-center justify-center">
+            <i class="fas fa-image text-xl mb-1 opacity-50"></i>
+            <p class="text-xs">لا توجد صورة</p>
+        </div>
+    `;
             }
         }
 
@@ -1223,38 +1217,38 @@ class UIRenderer {
             if (side === 'left') {
                 const slideId = this.editor.getCurrentSlide()?.id;
                 return `
-        <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}"
-             onmousedown="window.startConnectDrawing(event, '${side}', ${index}, '${slideId}')"
-             ontouchstart="window.startConnectDrawing(event, '${side}', ${index}, '${slideId}')">
-            ${content}
-        </div>
-    `;
+    <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}"
+         onmousedown="window.startConnectDrawing(event, '${side}', ${index}, '${slideId}')"
+         ontouchstart="window.startConnectDrawing(event, '${side}', ${index}, '${slideId}')">
+        ${content}
+    </div>
+`;
             } else {
                 // Right items don't need interactive events for drawing
                 return `
-        <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}">
-            ${content}
-        </div>
-    `;
+    <div class="${itemClass} ${connectionClass} quiz-connect-item" data-side="${side}" data-index="${index}">
+        ${content}
+    </div>
+`;
             }
         } else if (quizType === 'drag') {
             const draggable = side === 'left' && !submitted && type === 'image';
 
             return `
-        <div class="${itemClass} quiz-drag-item" data-side="${side}" data-index="${index}" 
-             ${draggable ? 'draggable="true"' : ''}
-             ondragstart="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}">
-            ${content}
-        </div>
-    `;
+    <div class="${itemClass} quiz-drag-item" data-side="${side}" data-index="${index}" 
+         ${draggable ? 'draggable="true"' : ''}
+         ondragstart="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}">
+        ${content}
+    </div>
+`;
         } else if (quizType === 'pairs') {
             const selectable = !submitted;
             return `
-        <div class="${itemClass} quiz-pairs-item" data-side="${side}" data-index="${index}" 
-             ${selectable ? `onclick="window.handleImagePairsSelect(event, '${side}', ${index})"` : ''}>
-            ${content}
-        </div>
-    `;
+    <div class="${itemClass} quiz-pairs-item" data-side="${side}" data-index="${index}" 
+         ${selectable ? `onclick="window.handleImagePairsSelect(event, '${side}', ${index})"` : ''}>
+        ${content}
+    </div>
+`;
         }
 
         return `<div class="${itemClass}">${content}</div>`;
@@ -1764,47 +1758,47 @@ class UIRenderer {
 
             let classes = "quiz-option w-full flex items-start gap-2 px-3 py-2 rounded-lg border transition text-right break-words hyphens-auto ";
             if (submitted) {
-                if (isCorrect) classes += "border-green-500 bg-green-600/30 text-white";
-                else if (isWrong) classes += "border-red-500 bg-red-600/30 text-white";
-                else classes += "border-gray-300 bg-white/10 text-gray-300";
+                if (isCorrect) classes += "border-green-500 bg-green-600/30";
+                else if (isWrong) classes += "border-red-500 bg-red-600/30";
+                else classes += "border-gray-300 bg-white/10";
             } else {
                 classes += isChosen
-                    ? "border-blue-500 quiz-option-selected text-white"
-                    : "border-gray-300 bg-white/10 text-white hover:bg-white/20";
+                    ? "border-blue-500 quiz-option-selected"
+                    : "border-gray-300 bg-white/10 hover:bg-white/20";
             }
 
             const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400 flex-shrink-0'></i>` : "";
             return `
-        <button data-index="${i}" class="${classes}">
-            <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
-                ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
-            </span>
-            <span class="flex-1 text-right break-words hyphens-auto min-w-0">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
-            ${mark}
-        </button>
-    `;
+    <button data-index="${i}" class="${classes}">
+        <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
+            ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
+        </span>
+        <span class="flex-1 text-right break-words hyphens-auto min-w-0">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
+        ${mark}
+    </button>
+`;
         }).join('');
 
         // Use the common function to check if submit button should be shown
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
 
         return `
-    <div class="mt-4 relative overflow-visible w-full">
-        <h2 class="text-lg font-bold text-center mb-3 text-white break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
-        <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">
-            ${answersHTML}
-        </div>
-        ${showSubmit ? `
-            <div class="text-center mt-4">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
-                        id="quiz-${slide.id}-submit">
-                    تأكيد الإجابة
-                </button>
-            </div>
-        ` : ''}
-        <!-- New feedback icon container -->
-        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+<div class="mt-4 relative overflow-visible w-full">
+    <h2 class="text-lg font-bold text-center mb-3 break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
+    <div class="space-y-2 max-w-md mx-auto max-h-[80vh] overflow-y-auto" id="quiz-${slide.id}-answers">
+        ${answersHTML}
     </div>
+    ${showSubmit ? `
+        <div class="text-center mt-4">
+            <button class="bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
+                    id="quiz-${slide.id}-submit">
+                تأكيد الإجابة
+            </button>
+        </div>
+    ` : ''}
+    <!-- New feedback icon container -->
+    <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+</div>
 `;
     }
 
@@ -1832,49 +1826,49 @@ class UIRenderer {
             }
 
             return `
-    <div class="quiz-category-zone border ${bg} rounded-xl flex flex-col items-center justify-center 
-                text-white font-semibold p-4 text-center transition relative min-h-[100px] drop-zone"
-         data-index="${i}"
-         ondragover="event.preventDefault()"
-         ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
-        <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
-        ${chosen === i ? `
-            <div class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md transition select-none max-w-xs text-center">
-                ${Utils.escapeHTML(question)}
-            </div>
-        ` : ''}
-    </div>`;
+<div class="quiz-category-zone border ${bg} rounded-xl flex flex-col items-center justify-center 
+            font-semibold p-4 text-center transition relative min-h-[100px] drop-zone"
+     data-index="${i}"
+     ondragover="event.preventDefault()"
+     ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
+    <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
+    ${chosen === i ? `
+        <div class="quiz-draggable bg-white/80 font-bold text-lg rounded-xl px-6 py-4 shadow-md transition select-none max-w-xs text-center">
+            ${Utils.escapeHTML(question)}
+        </div>
+    ` : ''}
+</div>`;
         }).join('');
 
         // 🧱 Build draggable question box (only show if not placed in a category)
         let draggableHtml = '';
         if (!submitted && chosen === null) {
             draggableHtml = `
-        <div id="${containerId}-question"
-             draggable="true"
-             class="quiz-draggable bg-white/80 text-gray-900 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
-                    transition select-none mb-6 max-w-xs text-center"
-             ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
-            ${Utils.escapeHTML(question)}
-        </div>`;
+    <div id="${containerId}-question"
+         draggable="true"
+         class="quiz-draggable bg-white/80 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
+                transition select-none mb-6 max-w-xs text-center"
+         ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
+        ${Utils.escapeHTML(question)}
+    </div>`;
         }
 
         return `
-        <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
-            ${draggableHtml}
-            <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
-                ${dropZones}
-            </div>
-            ${showSubmit ? `
-                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
-                        id="quiz-${slide.id}-submit">
-                    إرسال الإجابة
-                </button>
-            ` : ''}
+    <div id="${containerId}" class="mt-6 w-full flex flex-col items-center text-center">
+        ${draggableHtml}
+        <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
+            ${dropZones}
+        </div>
+        ${showSubmit ? `
+            <button class="bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
+                    id="quiz-${slide.id}-submit">
+                إرسال الإجابة
+            </button>
+        ` : ''}
 
-            <!-- New feedback icon container -->
-            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-        </div>`;
+        <!-- New feedback icon container -->
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>`;
     }
 
     renderUniversalComparison(slide, type = 'text') {
@@ -1884,53 +1878,53 @@ class UIRenderer {
         // Build content per type
         const leftHtml = (type === 'image')
             ? (c.imageA
-                ? `<div class="relative w-full h-full">
-                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="w-full h-full object-contain rounded-lg"
+                ? `<div class="relative w-full h-full flex items-center justify-center p-4">
+                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="max-w-full max-h-full object-contain rounded-lg"
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center text-white/70">
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
                    <p class="text-xs text-center">تعذر تحميل الصورة</p>
                  </div>
                </div>`
-                : `<div class="text-white/70 text-center py-8">الصورة الأولى غير محددة</div>`)
-            : `<div class="text-white text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
+                : `<div class="text-center py-8">الصورة الأولى غير محددة</div>`)
+            : `<div class="text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
 
         const rightHtml = (type === 'image')
             ? (c.imageB
-                ? `<div class="relative w-full h-full">
-                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="w-full h-full object-contain rounded-lg"
+                ? `<div class="relative w-full h-full flex items-center justify-center p-4">
+                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="max-w-full max-h-full object-contain rounded-lg"
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center text-white/70">
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
                    <p class="text-xs text-center">تعذر تحميل الصورة</p>
                  </div>
                </div>`
-                : `<div class="text-white/70 text-center py-8">الصورة الثانية غير محددة</div>`)
-            : `<div class="text-white text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
+                : `<div class="text-center py-8">الصورة الثانية غير محددة</div>`)
+            : `<div class="text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
 
         // unified background + fully opaque top layer
         return `
-    <div id="${id}" class="comparison-wrapper relative w-full rounded-lg overflow-hidden bg-black/30 text-white" style="min-height:250px;">
-        <!-- Unified background already on wrapper -->
+<div id="${id}" class="comparison-wrapper relative w-full rounded-lg overflow-hidden bg-gray-700" style="min-height:250px;">
+    <!-- Unified background already on wrapper -->
 
-        <!-- Bottom (right) layer -->
-        <div class="comparison-layer bottom absolute inset-0 z-0">
-            ${rightHtml}
-        </div>
+    <!-- Bottom (right) layer -->
+    <div class="comparison-layer bottom absolute inset-0 z-0 flex items-center justify-center">
+        ${rightHtml}
+    </div>
 
-        <!-- Top (left) layer, completely opaque -->
-        <div class="comparison-layer top absolute inset-0 z-10 bg-black/30" 
-             style="clip-path: inset(0 50% 0 0); transition: clip-path 0.12s linear;">
-            ${leftHtml}
-        </div>
+    <!-- Top (left) layer, completely opaque -->
+    <div class="comparison-layer top absolute inset-0 z-10 bg-gray-700 flex items-center justify-center" 
+         style="clip-path: inset(0 50% 0 0); transition: clip-path 0.12s linear;">
+        ${leftHtml}
+    </div>
 
-        <!-- Draggable separator -->
-        <div class="comparison-separator absolute top-0 bottom-0 z-20 cursor-ew-resize" style="left:50%; width:6px;">
-            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:999px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.15);">
-                <i class="fas fa-arrows-left-right text-sm text-blue-600"></i>
-            </div>
+    <!-- Draggable separator -->
+    <div class="comparison-separator absolute top-0 bottom-0 z-20 cursor-ew-resize" style="left:50%; width:6px;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:999px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.15);">
+            <i class="fas fa-arrows-left-right text-sm text-blue-600"></i>
         </div>
-    </div>`;
+    </div>
+</div>`;
     }
 
     renderTextSeriesEditor(slide) {
@@ -1986,14 +1980,14 @@ class UIRenderer {
     renderTextSeriesPreview(slide) {
         const items = slide.content.items || [];
         if (!items.length) {
-            return `<div class="text-center text-white/70 py-12">لا توجد نصوص في السلسلة</div>`;
+            return `<div class="text-center py-12">لا توجد نصوص في السلسلة</div>`;
         }
 
         const slidesHtml = items.map((item, index) => `
         <div class="text-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-300 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
             <div class="text-center max-w-2xl w-full">
-                ${item.title ? `<h3 class="text-2xl font-bold text-white mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
-                <div class="text-lg text-white leading-relaxed break-words hyphens-auto">
+                ${item.title ? `<h3 class="text-2xl font-bold mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
+                <div class="text-lg leading-relaxed break-words hyphens-auto">
                     ${Utils.escapeHTML(item.content || '').replace(/\n/g, '<br>')}
                 </div>
             </div>
@@ -2094,13 +2088,13 @@ class UIRenderer {
     renderImageSeriesPreview(slide) {
         const items = slide.content.items || [];
         if (!items.length) {
-            return `<div class="text-center text-white/70 py-12">لا توجد صور في السلسلة</div>`;
+            return `<div class="text-center py-12">لا توجد صور في السلسلة</div>`;
         }
 
         const slidesHtml = items.map((item, index) => `
     <div class="image-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-600 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
         <div class="text-center max-w-2xl w-full">
-            ${item.title ? `<h3 class="text-2xl font-bold text-white mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
+            ${item.title ? `<h3 class="text-2xl font-bold mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
             ${item.imageUrl ? `
                 <div class="image-container mb-4">
                     <img src="${Utils.escapeHTML(item.imageUrl)}" alt="${Utils.escapeHTML(item.title || 'صورة')}" 
@@ -2108,7 +2102,7 @@ class UIRenderer {
                          onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuS8muS4gOWbvueUteWtkDwvdGV4dD48L3N2Zz4='; this.alt='تعذر تحميل الصورة';" />
                 </div>
             ` : `
-                <div class="text-white/70 text-center py-8 bg-black/20 rounded-lg">
+                <div class="text-center py-8 bg-black/20 rounded-lg">
                     <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
                     <p>لم يتم إدخال رابط الصورة بعد</p>
                 </div>
@@ -2142,7 +2136,7 @@ class UIRenderer {
         const videoUrl = content.videoUrl || '';
         if (!videoUrl) {
             return `
-                <div class="self-center w-full text-white text-center py-10 bg-gray-600/30 rounded-xl border border-dashed border-white/50">
+                <div class="self-center w-full text-center py-10 bg-gray-600/30 rounded-xl border border-dashed border-white/50">
                     <i class="fas fa-video text-4xl mb-3 opacity-70"></i>
                     <p class="text-base font-medium">الرجاء إدخال رابط الفيديو للمعاينة</p>
                 </div>
@@ -2168,11 +2162,11 @@ class UIRenderer {
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
-                    onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center text-red-400 py-10&quot;>تعذر تحميل الفيديو 🚫</div>';">
+                    onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center py-10&quot;>تعذر تحميل الفيديو 🚫</div>';">
                 </iframe>
             </div>
-            ${content.description ? `<p class="text-white mt-3 text-center text-sm">${Utils.escapeHTML(content.description)}</p>` : ''}
-            ${content.duration ? `<p class="text-white/80 text-center text-xs"><i class="fas fa-clock ml-1"></i> المدة: ${Utils.escapeHTML(content.duration)}</p>` : ''}
+            ${content.description ? `<p class="mt-3 text-center text-sm">${Utils.escapeHTML(content.description)}</p>` : ''}
+            ${content.duration ? `<p class="text-center text-xs"><i class="fas fa-clock ml-1"></i> المدة: ${Utils.escapeHTML(content.duration)}</p>` : ''}
         `;
     }
 
