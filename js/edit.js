@@ -1049,8 +1049,27 @@ class UIRenderer {
         const isSelected = item._selected || false;
         const isCorrect = item.isCorrect || false;
 
+        // Debug logging
+        if (quizType === 'pairs') {
+            console.log(`Item ${side}-${index}: _selected = ${item._selected}, isSelected = ${isSelected}`);
+        }
+
         // Base Tailwind classes for all quiz items - FIXED sizing
-        let itemClass = "w-32 h-32 bg-black/40 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
+        let itemClass = "w-32 h-32 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
+
+        // Different background for image pairs vs other quiz types
+        if (quizType === 'pairs') {
+            // For image pairs, use a solid background that will be clearly visible when selected
+            itemClass += " bg-gray-700";
+
+            // Debug: Force blue background for testing
+            if (isSelected && !submitted) {
+                console.log(`Applying blue background to ${side}-${index}`);
+                itemClass += " bg-blue-600 border-blue-400";
+            }
+        } else {
+            itemClass += " bg-black/40";
+        }
 
         // Hover effects for interactive items
         if (quizType === 'connect' || quizType === 'pairs') {
@@ -1060,15 +1079,10 @@ class UIRenderer {
             itemClass += " cursor-grab active:cursor-grabbing hover:bg-blue-600/20 hover:border-blue-400";
         }
 
-        // Selected state for image pairs
-        if (quizType === 'pairs' && isSelected && !submitted) {
-            itemClass += " bg-blue-500/40 border-blue-400 shadow-blue-500/30 transform scale-105";
-        }
-
         // Submitted state styling
         if (submitted) {
             if (quizType === 'pairs') {
-                itemClass += isCorrect ? " bg-green-600/40 border-green-500 shadow-green-500/30" : " bg-red-600/40 border-red-500 shadow-red-500/30";
+                itemClass += isCorrect ? " bg-green-600 border-green-500" : " bg-red-600 border-red-500";
             }
         }
 
@@ -3072,6 +3086,18 @@ window.handleImagePairsSelect = function (event, side, index) {
     } else {
         // Add selection
         currentSelections.push(index);
+    }
+
+    // Update _selected property for ALL items based on current selections
+    if (slide.content.leftColumn) {
+        slide.content.leftColumn.forEach((item, idx) => {
+            item._selected = slide.userSelections.left.includes(idx);
+        });
+    }
+    if (slide.content.rightColumn) {
+        slide.content.rightColumn.forEach((item, idx) => {
+            item._selected = slide.userSelections.right.includes(idx);
+        });
     }
 
     editor.saveToLocalStorage();
