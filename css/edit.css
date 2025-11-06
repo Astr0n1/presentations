@@ -1773,3 +1773,19 @@ body {
 		opacity: 1;
 	}
 }
+
+/* Add to edit.css - Drag and Drop Quiz Feedback Styles */
+.quiz-drop-zone.border-green-400 {
+	border-color: #10b981 !important;
+	background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.quiz-drop-zone.border-red-400 {
+	border-color: #ef4444 !important;
+	background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.quiz-drop-zone.border-blue-400 {
+	border-color: #3b82f6 !important;
+	background-color: rgba(59, 130, 246, 0.1) !important;
+}

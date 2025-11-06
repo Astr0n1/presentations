@@ -908,6 +908,9 @@ class UIRenderer {
         const rightColumnType = c.rightColumnType || 'text';
         const submitted = slide.submitted || false;
 
+        // Check if answer is correct
+        const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
+
         let html = `
     <div class="quiz-drag-match-container mt-6 relative w-full h-full flex flex-col">
         <h3 class="text-xl font-bold text-center mb-6 text-white">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
@@ -966,7 +969,18 @@ class UIRenderer {
                 itemHtml = this.renderQuizItem(item, index, 'right', 'drag', submitted, rightColumnType);
             }
 
-            const zoneClass = match ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
+            // Determine border color based on submission and correctness
+            let zoneClass = 'quiz-drop-zone border-white/40';
+            if (submitted) {
+                if (match) {
+                    const leftItem = leftColumn[match.leftIndex];
+                    const rightItem = rightColumn[match.rightIndex];
+                    const isMatchCorrect = leftItem && rightItem && leftItem.correctIndex === match.rightIndex;
+                    zoneClass = isMatchCorrect ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-red-400 bg-red-500/10';
+                }
+            } else {
+                zoneClass = match ? 'quiz-drop-zone border-green-400 bg-green-500/10' : 'quiz-drop-zone border-white/40';
+            }
 
             html += `
         <div class="${zoneClass} h-[30%] border-2 border-dashed rounded-xl transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
@@ -998,6 +1012,27 @@ class UIRenderer {
             </button>
         </div>
     `;
+        }
+
+        // Feedback message - show only after submission
+        if (submitted) {
+            const feedbackClass = isCorrect ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700';
+            const feedbackIcon = isCorrect ? 'fa-check-circle' : 'fa-exclamation-triangle';
+            const feedbackText = isCorrect ? 'إجابة صحيحة' : 'اجابة خاطئة';
+
+            html += `
+        <div id="drag-quiz-feedback-${slide.id}" class="quiz-feedback-message mt-4 p-4 ${feedbackClass} rounded-lg relative">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas ${feedbackIcon} ml-2"></i>
+                    <span class="font-medium">${feedbackText}</span>
+                </div>
+                <button class="close-feedback-message text-${isCorrect ? 'green' : 'red'}-500 hover:text-${isCorrect ? 'green' : 'red'}-700" onclick="this.parentElement.parentElement.style.display='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        `;
         }
 
         html += `
