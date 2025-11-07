@@ -316,6 +316,97 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Saved Assets Modal -->
+<div id="saved-assets-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-4xl h-[70vh] flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-900">الأصول المحفوظة</h2>
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <button
+                    id="close-saved-assets-modal"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Upload Section -->
+            <div class="w-1/4 bg-gray-50 border-l border-gray-200 p-4">
+                <div class="space-y-4">
+                    <button
+                        id="upload-from-device"
+                        class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition duration-150"
+                    >
+                        <i class="fas fa-upload"></i>
+                        <span>رفع من الجهاز</span>
+                    </button>
+                    <div class="text-sm text-gray-600 text-center">
+                        <p>يمكنك رفع الصور أو الفيديوهات من جهازك</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assets Grid -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <div id="assets-loading" class="text-center py-8 hidden">
+                    <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-2"></i>
+                    <p>جاري تحميل الأصول...</p>
+                </div>
+                
+                <div id="assets-container" class="hidden">
+                    <h3 id="assets-type-title" class="text-lg font-semibold mb-4 text-gray-800"></h3>
+                    <div id="assets-grid" class="grid grid-cols-3 gap-4">
+                        <!-- Assets will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <div id="assets-empty" class="text-center py-8 hidden">
+                    <i class="fas fa-folder-open text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-500">لا توجد أصول محفوظة</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <span id="selected-asset-info" class="text-sm text-gray-600 hidden">
+                    <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                    <span>تم اختيار عنصر</span>
+                </span>
+                <div class="flex space-x-3 space-x-reverse">
+                    <button
+                        id="cancel-assets-selection"
+                        class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        إلغاء
+                    </button>
+                    <button
+                        id="confirm-asset-selection"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors hidden"
+                    >
+                        تأكيد الاختيار
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden file input for upload -->
+        <input 
+            type="file" 
+            id="file-upload-input" 
+            class="hidden" 
+            accept="image/*,video/*" 
+            multiple
+        />
+    </div>
+</div>
+
 		<!-- 🌐 Mobile Bottom Slide Navigator -->
 		<div
 			id="mobile-slide-nav"

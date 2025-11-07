@@ -50,6 +50,228 @@ class Lesson {
 }
 
 ////////////////////////////////////////////////////
+// AssetsManager - Saved Assets Modal Functionality
+////////////////////////////////////////////////////
+class AssetsManager {
+    constructor(editor) {
+        this.editor = editor;
+        this.currentAssetsType = 'images'; // 'images' or 'videos'
+        this.selectedAsset = null;
+        this.targetInputField = null;
+
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Open modal buttons will be set up dynamically
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.open-assets-modal')) {
+                const button = e.target.closest('.open-assets-modal');
+                const assetType = button.dataset.assetType || 'images';
+                const targetField = button.dataset.targetField;
+                this.openModal(assetType, targetField);
+            }
+        });
+
+        // Modal controls
+        document.getElementById('close-saved-assets-modal')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('cancel-assets-selection')?.addEventListener('click', () => this.closeModal());
+        document.getElementById('confirm-asset-selection')?.addEventListener('click', () => this.confirmSelection());
+        document.getElementById('upload-from-device')?.addEventListener('click', () => this.triggerFileUpload());
+        document.getElementById('file-upload-input')?.addEventListener('change', (e) => this.handleFileUpload(e));
+
+        // Close modal when clicking outside
+        document.getElementById('saved-assets-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'saved-assets-modal') {
+                this.closeModal();
+            }
+        });
+    }
+
+    openModal(assetType, targetField) {
+        this.currentAssetsType = assetType;
+        this.targetInputField = targetField;
+        this.selectedAsset = null;
+
+        // Show modal
+        document.getElementById('saved-assets-modal').classList.remove('hidden');
+
+        // Load assets
+        this.loadAssets();
+
+        // Reset selection UI
+        this.updateSelectionUI();
+    }
+
+    closeModal() {
+        document.getElementById('saved-assets-modal').classList.add('hidden');
+        this.selectedAsset = null;
+        this.targetInputField = null;
+
+        // Reset file input
+        document.getElementById('file-upload-input').value = '';
+    }
+
+    async loadAssets() {
+        const loadingEl = document.getElementById('assets-loading');
+        const containerEl = document.getElementById('assets-container');
+        const emptyEl = document.getElementById('assets-empty');
+        const gridEl = document.getElementById('assets-grid');
+
+        // Show loading
+        loadingEl.classList.remove('hidden');
+        containerEl.classList.add('hidden');
+        emptyEl.classList.add('hidden');
+
+        try {
+            // Fetch assets from JSON file
+            const response = await fetch('data/assets.json');
+            const data = await response.json();
+
+            const assets = data[this.currentAssetsType] || [];
+
+            // Update title
+            const titleEl = document.getElementById('assets-type-title');
+            titleEl.textContent = this.currentAssetsType === 'images' ? 'الصور المحفوظة' : 'الفيديوهات المحفوظة';
+
+            // Render assets
+            this.renderAssets(assets, gridEl);
+
+            // Show appropriate state
+            if (assets.length > 0) {
+                containerEl.classList.remove('hidden');
+                emptyEl.classList.add('hidden');
+            } else {
+                containerEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+            }
+
+        } catch (error) {
+            console.error('Failed to load assets:', error);
+            containerEl.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
+            emptyEl.innerHTML = `
+                <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-3"></i>
+                <p class="text-red-500">فشل في تحميل الأصول</p>
+            `;
+        } finally {
+            loadingEl.classList.add('hidden');
+        }
+    }
+
+    renderAssets(assets, container) {
+        container.innerHTML = assets.map(asset => `
+            <div class="asset-card relative" data-asset-id="${asset.id}">
+                <div class="asset-preview">
+                    ${this.currentAssetsType === 'images' ?
+                `<img src="${Utils.escapeHTML(asset.url)}" alt="${Utils.escapeHTML(asset.name)}" 
+                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />` :
+                `<video src="${Utils.escapeHTML(asset.url)}" muted></video>
+                         <div class="video-icon">
+                             <i class="fas fa-play"></i>
+                         </div>`
+            }
+                    <div class="fallback-placeholder hidden absolute inset-0 flex items-center justify-center bg-gray-200">
+                        <i class="fas fa-${this.currentAssetsType === 'images' ? 'image' : 'video'} text-2xl text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="asset-info">
+                    <div class="asset-name">${Utils.escapeHTML(asset.name)}</div>
+                    <div class="asset-type">${this.currentAssetsType === 'images' ? 'صورة' : 'فيديو'}</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Add click listeners to asset cards
+        container.querySelectorAll('.asset-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectAsset(card, assets.find(a => a.id == card.dataset.assetId));
+            });
+        });
+    }
+
+    selectAsset(card, asset) {
+        // Deselect all assets
+        document.querySelectorAll('.asset-card').forEach(c => {
+            c.classList.remove('selected');
+        });
+
+        // Select clicked asset
+        card.classList.add('selected');
+        this.selectedAsset = asset;
+
+        this.updateSelectionUI();
+    }
+
+    updateSelectionUI() {
+        const confirmBtn = document.getElementById('confirm-asset-selection');
+        const selectedInfo = document.getElementById('selected-asset-info');
+
+        if (this.selectedAsset) {
+            confirmBtn.classList.remove('hidden');
+            selectedInfo.classList.remove('hidden');
+        } else {
+            confirmBtn.classList.add('hidden');
+            selectedInfo.classList.add('hidden');
+        }
+    }
+
+    confirmSelection() {
+        if (this.selectedAsset && this.targetInputField) {
+            // Update the target input field with the selected asset URL
+            const targetInput = document.getElementById(this.targetInputField);
+            if (targetInput) {
+                targetInput.value = this.selectedAsset.url;
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+        this.closeModal();
+    }
+
+    triggerFileUpload() {
+        document.getElementById('file-upload-input').click();
+    }
+
+    handleFileUpload(event) {
+        const files = event.target.files;
+        if (files.length === 0) return;
+
+        // Simulate upload process
+        Array.from(files).forEach(file => {
+            const blob = new Blob([file], { type: file.type });
+
+            // Log the blob (simulating backend upload)
+            console.log('Uploaded file:', {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                blob: blob
+            });
+
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'تم الرفع بنجاح',
+                text: `تم رفع ${file.name} بنجاح`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        });
+
+        setTimeout(() => {
+            this.loadAssets();
+        }, 1000);
+
+        // Reset file input
+        event.target.value = '';
+    }
+}
+
+////////////////////////////////////////////////////
 // SlideManager — data + persistence + CRUD
 ////////////////////////////////////////////////////
 class SlideManager {
@@ -1280,9 +1502,16 @@ class UIRenderer {
                 ` : `
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                        <input type="url" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                            placeholder="https://example.com/image.jpg" />
+                        <div class="flex space-x-2 space-x-reverse">
+                            <input type="url" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                                placeholder="https://example.com/image.jpg" />
+                            <button type="button" class="open-assets-modal upload-btn" 
+                                    data-asset-type="images" data-target-field="connect-left-${index}"
+                                    title="اختر من الأصول المحفوظة">
+                                <i class="fas fa-images"></i>
+                            </button>
+                        </div>
                     </div>
                 `}
                 <div>
@@ -1316,9 +1545,16 @@ class UIRenderer {
                 ` : `
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                        <input type="url" data-connect-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                            placeholder="https://example.com/image.jpg" />
+                        <div class="flex space-x-2 space-x-reverse">
+                            <input type="url" data-connect-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                                placeholder="https://example.com/image.jpg" />
+                            <button type="button" class="open-assets-modal upload-btn" 
+                                    data-asset-type="images" data-target-field="connect-right-${index}"
+                                    title="اختر من الأصول المحفوظة">
+                                <i class="fas fa-images"></i>
+                            </button>
+                        </div>
                     </div>
                 `}
             </div>
@@ -1413,9 +1649,17 @@ class UIRenderer {
             </div>
             <div class="space-y-2">
                 <div>
-                    <input type="url" data-drag-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="رابط الصورة..." />
+                    <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                    <div class="flex space-x-2 space-x-reverse">
+                        <input type="url" data-drag-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                               placeholder="رابط الصورة..." />
+                        <button type="button" class="open-assets-modal upload-btn" 
+                                data-asset-type="images" data-target-field="drag-left-${index}"
+                                title="اختر من الأصول المحفوظة">
+                            <i class="fas fa-images"></i>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">رقم النص الصحيح:</label>
@@ -1522,9 +1766,16 @@ class UIRenderer {
         <div class="space-y-2">
             <div>
                 <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                <input type="url" data-pairs-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                       placeholder="https://example.com/image.jpg" />
+                <div class="flex space-x-2 space-x-reverse">
+                    <input type="url" data-pairs-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                           placeholder="https://example.com/image.jpg" />
+                    <button type="button" class="open-assets-modal upload-btn" 
+                            data-asset-type="images" data-target-field="pairs-left-${index}"
+                            title="اختر من الأصول المحفوظة">
+                        <i class="fas fa-images"></i>
+                    </button>
+                </div>
                 ${item.value ? `
     <div class="mt-2 p-2 bg-gray-100 rounded-lg text-center">
         <div class="text-gray-500 text-sm">
@@ -1557,9 +1808,16 @@ class UIRenderer {
         <div class="space-y-2">
             <div>
                 <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                <input type="url" data-pairs-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                       placeholder="https://example.com/image.jpg" />
+                <div class="flex space-x-2 space-x-reverse">
+                    <input type="url" data-pairs-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                           placeholder="https://example.com/image.jpg" />
+                    <button type="button" class="open-assets-modal upload-btn" 
+                            data-asset-type="images" data-target-field="pairs-right-${index}"
+                            title="اختر من الأصول المحفوظة">
+                        <i class="fas fa-images"></i>
+                    </button>
+                </div>
                 ${item.value ? `
     <div class="mt-2 p-2 bg-gray-100 rounded-lg text-center">
         <div class="text-gray-500 text-sm">
@@ -1690,10 +1948,17 @@ class UIRenderer {
         <div class="space-y-3">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
-                <input type="url" data-image-collection="${idx}" data-field="imageUrl" 
-                       value="${Utils.escapeHTML(section.imageUrl || '')}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                       placeholder="https://example.com/image.jpg" />
+                <div class="flex space-x-2 space-x-reverse">
+                    <input type="url" data-image-collection="${idx}" data-field="imageUrl" 
+                           value="${Utils.escapeHTML(section.imageUrl || '')}" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                           placeholder="https://example.com/image.jpg" />
+                    <button type="button" class="open-assets-modal upload-btn" 
+                            data-asset-type="images" data-target-field="image-collection-${idx}"
+                            title="اختر من الأصول المحفوظة">
+                        <i class="fas fa-images"></i>
+                    </button>
+                </div>
                 ${section.imageUrl ? `
                     <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
                         <img src="${Utils.escapeHTML(section.imageUrl)}" alt="معاينة" 
@@ -2062,9 +2327,16 @@ class UIRenderer {
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
-            <input type="url" data-image-series="${index}" data-field="imageUrl" value="${Utils.escapeHTML(item.imageUrl || '')}" 
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                   placeholder="https://example.com/image.jpg" />
+            <div class="flex space-x-2 space-x-reverse">
+                <input type="url" data-image-series="${index}" data-field="imageUrl" value="${Utils.escapeHTML(item.imageUrl || '')}" 
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="https://example.com/image.jpg" />
+                <button type="button" class="open-assets-modal upload-btn" 
+                        data-asset-type="images" data-target-field="image-series-${index}"
+                        title="اختر من الأصول المحفوظة">
+                    <i class="fas fa-images"></i>
+                </button>
+            </div>
             ${item.imageUrl ? `
                 <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
                     <img src="${Utils.escapeHTML(item.imageUrl)}" alt="معاينة" 
@@ -2257,22 +2529,33 @@ class UIRenderer {
     renderVideoEditor(slide) {
         const c = slide.content || {};
         return `
-            <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-                <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات محتوى الفيديو</h4>
-                <div class="mb-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">رابط الفيديو (URL)</label>
-                    <input type="url" id="edit-video-url" value="${Utils.escapeHTML(c.videoUrl || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
-                <div class="mb-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">مدة الفيديو</label>
-                    <input type="text" id="edit-video-duration" value="${Utils.escapeHTML(c.duration || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
-                    <textarea id="edit-video-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Utils.escapeHTML(c.description || '')}</textarea>
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+            <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات محتوى الفيديو</h4>
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">رابط الفيديو (URL)</label>
+                <div class="flex space-x-2 space-x-reverse">
+                    <input type="url" id="edit-video-url" value="${Utils.escapeHTML(c.videoUrl || '')}" 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" 
+                           placeholder="https://example.com/video.mp4" />
+                    <button type="button" class="open-assets-modal upload-btn" 
+                            data-asset-type="videos" data-target-field="edit-video-url"
+                            title="اختر من الأصول المحفوظة">
+                        <i class="fas fa-video"></i>
+                    </button>
                 </div>
             </div>
-        `;
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">مدة الفيديو</label>
+                <input type="text" id="edit-video-duration" value="${Utils.escapeHTML(c.duration || '')}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                <textarea id="edit-video-description" rows="3" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Utils.escapeHTML(c.description || '')}</textarea>
+            </div>
+        </div>
+    `;
     }
 
     renderQuizCarouselEditor(slide) {
@@ -2390,14 +2673,32 @@ class UIRenderer {
         return `
         <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
             <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات مقارنة الصور</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الأولى (A)</label>
-                    <input type="url" id="edit-imageA" value="${Utils.escapeHTML(c.imageA || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="https://example.com/imageA.jpg" />
+                    <div class="flex space-x-2 space-x-reverse">
+                        <input type="url" id="edit-imageA" value="${Utils.escapeHTML(c.imageA || '')}" 
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" 
+                               placeholder="https://example.com/imageA.jpg" />
+                        <button type="button" class="open-assets-modal upload-btn" 
+                                data-asset-type="images" data-target-field="edit-imageA"
+                                title="اختر من الأصول المحفوظة">
+                            <i class="fas fa-images"></i>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الثانية (B)</label>
-                    <input type="url" id="edit-imageB" value="${Utils.escapeHTML(c.imageB || '')}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="https://example.com/imageB.jpg" />
+                    <div class="flex space-x-2 space-x-reverse">
+                        <input type="url" id="edit-imageB" value="${Utils.escapeHTML(c.imageB || '')}" 
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" 
+                               placeholder="https://example.com/imageB.jpg" />
+                        <button type="button" class="open-assets-modal upload-btn" 
+                                data-asset-type="images" data-target-field="edit-imageB"
+                                title="اختر من الأصول المحفوظة">
+                            <i class="fas fa-images"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -5094,6 +5395,7 @@ export default class CourseEditor {
         this.updateLessonHeader();
 
         // interactions & drag system
+        this.assetsManager = new AssetsManager(this);
         this.quizManager = new QuizManager(this);
         this.interactions = new UIInteractions(this);
         this.dragManager = new DragDropManager(this);

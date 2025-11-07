@@ -1,0 +1,48 @@
+{
+	"images": [
+		{
+			"id": 1,
+			"url": "https://images.unsplash.com/photo-1575936123452-b67c3203c357?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D&w=1000&q=80",
+			"name": "صورة مثال 1",
+			"type": "image"
+		},
+		{
+			"id": 2,
+			"url": "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg",
+			"name": "صورة مثال 2",
+			"type": "image"
+		},
+		{
+			"id": 3,
+			"url": "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg?cs=srgb&dl=pexels-pixabay-268533.jpg&fm=jpg",
+			"name": "صورة مثال 3",
+			"type": "image"
+		},
+		{
+			"id": 4,
+			"url": "https://img.freepik.com/free-photo/painting-mountain-lake-with-mountain-background_188544-9126.jpg",
+			"name": "صورة مثال 4",
+			"type": "image"
+		}
+	],
+	"videos": [
+		{
+			"id": 1,
+			"url": "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
+			"name": "فيديو مثال 1",
+			"type": "video"
+		},
+		{
+			"id": 2,
+			"url": "https://sample-videos.com/video123/mp4/480/big_buck_bunny_480p_1mb.mp4",
+			"name": "فيديو مثال 2",
+			"type": "video"
+		},
+		{
+			"id": 3,
+			"url": "https://sample-videos.com/video123/mp4/360/big_buck_bunny_360p_1mb.mp4",
+			"name": "فيديو مثال 3",
+			"type": "video"
+		}
+	]
+}
