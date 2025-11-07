@@ -220,16 +220,356 @@ class AssetsManager {
         }
     }
 
-    confirmSelection() {
-        if (this.selectedAsset && this.targetInputField) {
-            // Update the target input field with the selected asset URL
-            const targetInput = document.getElementById(this.targetInputField);
-            if (targetInput) {
-                targetInput.value = this.selectedAsset.url;
-                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    // Enhanced method to handle all input types including data-target-field
+    updateSlideContentDirectly(editor, targetInput) {
+        const slideId = editor.currentSlideId;
+        if (!slideId) return;
+
+        const slide = editor.findSlide(editor.currentLessonId, slideId);
+        if (!slide) return;
+
+        console.log('🔄 Direct content update for slide:', slideId);
+        console.log('📋 Input attributes:', {
+            id: targetInput.id,
+            dataset: targetInput.dataset,
+            dataTargetField: targetInput.dataset.targetField
+        });
+
+        // Get the target field from data-target-field attribute
+        const targetField = targetInput.dataset.targetField;
+
+        // Handle inputs with data-target-field attribute
+        if (targetField) {
+            console.log('🎯 Processing data-target-field:', targetField);
+            this.handleTargetFieldInput(editor, slideId, targetInput, targetField);
+            return;
+        }
+
+        // Handle inputs with specific data attributes (original logic)
+        if (targetInput.dataset.imageSeries !== undefined) {
+            const index = parseInt(targetInput.dataset.imageSeries);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'items', index, field, targetInput.value);
+                console.log('✅ Updated image series item:', index, field, targetInput.value);
             }
         }
-        this.closeModal();
+        else if (targetInput.dataset.imageCollection !== undefined) {
+            const index = parseInt(targetInput.dataset.imageCollection);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'sections', index, field, targetInput.value);
+                console.log('✅ Updated image collection section:', index, field, targetInput.value);
+            }
+        }
+        else if (targetInput.dataset.connectLeft !== undefined) {
+            const index = parseInt(targetInput.dataset.connectLeft);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'leftColumn', index, field, targetInput.value);
+                console.log('✅ Updated connect quiz left item:', index, field, targetInput.value);
+            }
+        }
+        else if (targetInput.dataset.connectRight !== undefined) {
+            const index = parseInt(targetInput.dataset.connectRight);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'rightColumn', index, field, targetInput.value);
+                console.log('✅ Updated connect quiz right item:', index, field, targetInput.value);
+            }
+        }
+        else if (targetInput.dataset.dragLeft !== undefined) {
+            const index = parseInt(targetInput.dataset.dragLeft);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'leftColumn', index, field, targetInput.value);
+                console.log('✅ Updated drag match left item:', index, field, targetInput.value);
+            }
+        }
+        else if (targetInput.dataset.dragRight !== undefined) {
+            const index = parseInt(targetInput.dataset.dragRight);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'rightColumn', index, field, targetInput.value);
+                console.log('✅ Updated drag match right item:', index, field, targetInput.value);
+            }
+        }
+        else if (targetInput.dataset.pairsLeft !== undefined) {
+            const index = parseInt(targetInput.dataset.pairsLeft);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'leftColumn', index, field, targetInput.value);
+                console.log('✅ Updated image pairs left item:', index, field, targetInput.value);
+            }
+        }
+        else if (targetInput.dataset.pairsRight !== undefined) {
+            const index = parseInt(targetInput.dataset.pairsRight);
+            const field = targetInput.dataset.field;
+            if (!isNaN(index) && field) {
+                editor.updateNestedContent(slideId, 'rightColumn', index, field, targetInput.value);
+                console.log('✅ Updated image pairs right item:', index, field, targetInput.value);
+            }
+        }
+        else {
+            console.log('⚠️ No specific handler for input type, relying on event system');
+        }
+
+        // Force save to localStorage
+        editor.saveToLocalStorage();
+    }
+
+    // Improved method to handle data-target-field inputs with proper UI refresh
+    handleTargetFieldInput(editor, slideId, targetInput, targetField) {
+        console.log('🎯 Handling target field:', targetField);
+
+        // Store the original value for comparison
+        const originalValue = targetInput.value;
+
+        // Parse the target field to extract index and type information
+        if (targetField.startsWith('image-series-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'items', index, 'imageUrl', targetInput.value);
+                console.log('✅ Updated image series via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('image-collection-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'sections', index, 'imageUrl', targetInput.value);
+                console.log('✅ Updated image collection via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('connect-left-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'leftColumn', index, 'value', targetInput.value);
+                console.log('✅ Updated connect left via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('connect-right-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'rightColumn', index, 'value', targetInput.value);
+                console.log('✅ Updated connect right via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('drag-left-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'leftColumn', index, 'value', targetInput.value);
+                console.log('✅ Updated drag left via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('drag-right-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'rightColumn', index, 'value', targetInput.value);
+                console.log('✅ Updated drag right via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('pairs-left-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'leftColumn', index, 'value', targetInput.value);
+                console.log('✅ Updated pairs left via target-field:', index, targetInput.value);
+            }
+        }
+        else if (targetField.startsWith('pairs-right-')) {
+            const index = parseInt(targetField.split('-')[2]);
+            if (!isNaN(index)) {
+                editor.updateNestedContent(slideId, 'rightColumn', index, 'value', targetInput.value);
+                console.log('✅ Updated pairs right via target-field:', index, targetInput.value);
+            }
+        }
+        else {
+            console.log('⚠️ Unknown target field pattern:', targetField);
+        }
+
+        // Force save to localStorage
+        editor.saveToLocalStorage();
+
+        // Refresh the edit form to update the input field display
+        console.log('🔄 Refreshing edit form for slide:', slideId);
+        editor.loadSlideEditContent(slideId);
+
+        // Single preview refresh after a short delay to allow form refresh
+        setTimeout(() => {
+            console.log('🔄 Single preview refresh for slide:', slideId);
+            editor.loadSlidePreview(slideId);
+        }, 300);
+    }
+
+    confirmSelection() {
+        if (this.selectedAsset && this.targetInputField) {
+            console.log('🔧 Setting field:', this.targetInputField, 'to URL:', this.selectedAsset.url);
+
+            let targetInput = null;
+
+            // Strategy 1: Direct ID lookup (for simple fields like video URL)
+            targetInput = document.getElementById(this.targetInputField);
+            if (targetInput) {
+                console.log('✅ Found by ID:', this.targetInputField);
+            }
+
+            // Strategy 2: Data attribute lookup for dynamic fields
+            if (!targetInput) {
+                targetInput = document.querySelector(`[data-target-field="${this.targetInputField}"]`);
+                if (targetInput) {
+                    console.log('✅ Found by data-target-field:', this.targetInputField);
+                }
+            }
+
+            // Strategy 3: Pattern-based lookup for complex dynamic fields
+            if (!targetInput) {
+                targetInput = this.findTargetInputByPattern(this.targetInputField);
+                if (targetInput) {
+                    console.log('✅ Found by pattern:', this.targetInputField);
+                }
+            }
+
+            // Strategy 4: Fallback - search all inputs with data attributes
+            if (!targetInput) {
+                console.log('🔍 Fallback search for:', this.targetInputField);
+                // Look for any input that might match our target pattern
+                const allInputs = document.querySelectorAll('input[data-connect-left], input[data-connect-right], input[data-drag-left], input[data-drag-right], input[data-pairs-left], input[data-pairs-right], input[data-image-collection], input[data-image-series]');
+
+                for (const input of allInputs) {
+                    // Check if this input's data attributes match our target
+                    const inputId = this.getInputIdentifier(input);
+                    if (inputId === this.targetInputField) {
+                        targetInput = input;
+                        console.log('✅ Found in fallback search:', this.targetInputField);
+                        break;
+                    }
+                }
+            }
+
+            if (targetInput) {
+                // Set the value
+                targetInput.value = this.selectedAsset.url;
+
+                // Trigger only essential events
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                console.log('🎉 Successfully set value for:', this.targetInputField, 'New value:', targetInput.value);
+
+                // Force immediate content update and UI refresh
+                const editor = window.courseEditor || window.editor;
+                if (editor && editor.currentSlideId) {
+                    this.updateSlideContentDirectly(editor, targetInput);
+                }
+
+                // Close modal on success
+                this.closeModal();
+            } else {
+                console.warn('❌ Could not find target input field:', this.targetInputField);
+                console.log('Available inputs with data attributes:');
+                document.querySelectorAll('input[data-connect-left], input[data-connect-right], input[data-drag-left], input[data-drag-right], input[data-pairs-left], input[data-pairs-right], input[data-image-collection], input[data-image-series]').forEach(input => {
+                    console.log(' - ', this.getInputIdentifier(input), input);
+                });
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تعذر العثور على الحقل',
+                    text: `لم يتم العثور على الحقل المستهدف: ${this.targetInputField}`,
+                    timer: 3000
+                });
+            }
+        } else {
+            console.warn('No asset selected or no target field specified');
+            this.closeModal();
+        }
+    }
+
+    // Add this helper method to identify inputs
+    getInputIdentifier(input) {
+        if (input.dataset.connectLeft !== undefined) {
+            return `connect-left-${input.dataset.connectLeft}`;
+        }
+        if (input.dataset.connectRight !== undefined) {
+            return `connect-right-${input.dataset.connectRight}`;
+        }
+        if (input.dataset.dragLeft !== undefined) {
+            return `drag-left-${input.dataset.dragLeft}`;
+        }
+        if (input.dataset.dragRight !== undefined) {
+            return `drag-right-${input.dataset.dragRight}`;
+        }
+        if (input.dataset.pairsLeft !== undefined) {
+            return `pairs-left-${input.dataset.pairsLeft}`;
+        }
+        if (input.dataset.pairsRight !== undefined) {
+            return `pairs-right-${input.dataset.pairsRight}`;
+        }
+        if (input.dataset.imageCollection !== undefined) {
+            return `image-collection-${input.dataset.imageCollection}`;
+        }
+        if (input.dataset.imageSeries !== undefined) {
+            return `image-series-${input.dataset.imageSeries}`;
+        }
+        return input.id || 'unknown';
+    }
+
+    // Enhanced pattern matching method
+    findTargetInputByPattern(targetField) {
+        let targetInput = null;
+
+        console.log('🔍 Pattern search for:', targetField);
+
+        // Handle image collection sections
+        if (targetField.startsWith('image-collection-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-image-collection="${index}"][data-field="imageUrl"]`);
+            if (!targetInput) {
+                // Try alternative selector
+                targetInput = document.querySelector(`[data-image-collection="${index}"] input[data-field="imageUrl"]`);
+            }
+        }
+        // Handle image series items
+        else if (targetField.startsWith('image-series-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-image-series="${index}"][data-field="imageUrl"]`);
+            if (!targetInput) {
+                targetInput = document.querySelector(`[data-image-series="${index}"] input[data-field="imageUrl"]`);
+            }
+        }
+        // Handle connect quiz items
+        else if (targetField.startsWith('connect-left-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-connect-left="${index}"][data-field="value"]`);
+        }
+        else if (targetField.startsWith('connect-right-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-connect-right="${index}"][data-field="value"]`);
+        }
+        // Handle drag match quiz items
+        else if (targetField.startsWith('drag-left-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-drag-left="${index}"][data-field="value"]`);
+        }
+        else if (targetField.startsWith('drag-right-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-drag-right="${index}"][data-field="value"]`);
+        }
+        // Handle image pairs quiz items
+        else if (targetField.startsWith('pairs-left-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-pairs-left="${index}"][data-field="value"]`);
+        }
+        else if (targetField.startsWith('pairs-right-')) {
+            const index = targetField.split('-')[2];
+            targetInput = document.querySelector(`input[data-pairs-right="${index}"][data-field="value"]`);
+        }
+
+        if (targetInput) {
+            console.log('✅ Pattern match found:', targetField);
+        } else {
+            console.log('❌ Pattern match failed:', targetField);
+        }
+
+        return targetInput;
     }
 
     triggerFileUpload() {
@@ -1502,14 +1842,14 @@ class UIRenderer {
                 ` : `
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                        <div class="flex space-x-2 space-x-reverse">
+                        <div class="asset-input-group">
                             <input type="url" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                                class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
                                 placeholder="https://example.com/image.jpg" />
-                            <button type="button" class="open-assets-modal upload-btn" 
+                            <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                                     data-asset-type="images" data-target-field="connect-left-${index}"
                                     title="اختر من الأصول المحفوظة">
-                                <i class="fas fa-images"></i>
+                                <i class="fas fa-images text-sm"></i>
                             </button>
                         </div>
                     </div>
@@ -1545,14 +1885,14 @@ class UIRenderer {
                 ` : `
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                        <div class="flex space-x-2 space-x-reverse">
+                        <div class="asset-input-group">
                             <input type="url" data-connect-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                                class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
                                 placeholder="https://example.com/image.jpg" />
-                            <button type="button" class="open-assets-modal upload-btn" 
+                            <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                                     data-asset-type="images" data-target-field="connect-right-${index}"
                                     title="اختر من الأصول المحفوظة">
-                                <i class="fas fa-images"></i>
+                                <i class="fas fa-images text-sm"></i>
                             </button>
                         </div>
                     </div>
@@ -1650,14 +1990,14 @@ class UIRenderer {
             <div class="space-y-2">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                    <div class="flex space-x-2 space-x-reverse">
+                    <div class="asset-input-group">
                         <input type="url" data-drag-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                               placeholder="رابط الصورة..." />
-                        <button type="button" class="open-assets-modal upload-btn" 
+                            class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                            placeholder="رابط الصورة..." />
+                        <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                                 data-asset-type="images" data-target-field="drag-left-${index}"
                                 title="اختر من الأصول المحفوظة">
-                            <i class="fas fa-images"></i>
+                            <i class="fas fa-images text-sm"></i>
                         </button>
                     </div>
                 </div>
@@ -1749,7 +2089,6 @@ class UIRenderer {
         const c = slide.content || {};
         const leftColumn = c.leftColumn || [];
         const rightColumn = c.rightColumn || [];
-        // Force image pairs to use images only
         const leftColumnType = 'image';
         const rightColumnType = 'image';
 
@@ -1766,14 +2105,14 @@ class UIRenderer {
         <div class="space-y-2">
             <div>
                 <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                <div class="flex space-x-2 space-x-reverse">
+                <div class="asset-input-group">
                     <input type="url" data-pairs-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="https://example.com/image.jpg" />
-                    <button type="button" class="open-assets-modal upload-btn" 
+                        class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        placeholder="https://example.com/image.jpg" />
+                    <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                             data-asset-type="images" data-target-field="pairs-left-${index}"
                             title="اختر من الأصول المحفوظة">
-                        <i class="fas fa-images"></i>
+                        <i class="fas fa-images text-sm"></i>
                     </button>
                 </div>
                 ${item.value ? `
@@ -1808,14 +2147,14 @@ class UIRenderer {
         <div class="space-y-2">
             <div>
                 <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                <div class="flex space-x-2 space-x-reverse">
+                <div class="asset-input-group">
                     <input type="url" data-pairs-right="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                           placeholder="https://example.com/image.jpg" />
-                    <button type="button" class="open-assets-modal upload-btn" 
+                        class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        placeholder="https://example.com/image.jpg" />
+                    <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                             data-asset-type="images" data-target-field="pairs-right-${index}"
                             title="اختر من الأصول المحفوظة">
-                        <i class="fas fa-images"></i>
+                        <i class="fas fa-images text-sm"></i>
                     </button>
                 </div>
                 ${item.value ? `
@@ -1948,12 +2287,12 @@ class UIRenderer {
         <div class="space-y-3">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
-                <div class="flex space-x-2 space-x-reverse">
+                <div class="asset-input-group">
                     <input type="url" data-image-collection="${idx}" data-field="imageUrl" 
-                           value="${Utils.escapeHTML(section.imageUrl || '')}" 
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                           placeholder="https://example.com/image.jpg" />
-                    <button type="button" class="open-assets-modal upload-btn" 
+                        value="${Utils.escapeHTML(section.imageUrl || '')}" 
+                        class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        placeholder="https://example.com/image.jpg" />
+                    <button type="button" class="asset-button open-assets-modal !w-24 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                             data-asset-type="images" data-target-field="image-collection-${idx}"
                             title="اختر من الأصول المحفوظة">
                         <i class="fas fa-images"></i>
@@ -2327,15 +2666,15 @@ class UIRenderer {
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة</label>
-            <div class="flex space-x-2 space-x-reverse">
+            <div class="asset-input-group">
                 <input type="url" data-image-series="${index}" data-field="imageUrl" value="${Utils.escapeHTML(item.imageUrl || '')}" 
-                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                       placeholder="https://example.com/image.jpg" />
-                <button type="button" class="open-assets-modal upload-btn" 
+                    class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="https://example.com/image.jpg" />
+                <button type="button" class="asset-button open-assets-modal !w-24 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                         data-asset-type="images" data-target-field="image-series-${index}"
                         title="اختر من الأصول المحفوظة">
                     <i class="fas fa-images"></i>
-                </button>
+                </button>   
             </div>
             ${item.imageUrl ? `
                 <div class="mt-2 p-2 bg-gray-100 rounded-lg relative">
@@ -2529,32 +2868,32 @@ class UIRenderer {
     renderVideoEditor(slide) {
         const c = slide.content || {};
         return `
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-            <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات محتوى الفيديو</h4>
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1">رابط الفيديو (URL)</label>
-                <div class="flex space-x-2 space-x-reverse">
-                    <input type="url" id="edit-video-url" value="${Utils.escapeHTML(c.videoUrl || '')}" 
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" 
-                           placeholder="https://example.com/video.mp4" />
-                    <button type="button" class="open-assets-modal upload-btn" 
-                            data-asset-type="videos" data-target-field="edit-video-url"
-                            title="اختر من الأصول المحفوظة">
-                        <i class="fas fa-video"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1">مدة الفيديو</label>
-                <input type="text" id="edit-video-duration" value="${Utils.escapeHTML(c.duration || '')}" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
-                <textarea id="edit-video-description" rows="3" 
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Utils.escapeHTML(c.description || '')}</textarea>
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات محتوى الفيديو</h4>
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">رابط الفيديو (URL)</label>
+            <div class="asset-input-group">
+                <input type="url" id="edit-video-url" value="${Utils.escapeHTML(c.videoUrl || '')}" 
+                    class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="https://example.com/video.mp4" />
+                <button type="button" class="asset-button open-assets-modal !w-24 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center" 
+                        data-asset-type="videos" data-target-field="edit-video-url"
+                        title="اختر من الأصول المحفوظة">
+                    <i class="fas fa-video"></i>
+                </button>
             </div>
         </div>
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">مدة الفيديو</label>
+            <input type="text" id="edit-video-duration" value="${Utils.escapeHTML(c.duration || '')}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+            <textarea id="edit-video-description" rows="3" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">${Utils.escapeHTML(c.description || '')}</textarea>
+        </div>
+    </div>
     `;
     }
 
@@ -2676,11 +3015,11 @@ class UIRenderer {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الأولى (A)</label>
-                    <div class="flex space-x-2 space-x-reverse">
+                    <div class="asset-input-group">
                         <input type="url" id="edit-imageA" value="${Utils.escapeHTML(c.imageA || '')}" 
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" 
-                               placeholder="https://example.com/imageA.jpg" />
-                        <button type="button" class="open-assets-modal upload-btn" 
+                            class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                            placeholder="https://example.com/imageA.jpg" />
+                        <button type="button" class="asset-button open-assets-modal !w-24 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                                 data-asset-type="images" data-target-field="edit-imageA"
                                 title="اختر من الأصول المحفوظة">
                             <i class="fas fa-images"></i>
@@ -2689,11 +3028,11 @@ class UIRenderer {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الثانية (B)</label>
-                    <div class="flex space-x-2 space-x-reverse">
+                    <div class="asset-input-group">
                         <input type="url" id="edit-imageB" value="${Utils.escapeHTML(c.imageB || '')}" 
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" 
-                               placeholder="https://example.com/imageB.jpg" />
-                        <button type="button" class="open-assets-modal upload-btn" 
+                            class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                            placeholder="https://example.com/imageA.jpg" />
+                        <button type="button" class="asset-button open-assets-modal !w-24 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
                                 data-asset-type="images" data-target-field="edit-imageB"
                                 title="اختر من الأصول المحفوظة">
                             <i class="fas fa-images"></i>
