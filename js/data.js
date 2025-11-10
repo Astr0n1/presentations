@@ -10,7 +10,7 @@ const AppData = {
     async loadData() {
         try {
             const response = await fetch('data/courses.json');
-            const Course_response = await fetch('api/courses');
+            const Course_response = await fetch('api/courses.php');
             const data = await response.json();
             const C_data = await Course_response.json();
             this.courses = C_data.courses || [];

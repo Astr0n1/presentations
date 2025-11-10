@@ -55,7 +55,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             password: document.getElementById('password').value
         };
 
-        const response = await fetch('api/login.php', {
+        const response = await fetch('/api/login.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
