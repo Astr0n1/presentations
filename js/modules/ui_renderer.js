@@ -46,10 +46,65 @@ class UIRenderer {
 
         previewContainer.className = containerClasses;
 
+        // Apply text styling with better CSS classes
+        const textStyle = slide.textStyle || {};
+
+        // Build style attributes for different elements
+        const titleStyle = textStyle.title || {};
+        const subtitleStyle = textStyle.subtitle || {};
+        const contentStyle = textStyle.content || {};
+        const buttonStyle = textStyle.button || {};
+
+        // Generate CSS classes and styles
+        const titleSizeClass = titleStyle.size ? `text-size-${titleStyle.size.toLowerCase()}` : '';
+        const subtitleSizeClass = subtitleStyle.size ? `text-size-${subtitleStyle.size.toLowerCase()}` : '';
+        const contentSizeClass = contentStyle.size ? `text-size-${contentStyle.size.toLowerCase()}` : '';
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+
+        const titleItalicClass = titleStyle.italic ? 'text-italic' : '';
+        const subtitleItalicClass = subtitleStyle.italic ? 'text-italic' : '';
+        const contentItalicClass = contentStyle.italic ? 'text-italic' : '';
+        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
+
+        // Build style attributes with font weight support
+        let titleStyleAttr = '';
+        if (titleStyle.color || titleStyle.fontWeight) {
+            titleStyleAttr = `style="`;
+            if (titleStyle.color) titleStyleAttr += `color: ${titleStyle.color} !important;`;
+            if (titleStyle.fontWeight) titleStyleAttr += ` font-weight: ${titleStyle.fontWeight} !important;`;
+            titleStyleAttr += `"`;
+        }
+
+        let subtitleStyleAttr = '';
+        if (subtitleStyle.color || subtitleStyle.fontWeight) {
+            subtitleStyleAttr = `style="`;
+            if (subtitleStyle.color) subtitleStyleAttr += `color: ${subtitleStyle.color} !important;`;
+            if (subtitleStyle.fontWeight) subtitleStyleAttr += ` font-weight: ${subtitleStyle.fontWeight} !important;`;
+            subtitleStyleAttr += `"`;
+        }
+
+        let contentStyleAttr = '';
+        if (contentStyle.color || contentStyle.fontWeight) {
+            contentStyleAttr = `style="`;
+            if (contentStyle.color) contentStyleAttr += `color: ${contentStyle.color} !important;`;
+            if (contentStyle.fontWeight) contentStyleAttr += ` font-weight: ${contentStyle.fontWeight} !important;`;
+            contentStyleAttr += `"`;
+        }
+
+        let buttonStyleAttr = '';
+
+        // Button styling - combine background color and text color
+        if (buttonStyle.backgroundColor || buttonStyle.color) {
+            buttonStyleAttr = `style="`;
+            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
+            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
+            buttonStyleAttr += `"`;
+        }
+
         const headerHtml = `
     <div class="slide-header w-full">
-        ${slide.content.title ? `<h1 class="font-extrabold mb-2">${Utils.escapeHTML(slide.content.title)}</h1>` : ''}
-        ${slide.content.subtitle ? `<h2 class="mb-4">${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+        ${slide.content.title ? `<h1 class="font-extrabold mb-2 ${titleSizeClass} ${titleItalicClass}" ${titleStyleAttr}>${Utils.escapeHTML(slide.content.title)}</h1>` : ''}
+        ${slide.content.subtitle ? `<h2 class="mb-4 ${subtitleSizeClass} ${subtitleItalicClass}" ${subtitleStyleAttr}>${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
     </div>
 `;
 
@@ -82,7 +137,7 @@ class UIRenderer {
 
             case 'title-undefined':
                 bodyHtml += `<div class="mt-4 text-center self-center">
-                        <button class="bg-blue-600 hover:bg-blue-700 font-bold rounded-lg shadow-lg px-6 py-2">
+                        <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}>
                             ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
                         </button>
                     </div>`;
@@ -125,23 +180,14 @@ class UIRenderer {
                     bodyHtml += `<div class="text-center py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
                 }
         }
-
-        // Apply text styling with better CSS classes
-        const textStyle = slide.textStyle || {};
-        const textSizeClass = textStyle.size ? `text-size-${textStyle.size.toLowerCase()}` : '';
-        const fontFamilyClass = textStyle.fontFamily ? `font-${textStyle.fontFamily}` : '';
-        const italicClass = textStyle.italic ? 'text-italic' : '';
-
-        // Build style attribute
-        let styleAttribute = '';
-        if (textStyle.color) {
-            styleAttribute = `style="color: ${textStyle.color} !important;"`;
-        }
-
+        // TODO i want the ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr} classes to be applied only to the bodyhtml
         previewContent.innerHTML = `
-    <div class="slide-content w-full overflow-y-auto break-words hyphens-auto ${textSizeClass} ${fontFamilyClass} ${italicClass}" ${styleAttribute}>
-        ${headerHtml + bodyHtml}
-    </div>
+        <div class="slide-content w-full overflow-y-auto break-words hyphens-auto">
+            ${headerHtml}
+            <div class="${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
+                ${bodyHtml}
+            </div>
+        </div>
 `;
 
         const preview = document.getElementById("slide-preview-container");
@@ -259,6 +305,20 @@ class UIRenderer {
         const rightColumnType = c.rightColumnType || 'text';
         const submitted = slide.submitted || false;
 
+        // Get button styling
+        const textStyle = slide.textStyle || {};
+        const buttonStyle = textStyle.button || {};
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
+        let buttonStyleAttr = '';
+
+        if (buttonStyle.backgroundColor || buttonStyle.color) {
+            buttonStyleAttr = `style="`;
+            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
+            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
+            buttonStyleAttr += `"`;
+        }
+
         // Check if answer is correct
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
 
@@ -300,19 +360,19 @@ class UIRenderer {
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-    <div class="text-center mt-4 pt-3 border-t border-white/20">
-        <button class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm" 
-                id="quiz-${slide.id}-submit">
-            تأكيد الإجابة
-        </button>
-    </div>
-`;
+            <div class="text-center mt-4 pt-3 border-t border-white/20">
+                <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
+                        id="quiz-${slide.id}-submit">
+                    تأكيد الإجابة
+                </button>
+            </div>
+        `;
         }
 
         html += `
-    <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-</div>
-`;
+            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+        </div>
+        `;
 
         return html;
     }
@@ -398,6 +458,21 @@ class UIRenderer {
         const leftColumnType = c.leftColumnType || 'image';
         const rightColumnType = c.rightColumnType || 'text';
         const submitted = slide.submitted || false;
+
+        // Get button styling
+        const textStyle = slide.textStyle || {};
+        const buttonStyle = textStyle.button || {};
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
+        let buttonStyleAttr = '';
+
+        if (buttonStyle.backgroundColor || buttonStyle.color) {
+            buttonStyleAttr = `style="`;
+            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
+            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
+            buttonStyleAttr += `"`;
+        }
+
 
         // Check if answer is correct
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
@@ -495,7 +570,7 @@ class UIRenderer {
         if (showSubmit) {
             html += `
             <div class="text-center mt-3 pt-2 border-t border-white/20">
-                <button class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-sm ${showSubmit ? '' : 'hidden'}" 
+                <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
                         id="quiz-${slide.id}-submit">
                     تأكيد الإجابة
                 </button>
@@ -516,6 +591,21 @@ class UIRenderer {
         const leftColumn = c.leftColumn || [];
         const rightColumn = c.rightColumn || [];
         const submitted = slide.submitted || false;
+
+        // Get button styling
+        const textStyle = slide.textStyle || {};
+        const buttonStyle = textStyle.button || {};
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
+        let buttonStyleAttr = '';
+
+        if (buttonStyle.backgroundColor || buttonStyle.color) {
+            buttonStyleAttr = `style="`;
+            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
+            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
+            buttonStyleAttr += `"`;
+        }
+
 
         let html = `
         <div class="quiz-image-pairs-container mt-4 mx-auto">
@@ -548,9 +638,9 @@ class UIRenderer {
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-            <div class="text-center mt-4">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
-                        id="quiz-${slide.id}-submit">
+            <div class="text-center mt-3 pt-2 border-t border-white/20">
+                <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
+                    id="quiz-${slide.id}-submit">
                     تأكيد الإجابة
                 </button>
             </div>
@@ -572,12 +662,19 @@ class UIRenderer {
         const isSelected = item._selected || false;
         const isCorrect = item.isCorrect || false;
 
-        // Get the current slide for user selections - FIXED: Use editor to get current slide
+        // Get the current slide for user selections and text styling
         const currentSlide = this.editor.getCurrentSlide();
         const userSelections = currentSlide?.userSelections || { left: [], right: [] };
         const isActuallySelected = userSelections[side]?.includes(index) || false;
 
-        // Base Tailwind classes for all quiz items - FIXED sizing
+        // Get text styling for this item
+        const textStyle = currentSlide?.textStyle || {};
+        const contentStyle = textStyle.content || {};
+        const contentSizeClass = contentStyle.size ? `text-size-${contentStyle.size.toLowerCase()}` : '';
+        const contentItalicClass = contentStyle.italic ? 'text-italic' : '';
+        let contentStyleAttr = contentStyle.color ? `style="color: ${contentStyle.color} !important;"` : '';
+
+        // Base Tailwind classes for all quiz items
         let itemClass = "w-28 h-28 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
 
         // Different background for image pairs vs other quiz types
@@ -611,7 +708,7 @@ class UIRenderer {
 
         let content = '';
         if (type === 'text') {
-            content = `<div class="text-center font-semibold text-sm leading-relaxed break-words hyphens-auto px-2">${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
+            content = `<div class="text-center font-semibold text-sm leading-relaxed break-words hyphens-auto px-2 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
         } else if (type === 'image') {
             if (item.value) {
                 content = `
@@ -1229,6 +1326,21 @@ class UIRenderer {
         const submitted = slide.submitted ?? false;
         const correctIndex = (c.correct ?? 1) - 1;
 
+        // Get textStyle for button styling
+        const textStyle = slide.textStyle || {};
+        const buttonStyle = textStyle.button || {};
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
+        let buttonStyleAttr = '';
+
+        // Button styling
+        if (buttonStyle.backgroundColor || buttonStyle.color) {
+            buttonStyleAttr = `style="`;
+            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
+            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
+            buttonStyleAttr += `"`;
+        }
+
         const answersHTML = answers.map((a, i) => {
             const isChosen = chosen === i;
             const isCorrect = submitted && i === correctIndex;
@@ -1268,7 +1380,7 @@ class UIRenderer {
     </div>
     ${showSubmit ? `
         <div class="text-center mt-4">
-            <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition" 
+            <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
                     id="quiz-${slide.id}-submit">
                 تأكيد الإجابة
             </button>
@@ -1288,6 +1400,21 @@ class UIRenderer {
         const chosen = slide.userChoice ?? null;
         const submitted = slide.submitted ?? false;
         const containerId = `quiz-${slide.id}-categorize`;
+
+        // Get button styling
+        const textStyle = slide.textStyle || {};
+        const buttonStyle = textStyle.button || {};
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
+        let buttonStyleAttr = '';
+
+        if (buttonStyle.backgroundColor || buttonStyle.color) {
+            buttonStyleAttr = `style="`;
+            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
+            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
+            buttonStyleAttr += `"`;
+        }
+
 
         // Use common function to check if submit should be shown
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
@@ -1345,8 +1472,8 @@ class UIRenderer {
             ${dropZones}
         </div>
         ${showSubmit ? `
-            <button class="bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-700 transition mt-3"
-                    id="quiz-${slide.id}-submit">
+            <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
+                id="quiz-${slide.id}-submit">
                 إرسال الإجابة
             </button>
         ` : ''}
@@ -2031,101 +2158,266 @@ class UIRenderer {
         this.editor.currentSlideId = slideId;
         this.editor.loadSlidePreview(slideId);
 
+        // In UIRenderer class, replace the styleScetion variable in loadSlideEditContent method:
+
         let styleScetion = `
-            <!-- Styling Controls Section -->
-            <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-                <details class="styling-controls-section">
-                    <summary class="cursor-pointer flex items-center justify-between">
-                        <h4 class="text-lg font-semibold text-gray-800">إعدادات التنسيق</h4>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
-                    </summary>
-                    
-                    <div class="mt-4 space-y-4">
-                        <!-- Lesson Background -->
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <h5 class="text-sm font-medium text-gray-700 mb-2">خلفية الدرس (لجميع الشرائح)</h5>
-                            <div class="space-y-2">
-                                <div class="flex items-center space-x-2 space-x-reverse">
-                                    <input type="radio" id="bg-default" name="lesson-background" value="default" 
-                                        ${(!lesson.background) ? 'checked' : ''} class="text-blue-600">
-                                    <label for="bg-default" class="text-sm text-gray-700">الخلفية الافتراضية</label>
-                                </div>
-                                <div class="flex items-center space-x-2 space-x-reverse">
-                                    <input type="radio" id="bg-custom" name="lesson-background" value="custom" 
-                                        ${(lesson.background) ? 'checked' : ''} class="text-blue-600">
-                                    <label for="bg-custom" class="text-sm text-gray-700">صورة مخصصة</label>
-                                </div>
-                                <div id="bg-image-input" class="${lesson.background ? '' : 'hidden'}">
-                                    <input type="url" id="lesson-bg-image" value="${Utils.escapeHTML(lesson.background || '')}" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
-                                        placeholder="أدخل رابط الصورة...">
-                                    <button id="test-bg-image" class="w-full mt-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
-                                        اختبار الصورة
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Slide Text Styling -->
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق النص (لهذه الشريحة فقط)</h5>
-                            <div class="grid grid-cols-2 gap-3">
-                                <!-- Text Size -->
-                                <div>
-                                    <label class="block text-xs text-gray-600 mb-1">حجم النص</label>
-                                    <select id="text-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                        <option value="xs" ${(slide.textStyle && slide.textStyle.size === 'xs') ? 'selected' : ''}>صغير جداً</option>
-                                        <option value="s" ${(slide.textStyle && slide.textStyle.size === 's') ? 'selected' : ''}>صغير</option>
-                                        <option value="m" ${(!slide.textStyle || slide.textStyle.size === 'm') ? 'selected' : ''}>متوسط</option>
-                                        <option value="l" ${(slide.textStyle && slide.textStyle.size === 'l') ? 'selected' : ''}>كبير</option>
-                                        <option value="xl" ${(slide.textStyle && slide.textStyle.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
-                                    </select>
-                                </div>
-
-                                <!-- Font Family -->
-                                <div>
-                                    <label class="block text-xs text-gray-600 mb-1">نوع الخط</label>
-                                    <select id="font-family" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                                        <option value="tajawal" ${(!slide.textStyle || slide.textStyle.fontFamily === 'tajawal') ? 'selected' : ''}>تاجوال</option>
-                                        <option value="cairo" ${(slide.textStyle && slide.textStyle.fontFamily === 'cairo') ? 'selected' : ''}>القاهرة</option>
-                                        <option value="amiri" ${(slide.textStyle && slide.textStyle.fontFamily === 'amiri') ? 'selected' : ''}>أميري</option>
-                                        <option value="lateef" ${(slide.textStyle && slide.textStyle.fontFamily === 'lateef') ? 'selected' : ''}>لطيف</option>
-                                        <option value="scheherazade" ${(slide.textStyle && slide.textStyle.fontFamily === 'scheherazade') ? 'selected' : ''}>شهرزاد</option>
-                                    </select>
-                                </div>
-
-                                <!-- Text Color -->
-                                <div>
-                                    <label class="block text-xs text-gray-600 mb-1">لون النص</label>
-                                    <div class="flex items-center space-x-2 space-x-reverse">
-                                        <input type="color" id="text-color" 
-                                            value="${(slide.textStyle && slide.textStyle.color) ? slide.textStyle.color : '#ffffff'}" 
-                                            class="w-8 h-8 border border-gray-300 rounded">
-                                        <input type="text" id="text-color-hex" 
-                                            value="${(slide.textStyle && slide.textStyle.color) ? slide.textStyle.color : '#ffffff'}" 
-                                            class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" 
-                                            placeholder="#ffffff" maxlength="7">
-                                    </div>
-                                </div>
-
-                                <!-- Italic -->
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="text-italic" 
-                                        ${(slide.textStyle && slide.textStyle.italic) ? 'checked' : ''} 
-                                        class="w-4 h-4 text-blue-600 border-gray-300 rounded">
-                                    <label for="text-italic" class="mr-2 text-xs text-gray-700">مائل</label>
-                                </div>
-                            </div>
-
-                            <!-- Reset Button -->
-                            <button id="reset-text-style" class="w-full mt-3 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
-                                إعادة التعيين إلى الافتراضي
+<!-- Styling Controls Section -->
+<div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4 mb-6">
+    <details class="styling-controls-section">
+        <summary class="cursor-pointer flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-gray-800">إعدادات التنسيق</h4>
+            <i class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+        </summary>
+        
+        <div class="mt-4 space-y-4">
+            <!-- Lesson Background -->
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <h5 class="text-sm font-medium text-gray-700 mb-2">خلفية الدرس (لجميع الشرائح)</h5>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <input type="radio" id="bg-default" name="lesson-background" value="default" 
+                            ${(!lesson.background) ? 'checked' : ''} class="text-blue-600">
+                        <label for="bg-default" class="text-sm text-gray-700">الخلفية الافتراضية</label>
+                    </div>
+                    <div class="flex items-center space-x-2 space-x-reverse">
+                        <input type="radio" id="bg-custom" name="lesson-background" value="custom" 
+                            ${(lesson.background) ? 'checked' : ''} class="text-blue-600">
+                        <label for="bg-custom" class="text-sm text-gray-700">صورة مخصصة</label>
+                    </div>
+                    <div id="bg-image-input" class="${lesson.background ? '' : 'hidden'}">
+                        <div class="asset-input-group">
+                            <input type="url" id="lesson-bg-image" value="${Utils.escapeHTML(lesson.background || '')}" 
+                                class="asset-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
+                                placeholder="أدخل رابط الصورة..." />
+                            <button type="button" class="asset-button open-assets-modal !w-32 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center text-sm"
+                                    data-asset-type="images" data-target-field="lesson-bg-image"
+                                    title="اختر من الأصول المحفوظة">
+                                <i class="fas fa-images ml-2"></i>
                             </button>
                         </div>
                     </div>
-                </details>
+                </div>
             </div>
-    `;
+
+            <!-- Title Styling - Improved responsive layout -->
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق العنوان الرئيسي</h5>
+                <div class="space-y-3">
+                    <!-- Text Size -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">حجم النص</label>
+                        <select id="title-text-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="xs" ${(slide.textStyle?.title?.size === 'xs') ? 'selected' : ''}>صغير جداً</option>
+                            <option value="s" ${(slide.textStyle?.title?.size === 's') ? 'selected' : ''}>صغير</option>
+                            <option value="m" ${(!slide.textStyle?.title?.size || slide.textStyle.title.size === 'm') ? 'selected' : ''}>متوسط</option>
+                            <option value="l" ${(slide.textStyle?.title?.size === 'l') ? 'selected' : ''}>كبير</option>
+                            <option value="xl" ${(slide.textStyle?.title?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
+                            <option value="xxl" ${(slide.textStyle?.title?.size === 'xxl') ? 'selected' : ''}>كبير جداً جداً</option>
+                            <option value="xxxl" ${(slide.textStyle?.title?.size === 'xxxl') ? 'selected' : ''}>ضخم</option>
+                        </select>
+                    </div>
+
+                    <!-- Font Weight -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
+                        <select id="title-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="300" ${(slide.textStyle?.title?.fontWeight === '300') ? 'selected' : ''}>خفيف (300)</option>
+                            <option value="500" ${(!slide.textStyle?.title?.fontWeight || slide.textStyle.title.fontWeight === '500') ? 'selected' : ''}>متوسط (500)</option>
+                            <option value="800" ${(slide.textStyle?.title?.fontWeight === '800') ? 'selected' : ''}>ثقيل (800)</option>
+                        </select>
+                    </div>
+
+                    <!-- Text Color - Improved layout -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">لون النص</label>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <input type="color" id="title-text-color" 
+                                value="${(slide.textStyle?.title?.color) ? slide.textStyle.title.color : '#ffffff'}" 
+                                class="w-full sm:w-12 h-10 border border-gray-300 rounded" />
+                            <input type="text" id="title-text-color-hex" 
+                                value="${(slide.textStyle?.title?.color) ? slide.textStyle.title.color : '#ffffff'}" 
+                                class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                                placeholder="#ffffff" maxlength="7" />
+                        </div>
+                    </div>
+
+                    <!-- Italic -->
+                    <div class="flex items-center pt-1">
+                        <input type="checkbox" id="title-text-italic" 
+                            ${(slide.textStyle?.title?.italic) ? 'checked' : ''} 
+                            class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                        <label for="title-text-italic" class="mr-2 text-xs text-gray-700">نص مائل</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtitle Styling -->
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق العنوان الفرعي</h5>
+                <div class="space-y-3">
+                    <!-- Text Size -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">حجم النص</label>
+                        <select id="subtitle-text-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="xs" ${(slide.textStyle?.subtitle?.size === 'xs') ? 'selected' : ''}>صغير جداً</option>
+                            <option value="s" ${(slide.textStyle?.subtitle?.size === 's') ? 'selected' : ''}>صغير</option>
+                            <option value="m" ${(!slide.textStyle?.subtitle?.size || slide.textStyle.subtitle.size === 'm') ? 'selected' : ''}>متوسط</option>
+                            <option value="l" ${(slide.textStyle?.subtitle?.size === 'l') ? 'selected' : ''}>كبير</option>
+                            <option value="xl" ${(slide.textStyle?.subtitle?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
+                            <option value="xxl" ${(slide.textStyle?.subtitle?.size === 'xxl') ? 'selected' : ''}>كبير جداً جداً</option>
+                            <option value="xxxl" ${(slide.textStyle?.subtitle?.size === 'xxxl') ? 'selected' : ''}>ضخم</option>
+                        </select>
+                    </div>
+
+                    <!-- Font Weight -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
+                        <select id="subtitle-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="300" ${(slide.textStyle?.subtitle?.fontWeight === '300') ? 'selected' : ''}>خفيف (300)</option>
+                            <option value="500" ${(!slide.textStyle?.subtitle?.fontWeight || slide.textStyle.subtitle.fontWeight === '500') ? 'selected' : ''}>متوسط (500)</option>
+                            <option value="800" ${(slide.textStyle?.subtitle?.fontWeight === '800') ? 'selected' : ''}>ثقيل (800)</option>
+                        </select>
+                    </div>
+
+                    <!-- Text Color -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">لون النص</label>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <input type="color" id="subtitle-text-color" 
+                                value="${(slide.textStyle?.subtitle?.color) ? slide.textStyle.subtitle.color : '#e5e7eb'}" 
+                                class="w-full sm:w-12 h-10 border border-gray-300 rounded">
+                            <input type="text" id="subtitle-text-color-hex" 
+                                value="${(slide.textStyle?.subtitle?.color) ? slide.textStyle.subtitle.color : '#e5e7eb'}" 
+                                class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                                placeholder="#e5e7eb" maxlength="7">
+                        </div>
+                    </div>
+
+                    <!-- Italic -->
+                    <div class="flex items-center pt-1">
+                        <input type="checkbox" id="subtitle-text-italic" 
+                            ${(slide.textStyle?.subtitle?.italic) ? 'checked' : ''} 
+                            class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                        <label for="subtitle-text-italic" class="mr-2 text-xs text-gray-700">نص مائل</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Styling -->
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق المحتوى</h5>
+                <div class="space-y-3">
+                    <!-- Text Size -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">حجم النص</label>
+                        <select id="content-text-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="xs" ${(slide.textStyle?.content?.size === 'xs') ? 'selected' : ''}>صغير جداً</option>
+                            <option value="s" ${(slide.textStyle?.content?.size === 's') ? 'selected' : ''}>صغير</option>
+                            <option value="m" ${(!slide.textStyle?.content?.size || slide.textStyle.content.size === 'm') ? 'selected' : ''}>متوسط</option>
+                            <option value="l" ${(slide.textStyle?.content?.size === 'l') ? 'selected' : ''}>كبير</option>
+                            <option value="xl" ${(slide.textStyle?.content?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
+                            <option value="xxl" ${(slide.textStyle?.content?.size === 'xxl') ? 'selected' : ''}>كبير جداً جداً</option>
+                            <option value="xxxl" ${(slide.textStyle?.content?.size === 'xxxl') ? 'selected' : ''}>ضخم</option>
+                        </select>
+                    </div>
+
+                    <!-- Font Weight -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
+                        <select id="content-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="300" ${(slide.textStyle?.content?.fontWeight === '300') ? 'selected' : ''}>خفيف (300)</option>
+                            <option value="500" ${(!slide.textStyle?.content?.fontWeight || slide.textStyle.content.fontWeight === '500') ? 'selected' : ''}>متوسط (500)</option>
+                            <option value="800" ${(slide.textStyle?.content?.fontWeight === '800') ? 'selected' : ''}>ثقيل (800)</option>
+                        </select>
+                    </div>
+
+                    <!-- Text Color -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">لون النص</label>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <input type="color" id="content-text-color" 
+                                value="${(slide.textStyle?.content?.color) ? slide.textStyle.content.color : '#ffffff'}" 
+                                class="w-full sm:w-12 h-10 border border-gray-300 rounded">
+                            <input type="text" id="content-text-color-hex" 
+                                value="${(slide.textStyle?.content?.color) ? slide.textStyle.content.color : '#ffffff'}" 
+                                class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                                placeholder="#ffffff" maxlength="7">
+                        </div>
+                    </div>
+
+                    <!-- Italic -->
+                    <div class="flex items-center pt-1">
+                        <input type="checkbox" id="content-text-italic" 
+                            ${(slide.textStyle?.content?.italic) ? 'checked' : ''} 
+                            class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                        <label for="content-text-italic" class="mr-2 text-xs text-gray-700">نص مائل</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Button Styling -->
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق الأزرار</h5>
+                <div class="space-y-3">
+                    <!-- Background Color -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">لون الخلفية</label>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <input type="color" id="button-bg-color"
+                                value="${(slide.textStyle?.button?.backgroundColor) ? slide.textStyle.button.backgroundColor : '#2563eb'}" 
+                                class="w-full sm:w-12 h-10 border border-gray-300 rounded">
+                            <input type="text" id="button-bg-color-hex" 
+                                value="${(slide.textStyle?.button?.backgroundColor) ? slide.textStyle.button.backgroundColor : '#2563eb'}" 
+                                class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                                placeholder="#2563eb" maxlength="7">
+                        </div>
+                    </div>
+
+                    <!-- Text Color - FIXED: Default to white (#ffffff) -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">لون النص</label>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <input type="color" id="button-text-color" 
+                                value="${(slide.textStyle?.button?.color) ? slide.textStyle.button.color : '#ffffff'}" 
+                                class="w-full sm:w-12 h-10 border border-gray-300 rounded">
+                            <input type="text" id="button-text-color-hex" 
+                                value="${(slide.textStyle?.button?.color) ? slide.textStyle.button.color : '#ffffff'}" 
+                                class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                                placeholder="#ffffff" maxlength="7">
+                        </div>
+                    </div>
+
+                    <!-- Text Size -->
+                    <div>
+                        <label class="block text-xs text-gray-600 mb-1">حجم النص</label>
+                        <select id="button-text-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            <option value="xs" ${(slide.textStyle?.button?.size === 'xs') ? 'selected' : ''}>صغير جداً</option>
+                            <option value="s" ${(slide.textStyle?.button?.size === 's') ? 'selected' : ''}>صغير</option>
+                            <option value="m" ${(!slide.textStyle?.button?.size || slide.textStyle.button.size === 'm') ? 'selected' : ''}>متوسط</option>
+                            <option value="l" ${(slide.textStyle?.button?.size === 'l') ? 'selected' : ''}>كبير</option>
+                            <option value="xl" ${(slide.textStyle?.button?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
+                        </select>
+                    </div>
+
+                    <!-- Italic -->
+                    <div class="flex items-center pt-1">
+                        <input type="checkbox" id="button-text-italic" 
+                            ${(slide.textStyle?.button?.italic) ? 'checked' : ''} 
+                            class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                        <label for="button-text-italic" class="mr-2 text-xs text-gray-700">نص مائل</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Button -->
+        <button id="reset-text-style" class="w-full mt-4 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
+            إعادة التعيين إلى الافتراضي
+        </button>
+    </details>
+</div>
+`;
+
 
         let html = ` ${styleScetion}
         <div class="space-y-4">

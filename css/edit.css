@@ -1779,102 +1779,102 @@ body {
 }
 
 /* Text Size Classes with Better Specificity */
-.slide-content.text-size-xs {
+.text-size-xs {
 	font-size: 0.75rem !important;
 }
-.slide-content.text-size-s {
+.text-size-s {
 	font-size: 0.875rem !important;
 }
-.slide-content.text-size-m {
+.text-size-m {
 	font-size: 1rem !important;
 }
-.slide-content.text-size-l {
+.text-size-l {
 	font-size: 1.125rem !important;
 }
-.slide-content.text-size-xl {
+.text-size-xl {
 	font-size: 1.25rem !important;
 }
 
 /* Size multipliers for different text elements */
-.slide-content.text-size-xs .slide-header h1 {
+.text-size-xs .slide-header h1 {
 	font-size: clamp(0.9rem, 2vw, 1.5rem) !important;
 }
-.slide-content.text-size-xs .slide-header h2 {
+.text-size-xs .slide-header h2 {
 	font-size: clamp(0.8rem, 1.6vw, 1.1rem) !important;
 }
-.slide-content.text-size-xs .slide-content p,
-.slide-content.text-size-xs .slide-content li,
-.slide-content.text-size-xs .slide-content div:not(.slide-header) {
+.text-size-xs .slide-content p,
+.text-size-xs .slide-content li,
+.text-size-xs .slide-content div:not(.slide-header) {
 	font-size: clamp(0.7rem, 1.1vw, 0.9rem) !important;
 }
 
-.slide-content.text-size-s .slide-header h1 {
+.text-size-s .slide-header h1 {
 	font-size: clamp(1rem, 2vw, 1.6rem) !important;
 }
-.slide-content.text-size-s .slide-header h2 {
+.text-size-s .slide-header h2 {
 	font-size: clamp(0.85rem, 1.6vw, 1.2rem) !important;
 }
-.slide-content.text-size-s .slide-content p,
-.slide-content.text-size-s .slide-content li,
-.slide-content.text-size-s .slide-content div:not(.slide-header) {
+.text-size-s .slide-content p,
+.text-size-s .slide-content li,
+.text-size-s .slide-content div:not(.slide-header) {
 	font-size: clamp(0.75rem, 1.1vw, 0.95rem) !important;
 }
 
-.slide-content.text-size-m .slide-header h1 {
+.text-size-m .slide-header h1 {
 	font-size: clamp(1.1rem, 2vw, 1.75rem) !important;
 }
-.slide-content.text-size-m .slide-header h2 {
+.text-size-m .slide-header h2 {
 	font-size: clamp(0.9rem, 1.6vw, 1.3rem) !important;
 }
-.slide-content.text-size-m .slide-content p,
-.slide-content.text-size-m .slide-content li,
-.slide-content.text-size-m .slide-content div:not(.slide-header) {
+.text-size-m .slide-content p,
+.text-size-m .slide-content li,
+.text-size-m .slide-content div:not(.slide-header) {
 	font-size: clamp(0.8rem, 1.1vw, 1rem) !important;
 }
 
-.slide-content.text-size-l .slide-header h1 {
+.text-size-l .slide-header h1 {
 	font-size: clamp(1.25rem, 2vw, 2rem) !important;
 }
-.slide-content.text-size-l .slide-header h2 {
+.text-size-l .slide-header h2 {
 	font-size: clamp(1rem, 1.6vw, 1.5rem) !important;
 }
-.slide-content.text-size-l .slide-content p,
-.slide-content.text-size-l .slide-content li,
-.slide-content.text-size-l .slide-content div:not(.slide-header) {
+.text-size-l .slide-content p,
+.text-size-l .slide-content li,
+.text-size-l .slide-content div:not(.slide-header) {
 	font-size: clamp(0.9rem, 1.1vw, 1.1rem) !important;
 }
 
-.slide-content.text-size-xl .slide-header h1 {
+.text-size-xl .slide-header h1 {
 	font-size: clamp(1.4rem, 2vw, 2.25rem) !important;
 }
-.slide-content.text-size-xl .slide-header h2 {
+.text-size-xl .slide-header h2 {
 	font-size: clamp(1.1rem, 1.6vw, 1.7rem) !important;
 }
-.slide-content.text-size-xl .slide-content p,
-.slide-content.text-size-xl .slide-content li,
-.slide-content.text-size-xl .slide-content div:not(.slide-header) {
+.text-size-xl .slide-content p,
+.text-size-xl .slide-content li,
+.text-size-xl .slide-content div:not(.slide-header) {
 	font-size: clamp(1rem, 1.1vw, 1.2rem) !important;
 }
 
 /* Arabic Font Classes with Better Specificity */
-.slide-content.font-tajawal {
+.font-tajawal {
 	font-family: "Tajawal", sans-serif !important;
 }
-.slide-content.font-cairo {
+.font-cairo {
 	font-family: "Cairo", sans-serif !important;
 }
-.slide-content.font-amiri {
+.font-amiri {
 	font-family: "Amiri", serif !important;
 }
-.slide-content.font-lateef {
+.font-lateef {
 	font-family: "Lateef", serif !important;
 }
-.slide-content.font-scheherazade {
+.font-scheherazade {
 	font-family: "Scheherazade", serif !important;
 }
 
 /* Italic text with Better Specificity */
-.slide-content.text-italic {
+.text-italic {
 	font-style: italic !important;
 }
 
@@ -1896,89 +1896,89 @@ body {
 	background-repeat: no-repeat !important;
 }
 
-.slide-content.font-normal {
+.font-normal {
 	font-weight: normal !important;
 }
 
-.slide-content.font-bold {
+.font-bold {
 	font-weight: bold !important;
 }
 
-.slide-content.font-bolder {
+.font-bolder {
 	font-weight: 800 !important;
 }
 
-.slide-content.text-size-xxl {
+.text-size-xxl {
 	font-size: 1.5rem !important;
 }
 
-.slide-content.text-size-xxl .slide-header h1 {
+.text-size-xxl .slide-header h1 {
 	font-size: clamp(1.6rem, 2.5vw, 2.5rem) !important;
 }
 
-.slide-content.text-size-xxl .slide-header h2 {
+.text-size-xxl .slide-header h2 {
 	font-size: clamp(1.3rem, 2vw, 2rem) !important;
 }
 
-.slide-content.text-size-xxl .slide-content p,
-.slide-content.text-size-xxl .slide-content li,
-.slide-content.text-size-xxl .slide-content div:not(.slide-header) {
+.text-size-xxl .slide-content p,
+.text-size-xxl .slide-content li,
+.text-size-xxl .slide-content div:not(.slide-header) {
 	font-size: clamp(1.1rem, 1.3vw, 1.4rem) !important;
 }
 
 /* Extra Extra Extra Large (xxxl) */
-.slide-content.text-size-xxxl {
+.text-size-xxxl {
 	font-size: 1.75rem !important;
 }
 
-.slide-content.text-size-xxxl .slide-header h1 {
+.text-size-xxxl .slide-header h1 {
 	font-size: clamp(1.8rem, 3vw, 3rem) !important;
 }
 
-.slide-content.text-size-xxxl .slide-header h2 {
+.text-size-xxxl .slide-header h2 {
 	font-size: clamp(1.5rem, 2.5vw, 2.5rem) !important;
 }
 
-.slide-content.text-size-xxxl .slide-content p,
-.slide-content.text-size-xxxl .slide-content li,
-.slide-content.text-size-xxxl .slide-content div:not(.slide-header) {
+.text-size-xxxl .slide-content p,
+.text-size-xxxl .slide-content li,
+.text-size-xxxl .slide-content div:not(.slide-header) {
 	font-size: clamp(1.3rem, 1.5vw, 1.6rem) !important;
 }
 
 /* Also update the existing large sizes for consistency */
-.slide-content.text-size-l {
+.text-size-l {
 	font-size: 1.25rem !important;
 }
 
-.slide-content.text-size-l .slide-header h1 {
+.text-size-l .slide-header h1 {
 	font-size: clamp(1.4rem, 2.2vw, 2.2rem) !important;
 }
 
-.slide-content.text-size-l .slide-header h2 {
+.text-size-l .slide-header h2 {
 	font-size: clamp(1.2rem, 1.8vw, 1.8rem) !important;
 }
 
-.slide-content.text-size-l .slide-content p,
-.slide-content.text-size-l .slide-content li,
-.slide-content.text-size-l .slide-content div:not(.slide-header) {
+.text-size-l .slide-content p,
+.text-size-l .slide-content li,
+.text-size-l .slide-content div:not(.slide-header) {
 	font-size: clamp(1rem, 1.2vw, 1.3rem) !important;
 }
 
-.slide-content.text-size-xl {
+.text-size-xl {
 	font-size: 1.4rem !important;
 }
 
-.slide-content.text-size-xl .slide-header h1 {
+.text-size-xl .slide-header h1 {
 	font-size: clamp(1.5rem, 2.3vw, 2.4rem) !important;
 }
 
-.slide-content.text-size-xl .slide-header h2 {
+.text-size-xl .slide-header h2 {
 	font-size: clamp(1.3rem, 1.9vw, 2rem) !important;
 }
 
-.slide-content.text-size-xl .slide-content p,
-.slide-content.text-size-xl .slide-content li,
-.slide-content.text-size-xl .slide-content div:not(.slide-header) {
+.text-size-xl .slide-content p,
+.text-size-xl .slide-content li,
+.text-size-xl .slide-content div:not(.slide-header) {
 	font-size: clamp(1.1rem, 1.25vw, 1.35rem) !important;
 }
 
@@ -2319,62 +2319,62 @@ body {
 }
 
 .progress-container {
-    width: 100%;
-    height: 20px;
-    background: #f0f0f0;
-    border-radius: 10px;
-    margin: 15px 0;
-    overflow: hidden;
+	width: 100%;
+	height: 20px;
+	background: #f0f0f0;
+	border-radius: 10px;
+	margin: 15px 0;
+	overflow: hidden;
 }
 
 #upload-progress-bar {
-    height: 100%;
-    border-radius: 10px;
-    width: 0%;
-    transition: width 0.3s ease;
-    background: linear-gradient(90deg, #3B82F6, #60A5FA);
+	height: 100%;
+	border-radius: 10px;
+	width: 0%;
+	transition: width 0.3s ease;
+	background: linear-gradient(90deg, #3b82f6, #60a5fa);
 }
 
 .upload-stats {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #6B7280;
-    margin-top: 5px;
+	display: flex;
+	justify-content: space-between;
+	font-size: 14px;
+	color: #6b7280;
+	margin-top: 5px;
 }
 
 .upload-speed {
-    font-size: 12px;
-    color: #9CA3AF;
-    text-align: center;
-    margin-top: 5px;
+	font-size: 12px;
+	color: #9ca3af;
+	text-align: center;
+	margin-top: 5px;
 }
 
 /* Simple, performant animation */
 @keyframes simple-fly {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0;
-    }
-    20% {
-        transform: translate(-50%, -60%) scale(1.2);
-        opacity: 1;
-    }
-    80% {
-        transform: translate(-50%, -80%) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -100%) scale(0.8);
-        opacity: 0;
-    }
+	0% {
+		transform: translate(-50%, -50%) scale(0.5);
+		opacity: 0;
+	}
+	20% {
+		transform: translate(-50%, -60%) scale(1.2);
+		opacity: 1;
+	}
+	80% {
+		transform: translate(-50%, -80%) scale(1);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(-50%, -100%) scale(0.8);
+		opacity: 0;
+	}
 }
 
 .quiz-feedback-icon.animate-simple {
-    animation: simple-fly 2s ease-out forwards;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+	animation: simple-fly 2s ease-out forwards;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 /* Ensure quiz feedback icons maintain their colors */
@@ -2382,65 +2382,220 @@ body {
 .quiz-feedback-icon.incorrect,
 .quiz-feedback-icon.correct i,
 .quiz-feedback-icon.incorrect i {
-    color: inherit !important;
+	color: inherit !important;
 }
 
 .quiz-feedback-icon.correct {
-    color: #10b981 !important;
-    text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
+	color: #10b981 !important;
+	text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
+	filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
 }
 
 .quiz-feedback-icon.incorrect {
-    color: #ef4444 !important;
-    text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+	color: #ef4444 !important;
+	text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
+	filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
 }
-
 
 /* Ensure quiz feedback icons maintain their colors */
 .quiz-feedback-icon.correct,
 .quiz-feedback-icon.incorrect,
 .quiz-feedback-icon.correct i,
 .quiz-feedback-icon.incorrect i {
-    color: inherit !important;
+	color: inherit !important;
 }
 
 .quiz-feedback-icon.correct {
-    color: #10b981 !important;
-    text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
+	color: #10b981 !important;
+	text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
+	filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
 }
 
 .quiz-feedback-icon.incorrect {
-    color: #ef4444 !important;
-    text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+	color: #ef4444 !important;
+	text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
+	filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
 }
 
 /* Simple, performant animation */
 @keyframes simple-fly {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0;
-    }
-    20% {
-        transform: translate(-50%, -60%) scale(1.2);
-        opacity: 1;
-    }
-    80% {
-        transform: translate(-50%, -80%) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -100%) scale(0.8);
-        opacity: 0;
-    }
+	0% {
+		transform: translate(-50%, -50%) scale(0.5);
+		opacity: 0;
+	}
+	20% {
+		transform: translate(-50%, -60%) scale(1.2);
+		opacity: 1;
+	}
+	80% {
+		transform: translate(-50%, -80%) scale(1);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(-50%, -100%) scale(0.8);
+		opacity: 0;
+	}
 }
 
 .quiz-feedback-icon.animate-simple {
-    animation: simple-fly 2s ease-out forwards;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+	animation: simple-fly 2s ease-out forwards;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+/* TODO preview styilng section */
+/* Add to edit.css - Text Size Classes for different elements */
+.slide-header h1.text-size-xs {
+	font-size: clamp(0.9rem, 2vw, 1.5rem) !important;
+}
+.slide-header h1.text-size-s {
+	font-size: clamp(1rem, 2vw, 1.6rem) !important;
+}
+.slide-header h1.text-size-m {
+	font-size: clamp(1.1rem, 2vw, 1.75rem) !important;
+}
+.slide-header h1.text-size-l {
+	font-size: clamp(1.25rem, 2vw, 2rem) !important;
+}
+.slide-header h1.text-size-xl {
+	font-size: clamp(1.4rem, 2vw, 2.25rem) !important;
+}
+.slide-header h1.text-size-xxl {
+	font-size: clamp(1.6rem, 2.5vw, 2.5rem) !important;
+}
+.slide-header h1.text-size-xxxl {
+	font-size: clamp(1.8rem, 3vw, 3rem) !important;
+}
+
+.slide-header h2.text-size-xs {
+	font-size: clamp(0.8rem, 1.6vw, 1.1rem) !important;
+}
+.slide-header h2.text-size-s {
+	font-size: clamp(0.85rem, 1.6vw, 1.2rem) !important;
+}
+.slide-header h2.text-size-m {
+	font-size: clamp(0.9rem, 1.6vw, 1.3rem) !important;
+}
+.slide-header h2.text-size-l {
+	font-size: clamp(1rem, 1.6vw, 1.5rem) !important;
+}
+.slide-header h2.text-size-xl {
+	font-size: clamp(1.1rem, 1.6vw, 1.7rem) !important;
+}
+.slide-header h2.text-size-xxl {
+	font-size: clamp(1.3rem, 2vw, 2rem) !important;
+}
+.slide-header h2.text-size-xxxl {
+	font-size: clamp(1.5rem, 2.5vw, 2.5rem) !important;
+}
+
+.text-size-xs {
+	font-size: clamp(0.7rem, 1.1vw, 0.9rem) !important;
+}
+.text-size-s {
+	font-size: clamp(0.75rem, 1.1vw, 0.95rem) !important;
+}
+.text-size-m {
+	font-size: clamp(0.8rem, 1.1vw, 1rem) !important;
+}
+.text-size-l {
+	font-size: clamp(0.9rem, 1.1vw, 1.1rem) !important;
+}
+.text-size-xl {
+	font-size: clamp(1rem, 1.1vw, 1.2rem) !important;
+}
+.text-size-xxl {
+	font-size: clamp(1.1rem, 1.3vw, 1.4rem) !important;
+}
+.text-size-xxxl {
+	font-size: clamp(1.3rem, 1.5vw, 1.6rem) !important;
+}
+
+.quiz-submit-button.text-size-xs {
+	font-size: 0.75rem !important;
+	padding: 0.5rem 1rem !important;
+}
+.quiz-submit-button.text-size-s {
+	font-size: 0.875rem !important;
+	padding: 0.6rem 1.2rem !important;
+}
+.quiz-submit-button.text-size-m {
+	font-size: 1rem !important;
+	padding: 0.75rem 1.5rem !important;
+}
+.quiz-submit-button.text-size-l {
+	font-size: 1.125rem !important;
+	padding: 0.9rem 1.8rem !important;
+}
+.quiz-submit-button.text-size-xl {
+	font-size: 1.25rem !important;
+	padding: 1rem 2rem !important;
+}
+
+/* Ensure button styles override default styles */
+.quiz-submit-button {
+	border: none !important;
+	border-radius: 0.5rem !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+	transition: all 0.3s ease !important;
+}
+
+.quiz-submit-button:hover {
+	opacity: 0.9 !important;
+	transform: translateY(-1px) !important;
+}
+.slide-header h1.text-italic,
+.slide-content .slide-header h1.text-italic {
+	font-style: italic !important;
+}
+
+.slide-header h2.text-italic,
+.slide-content .slide-header h2.text-italic {
+	font-style: italic !important;
+}
+
+.text-italic p,
+.text-italic li,
+.text-italic div:not(.slide-header) {
+	font-style: italic !important;
+}
+
+/* Ensure quiz answers get italic styling */
+.quiz-option.text-italic,
+.quiz-category-zone.text-italic,
+.quiz-connect-item.text-italic,
+.quiz-drag-item.text-italic,
+.quiz-pairs-item.text-italic {
+	font-style: italic !important;
+}
+
+/* Fix content italic to only affect actual content, not headers */
+.text-italic p,
+.text-italic li,
+.text-italic
+	div:not(.slide-header):not(.quiz-option):not(.quiz-category-zone):not(
+		.quiz-connect-item
+	):not(.quiz-drag-item):not(.quiz-pairs-item),
+.text-italic span:not(.slide-header *) {
+	font-style: italic !important;
+}
+
+/* Ensure title and subtitle have independent italic control */
+.slide-header h1.text-italic {
+	font-style: italic !important;
+}
+
+.slide-header h2.text-italic {
+	font-style: italic !important;
+}
+
+/* Quiz items get their italic from content styling, not from slide-content */
+.quiz-option.text-italic,
+.quiz-category-zone.text-italic,
+.quiz-connect-item.text-italic,
+.quiz-drag-item.text-italic,
+.quiz-pairs-item.text-italic {
+	font-style: italic !important;
 }

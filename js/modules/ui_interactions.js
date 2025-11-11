@@ -126,6 +126,186 @@ class UIInteractions {
       });
     });
 
+    // Font weight controls
+    document.addEventListener('change', (e) => {
+      const slide = this.editor.getCurrentSlide();
+      if (!slide || !this.editor.currentSlideId) return;
+
+      if (['title-font-weight', 'subtitle-font-weight', 'content-font-weight'].includes(e.target.id)) {
+        slide.textStyle = slide.textStyle || {};
+
+        switch (e.target.id) {
+          case 'title-font-weight':
+            slide.textStyle.title = slide.textStyle.title || {};
+            slide.textStyle.title.fontWeight = e.target.value;
+            break;
+          case 'subtitle-font-weight':
+            slide.textStyle.subtitle = slide.textStyle.subtitle || {};
+            slide.textStyle.subtitle.fontWeight = e.target.value;
+            break;
+          case 'content-font-weight':
+            slide.textStyle.content = slide.textStyle.content || {};
+            slide.textStyle.content.fontWeight = e.target.value;
+            break;
+        }
+
+        this.editor.saveToLocalStorage();
+        this.editor.renderSlidePreview(slide);
+      }
+    });
+
+    // Title styling controls
+    document.addEventListener('change', (e) => {
+      const slide = this.editor.getCurrentSlide();
+      if (!slide || !this.editor.currentSlideId) return;
+
+      if (['title-text-size', 'title-text-color', 'title-text-italic'].includes(e.target.id)) {
+        slide.textStyle = slide.textStyle || {};
+        slide.textStyle.title = slide.textStyle.title || {};
+
+        switch (e.target.id) {
+          case 'title-text-size':
+            slide.textStyle.title.size = e.target.value;
+            break;
+          case 'title-text-color':
+            slide.textStyle.title.color = e.target.value;
+            // Sync hex input
+            const hexInput = document.getElementById('title-text-color-hex');
+            if (hexInput) hexInput.value = e.target.value;
+            break;
+          case 'title-text-italic':
+            slide.textStyle.title.italic = e.target.checked;
+            break;
+        }
+
+        this.editor.saveToLocalStorage();
+        this.editor.renderSlidePreview(slide);
+      }
+    });
+
+    // Subtitle styling controls
+    document.addEventListener('change', (e) => {
+      const slide = this.editor.getCurrentSlide();
+      if (!slide || !this.editor.currentSlideId) return;
+
+      if (['subtitle-text-size', 'subtitle-text-color', 'subtitle-text-italic'].includes(e.target.id)) {
+        slide.textStyle = slide.textStyle || {};
+        slide.textStyle.subtitle = slide.textStyle.subtitle || {};
+
+        switch (e.target.id) {
+          case 'subtitle-text-size':
+            slide.textStyle.subtitle.size = e.target.value;
+            break;
+          case 'subtitle-text-color':
+            slide.textStyle.subtitle.color = e.target.value;
+            // Sync hex input
+            const hexInput = document.getElementById('subtitle-text-color-hex');
+            if (hexInput) hexInput.value = e.target.value;
+            break;
+          case 'subtitle-text-italic':
+            slide.textStyle.subtitle.italic = e.target.checked;
+            break;
+        }
+
+        this.editor.saveToLocalStorage();
+        this.editor.renderSlidePreview(slide);
+      }
+    });
+
+    // Content styling controls
+    document.addEventListener('change', (e) => {
+      const slide = this.editor.getCurrentSlide();
+      if (!slide || !this.editor.currentSlideId) return;
+
+      if (['content-text-size', 'content-text-color', 'content-text-italic'].includes(e.target.id)) {
+        slide.textStyle = slide.textStyle || {};
+        slide.textStyle.content = slide.textStyle.content || {};
+
+        switch (e.target.id) {
+          case 'content-text-size':
+            slide.textStyle.content.size = e.target.value;
+            break;
+          case 'content-text-color':
+            slide.textStyle.content.color = e.target.value;
+            // Sync hex input
+            const hexInput = document.getElementById('content-text-color-hex');
+            if (hexInput) hexInput.value = e.target.value;
+            break;
+          case 'content-text-italic':
+            slide.textStyle.content.italic = e.target.checked;
+            break;
+        }
+
+        this.editor.saveToLocalStorage();
+        this.editor.renderSlidePreview(slide);
+      }
+    });
+
+    // Button styling controls
+    document.addEventListener('change', (e) => {
+      const slide = this.editor.getCurrentSlide();
+      if (!slide || !this.editor.currentSlideId) return;
+
+      if (['button-bg-color', 'button-text-color', 'button-text-size', 'button-text-italic'].includes(e.target.id)) {
+        slide.textStyle = slide.textStyle || {};
+        slide.textStyle.button = slide.textStyle.button || {};
+
+        switch (e.target.id) {
+          case 'button-bg-color':
+            slide.textStyle.button.backgroundColor = e.target.value;
+            // Sync hex input
+            const bgHexInput = document.getElementById('button-bg-color-hex');
+            if (bgHexInput) bgHexInput.value = e.target.value;
+            break;
+          case 'button-text-color':
+            slide.textStyle.button.color = e.target.value;
+            // Sync hex input
+            const textHexInput = document.getElementById('button-text-color-hex');
+            if (textHexInput) textHexInput.value = e.target.value;
+            break;
+          case 'button-text-size':
+            slide.textStyle.button.size = e.target.value;
+            break;
+          case 'button-text-italic':
+            slide.textStyle.button.italic = e.target.checked;
+            break;
+        }
+
+        this.editor.saveToLocalStorage();
+        this.editor.renderSlidePreview(slide);
+      }
+    });
+
+    // Add hex input sync for all new color inputs
+    document.addEventListener('input', (e) => {
+      const hexInputs = [
+        'title-text-color-hex', 'subtitle-text-color-hex', 'content-text-color-hex',
+        'button-bg-color-hex', 'button-text-color-hex'
+      ];
+
+      if (hexInputs.includes(e.target.id)) {
+        const colorInputId = e.target.id.replace('-hex', '');
+        const colorInput = document.getElementById(colorInputId);
+        if (!colorInput) return;
+
+        const hexValue = e.target.value;
+
+        // Basic hex validation - allow both with and without #
+        let validHex = hexValue;
+        if (hexValue && !hexValue.startsWith('#')) {
+          validHex = '#' + hexValue;
+        }
+
+        if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(validHex)) {
+          colorInput.value = validHex;
+          e.target.value = validHex;
+          // Trigger the change event
+          colorInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+
+
     // global document handlers (delegated)
     document.addEventListener('click', this.handleDocumentClick);
     document.addEventListener('input', this.handleInput);
@@ -283,7 +463,6 @@ class UIInteractions {
       }
     });
 
-    // Reset text style button
     document.addEventListener('click', (e) => {
       if (e.target.id === 'reset-text-style') {
         const slide = this.editor.getCurrentSlide();
@@ -294,7 +473,7 @@ class UIInteractions {
         this.editor.loadSlideEditContent(this.editor.currentSlideId);
         this.editor.loadSlidePreview(this.editor.currentSlideId);
 
-        Swal.fire('تم', 'تم إعادة تعيين التنسيق إلى الافتراضي', 'success');
+        Swal.fire('تم', 'تم إعادة تعيين جميع التنسيقات إلى الافتراضي', 'success');
       }
     });
   }
