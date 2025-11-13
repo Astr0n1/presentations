@@ -93,6 +93,16 @@ class QuizManager {
 
   // Common feedback display
   showQuizFeedback(slide, containerId = null) {
+    const isCorrect = this.isAnswerCorrect(slide);
+    // play sound audio track in the background from media folder depending on the answer correct / wrong status
+    const audio = new Audio();
+    if (isCorrect) {
+      audio.src = 'media/correct.mp3';
+    } else {
+      audio.src = 'media/wrong.mp3';
+    }
+    audio.play().catch(e => console.error("Error playing sound:", e));
+
     setTimeout(() => {
       // Try to find feedback element using containerId first, then fall back to slide id
       let feedbackEl = null;
@@ -103,7 +113,7 @@ class QuizManager {
         feedbackEl = document.getElementById(`quiz-${slide.id}-feedback`);
       }
 
-      const isCorrect = this.isAnswerCorrect(slide);
+
 
       if (feedbackEl) {
         feedbackEl.innerHTML = isCorrect

@@ -478,6 +478,7 @@ class UIInteractions {
     });
   }
 
+
   handleInput(e) {
     const target = e.target;
     // bulleted inputs
@@ -701,6 +702,15 @@ class UIInteractions {
         this.editor.updateSlideContent(this.editor.currentSlideId, 'correct', parseInt(target.value, 10));
       }
     }
+
+  }
+
+  uploadChanges() {
+    this.editor.lessons.forEach(lesson => {
+      console.log(lesson)
+      // ApiService.updateLessonContent(lesson.id, lesson.slides, lesson.background)
+      ApiService.updateLessonContent(lesson.id, lesson.slides, lesson.background)
+    })
 
   }
 
@@ -1138,6 +1148,7 @@ class UIInteractions {
       }).then((result) => {
         if (result.isConfirmed) {
           //  call deleteLesson function from api.js file 
+          this.uploadChanges();
           ApiService.deleteLesson(lessonId)
             .then(response => {
               if (response.status === 'success') {
@@ -1180,6 +1191,7 @@ class UIInteractions {
         cancelButtonText: 'إلغاء'
       }).then((result) => {
         if (result.isConfirmed) {
+          this.uploadChanges();
           ApiService.changeLessonStatus(lessonId)
             .then(response => {
               if (response.status === 'success') {
@@ -1189,6 +1201,7 @@ class UIInteractions {
                   timer: 1400,
                   showConfirmButton: false
                 });
+                this.uploadChanges();
                 this.editor.loadFromLocalStorage();
               } else {
                 Swal.fire({ icon: 'error', text: 'حدث خطأ أثناء تغيير حالة الدرس الدرس: ' + response.message });

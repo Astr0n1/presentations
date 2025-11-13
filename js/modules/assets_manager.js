@@ -78,10 +78,11 @@ class AssetsManager {
 
     try {
       // Fetch assets from JSON file
-      const response = await fetch('data/assets.json');
+      const response = await fetch(`https://barber.herova.net/api/edit/media/get${this.currentAssetsType === 'images' ? 'Images' : 'Vedioes'}.php`);
       const data = await response.json();
 
-      const assets = data[this.currentAssetsType] || [];
+      const assets = data.data || [];
+      console.log(assets)
 
       // Update title
       const titleEl = document.getElementById('assets-type-title');
@@ -129,7 +130,6 @@ class AssetsManager {
                     </div>
                 </div>
                 <div class="asset-info">
-                    <div class="asset-name">${Utils.escapeHTML(asset.name)}</div>
                     <div class="asset-type">${this.currentAssetsType === 'images' ? 'صورة' : 'فيديو'}</div>
                 </div>
             </div>
@@ -589,8 +589,8 @@ class AssetsManager {
       icon: errorCount === 0 ? 'success' : (successCount > 0 ? 'warning' : 'error'),
       title: errorCount === 0 ? 'تم الرفع بنجاح' : 'تم الرفع مع بعض الأخطاء',
       html: `
-            <div>✅ تم رفع ${successCount} ملف بنجاح</div>
-            ${errorCount > 0 ? `<div>❌ فشل رفع ${errorCount} ملف</div>` : ''}
+            <div> تم رفع ${successCount} ملف بنجاح</div>
+            ${errorCount > 0 ? `<div> فشل رفع ${errorCount} ملف</div>` : ''}
         `,
       timer: 3000,
       showConfirmButton: false

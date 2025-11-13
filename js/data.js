@@ -1,6 +1,7 @@
 // Data management
 const AppData = {
     courses: [],
+    students: [],
     navigation: [],
     filters: {},
     currentView: 'grid',
@@ -11,11 +12,24 @@ const AppData = {
         try {
             const response = await fetch('data/courses.json');
             const Course_response = await fetch('api/courses.php');
+            const Students_response = await fetch('api/students.php');
+
             const data = await response.json();
             const C_data = await Course_response.json();
-            this.courses = C_data.courses || [];
+            const S_data = await Students_response.json();
+
+            // console.log('Courses API response:', C_data); // Debug
+            // console.log('Students API response:', S_data); // Debug
+
+            // FIX: Properly handle different response formats
+            this.courses = C_data.courses || C_data.data || [];
+            this.students = S_data.students || S_data.data || [];
             this.navigation = data.navigation || [];
             this.filters = data.filters || {};
+
+            // console.log('Loaded courses:', this.courses); // Debug
+            // console.log('Loaded students:', this.students); // Debug
+
             return data;
         } catch (error) {
             console.error('Error loading data:', error);
@@ -38,48 +52,23 @@ const AppData = {
                     category: "programming",
                     lastModified: "2024-01-15"
                 },
+            ],
+            students: [
                 {
-                    id: 2,
-                    title: "Web Development Basics",
-                    type: "Course",
-                    description: "Learn HTML, CSS, and JavaScript",
-                    lessons: 12,
-                    status: "published",
-                    author: "JD",
-                    image: "gradient-card",
-                    category: "programming",
-                    lastModified: "2024-01-10"
+                    id: 1,
+                    name: "فاطمة علي",
+                    email: "fatima@example.com",
+                    score: 92,
+                    last_login: "2024-01-14 10:15:00",
+                    created_at: "2024-01-02",
+                    updated_at: "2024-01-14"
                 },
-                {
-                    id: 3,
-                    title: "Data Science Fundamentals",
-                    type: "Course",
-                    description: "Introduction to data analysis",
-                    lessons: 8,
-                    status: "draft",
-                    author: "ML",
-                    image: "gradient-card",
-                    category: "data-science",
-                    lastModified: "2024-01-05"
-                },
-                {
-                    id: 4,
-                    title: "Mobile App Development",
-                    type: "Course",
-                    description: "Build iOS and Android apps",
-                    lessons: 15,
-                    status: "published",
-                    author: "AR",
-                    image: "gradient-card",
-                    category: "mobile",
-                    lastModified: "2024-01-12"
-                }
+
             ],
             navigation: [
-                { name: "Courses", active: true },
-                { name: "Rapid Refresh Quizzes", active: false },
-                { name: "Brain Boost", active: false },
-                { name: "Paths", active: false }
+                { name: "الدورات", active: true },
+                { name: "#", active: false },
+                { name: "الطلاب", active: false },
             ],
             filters: {
                 searchPlaceholder: "Search courses...",
@@ -146,7 +135,6 @@ const AppData = {
     getFilters() {
         return this.filters;
     },
-
     setSearchTerm(term) {
         this.searchTerm = term;
     },
@@ -169,5 +157,57 @@ const AppData = {
 
     getSearchTerm() {
         return this.searchTerm;
+    },
+    getStudents() {
+        // console.log('Students data:', this.students); // Debug log
+        return Array.isArray(this.students) ? this.students : [];
+    },
+
+    async refreshStudents() {
+        try {
+            const response = await fetch('api/students.php');
+            const data = await response.json();
+
+            // console.log('Refresh students response:', data); // Debug
+
+            // FIX: Handle different response formats
+            this.students = data.students || data.data || [];
+
+            // console.log('Refreshed students:', this.students); // Debug
+            return this.students;
+        } catch (error) {
+            console.error('Error refreshing students:', error);
+            // Fallback to default students if API fails
+            const defaultData = this.getDefaultData();
+            this.students = defaultData.students || [];
+            return this.students;
+        }
+    },
+
+    // Add this method to AppData
+    async forceLoadStudents() {
+        try {
+            const response = await fetch('api/students.php');
+            const data = await response.json();
+
+            // console.log('Force load students response:', data);
+
+            // Try different possible response formats
+            this.students = data.students || data.data || data || [];
+
+            if (!Array.isArray(this.students)) {
+                console.warn('Students data is not an array, converting...');
+                this.students = [this.students].filter(Boolean);
+            }
+
+            // console.log('Force loaded students:', this.students);
+            return this.students;
+        } catch (error) {
+            console.error('Error force loading students:', error);
+            const defaultData = this.getDefaultData();
+            this.students = defaultData.students;
+            return this.students;
+        }
     }
+
 };

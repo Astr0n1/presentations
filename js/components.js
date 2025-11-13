@@ -1,5 +1,20 @@
 // UI Components - All classes kept exactly as original
 const Components = {
+
+    
+    // Main Container
+    createMainContainer() {
+        return `
+            <div class="min-h-screen bg-gradient-soft">
+                ${this.createHeader()}
+                ${this.createMainContent()}
+                ${this.createCourseModal()}
+                ${this.createStudentDetailsModal()}  <!-- Add this line -->
+                ${this.createLoadingSpinner()}
+            </div>
+        `;
+    },
+
     // Toast Container
     createToastContainer() {
         return `
@@ -11,19 +26,10 @@ const Components = {
         `;
     },
 
-    // Main Container
-    createMainContainer() {
-        return `
-            <div class="min-h-screen bg-gradient-soft">
-                ${this.createHeader()}
-                ${this.createMainContent()}
-            </div>
-        `;
-    },
 
-// Header
-createHeader() {
-    return `
+    // Header
+    createHeader() {
+        return `
         <header class="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm animate-slide-up">
             <div class="container mx-auto px-4 py-4">
                 <div class="flex items-center justify-between">
@@ -41,12 +47,12 @@ createHeader() {
             </div>
         </header>
     `;
-},
+    },
 
     // Navigation
     createNavigation(navigationItems) {
         const navItems = navigationItems.map(item => `
-            <button class="pb-4 px-1 text-sm font-medium transition-all duration-300 relative ${item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}">
+            <button class="pb-4 px-1 text-sm font-medium transition-all duration-300 relative ${item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}" data="${item.name}">
                 ${item.name}
                 ${item.active ? '<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary animate-slide-up"></div>' : ''}
             </button>
@@ -71,7 +77,7 @@ createHeader() {
         const currentView = AppData.getCurrentView();
 
         return `
-            <div class="mb-8 flex items-center gap-4 animate-fade-in" style="animation-delay: 0.2s;">
+            <div class="mb-8 flex items-center gap-4 animate-fade-in" style="animation-delay: 0.2s;" id="search-bar">
                 <div class="relative flex-1 max-w-md">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -215,7 +221,7 @@ createHeader() {
     createCourseCard(course, index) {
         const animationDelay = 0.3 + (index * 0.1);
         const currentView = AppData.getCurrentView();
-        
+
         if (currentView === 'list') {
             return `
                 <div class="group relative bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-500 hover:-translate-y-1 cursor-pointer animate-slide-up flex" style="animation-delay: ${animationDelay}s;">
@@ -320,35 +326,35 @@ createHeader() {
     },
 
     // Courses Grid/List
-// In the createCoursesContainer method, add an ID:
-createCoursesContainer(courses) {
-    const currentView = AppData.getCurrentView();
-    const coursesHtml = courses.map((course, index) => this.createCourseCard(course, index)).join('');
-    
-    if (currentView === 'list') {
-        return `
+    // In the createCoursesContainer method, add an ID:
+    createCoursesContainer(courses) {
+        const currentView = AppData.getCurrentView();
+        const coursesHtml = courses.map((course, index) => this.createCourseCard(course, index)).join('');
+
+        if (currentView === 'list') {
+            return `
             <div id="courses-container" class="space-y-4">
                 ${coursesHtml}
             </div>
         `;
-    } else {
-        return `
+        } else {
+            return `
             <div id="courses-container" class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 ${coursesHtml}
             </div>
         `;
-    }
-},
+        }
+    },
 
-// In the createSearchFilters method, make sure the results count has a proper structure:
-createSearchFilters(filters) {
-    const currentSort = AppData.getCurrentSort();
-    const searchTerm = AppData.getSearchTerm();
-    const courses = AppData.getCourses();
-    const currentView = AppData.getCurrentView();
-    
-    return `
-        <div class="mb-8 flex items-center gap-4 animate-fade-in" style="animation-delay: 0.2s;">
+    // In the createSearchFilters method, make sure the results count has a proper structure:
+    createSearchFilters(filters) {
+        const currentSort = AppData.getCurrentSort();
+        const searchTerm = AppData.getSearchTerm();
+        const courses = AppData.getCourses();
+        const currentView = AppData.getCurrentView();
+
+        return `
+        <div class="mb-8 flex items-center gap-4 animate-fade-in" style="animation-delay: 0.2s;" id="search-bar">
             <div class="relative flex-1 max-w-md">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -406,16 +412,262 @@ createSearchFilters(filters) {
             </div>
         </div>
     `;
-},
+    },
 
-    // Main Content
+    // Student Container Component - FIXED VERSION
+    createStudentContainer(students) {
+        return `
+            <div id="student-container" class="hidden animate-fade-in">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-foreground mb-2">إدارة الطلاب</h2>
+                    <p class="text-muted-foreground">عرض وإدارة جميع الطلاب المسجلين في النظام</p>
+                </div>
+                
+                ${this.createStudentFilters(students)}  <!-- Pass students parameter -->
+                ${this.createStudentsTable(students)}
+            </div>
+        `;
+    },
+
+    // Student Filters - FIXED VERSION
+    createStudentFilters(students) {  // Add students parameter
+        return `
+        <div class="mb-6 flex items-center justify-between animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
+                    <input 
+                        id="student-search-input"
+                        class="flex h-10 w-80 rounded-md border px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10 bg-card border-border focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
+                        placeholder="البحث عن طالب..."
+                    >
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-muted-foreground" id="student-count">${students.length} طالب</span>
+                <button id="refresh-students" class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3 gap-2 hover:shadow-button transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw h-4 w-4">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M21 3v5h-5"></path>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M3 21v-5h5"></path>
+                    </svg>
+                    تحديث
+                </button>
+            </div>
+        </div>
+    `;
+    },
+
+    // Students Table
+    createStudentsTable(students) {
+        // console.log(students);
+
+        if (students.length === 0) {
+            return `
+            <div class="text-center py-12 bg-card rounded-lg border border-border animate-fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users mx-auto h-12 w-12 text-muted-foreground mb-4">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-foreground mb-2">لا يوجد طلاب</h3>
+                <p class="text-muted-foreground">لم يتم العثور على أي طلاب مسجلين في النظام.</p>
+            </div>
+        `;
+        }
+
+        return `
+        <div class="bg-card rounded-lg border border-border overflow-hidden shadow-card animate-fade-in">
+            <div class="overflow-scroll">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-border bg-muted/50">
+                            <th class="text-right py-3 px-4 font-semibold text-foreground">الاسم</th>
+                            <th class="text-right py-3 px-4 font-semibold text-foreground">البريد الإلكتروني</th>
+                            <th class="text-right py-3 px-4 font-semibold text-foreground">النتيجة</th>
+                            <th class="text-right py-3 px-4 font-semibold text-foreground">آخر تسجيل دخول</th>
+                            <th class="text-right py-3 px-4 font-semibold text-foreground">تاريخ الإنشاء</th>
+                            <th class="text-right py-3 px-4 font-semibold text-foreground">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        ${students.map((student, index) => this.createStudentRow(student, index)).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    },
+
+    // Student Row
+    createStudentRow(student, index) {
+        const animationDelay = 0.2 + (index * 0.05);
+
+        const formatDate = (dateString) => {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        };
+
+        const formatDateTime = (dateString) => {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ar-SA', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        return `
+            <tr class="hover:bg-muted/30 transition-colors duration-200 animate-slide-up" style="animation-delay: ${animationDelay}s;">
+                <td class="py-3 px-4">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold text-sm">
+                            ${student.name ? student.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div class="text-right">
+                            <div class="font-medium text-foreground">${student.name || 'غير معروف'}</div>
+                            <div class="text-xs text-muted-foreground">ID: ${student.id}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-3 px-4 text-foreground">${student.email || '-'}</td>
+                <td class="py-3 px-4">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${student.score >= 80 ? 'bg-green-50 text-green-700 border-green-200' :
+                student.score >= 60 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                    'bg-red-50 text-red-700 border-red-200'
+            } border">
+                        ${student.score || 0}%
+                    </span>
+                </td>
+                <td class="py-3 px-4 text-muted-foreground">${formatDateTime(student.last_login)}</td>
+                <td class="py-3 px-4 text-muted-foreground">${formatDate(student.created_at)}</td>
+                <td class="py-3 px-4">
+                    <div class="flex items-center justify-end gap-2">
+                        <button class="student-action-btn view-student inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 gap-1 transition-all duration-200" data-student-id="${student.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye h-3 w-3">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            عرض
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    },
+
+    // Update Main Content to include student container
+    // Main Content - FIXED VERSION
     createMainContent() {
         return `
             <main class="container mx-auto px-4 py-8">
                 ${this.createNavigation(AppData.getNavigation())}
                 ${this.createSearchFilters(AppData.getFilters())}
                 ${this.createCoursesContainer(AppData.getCourses())}
+                ${this.createStudentContainer(AppData.getStudents())}  <!-- This should now work -->
             </main>
         `;
-    }
+    },
+
+    // Add this method to Components
+    createStudentDetailsModal() {
+        return `
+            <div id="student-details-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+                <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" data-student-modal-backdrop></div>
+                <div class="relative bg-card rounded-xl shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-hidden animate-slide-up">
+                    <div class="p-6 border-b border-border">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-semibold" id="student-modal-title">تفاصيل الطالب</h2>
+                            <button id="close-student-modal" class="rounded-lg p-2 hover:bg-muted transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-5 w-5">
+                                    <path d="M18 6 6 18"></path>
+                                    <path d="m6 6 12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 overflow-auto max-h-[calc(90vh-120px)]">
+                        <!-- Student Info Header -->
+                        <div id="student-info-header" class="mb-6 p-4 bg-muted/30 rounded-lg">
+                            <!-- Student info will be populated here -->
+                        </div>
+                        
+                        <!-- close button -->
+                        <button onclick="closeStudentModal()" class="inline-flex items-center justify-center whitespace-nowrap text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                            </svg>
+                        </button>
+                        
+                        <!-- Progress Stats -->
+                        
+                        <div id="student-stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <!-- Stats will be populated here -->
+                        </div>
+                        
+                        <!-- Courses Progress Table -->
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold mb-3">تقدم الطالب في الدورات</h3>
+                            <div class="overflow-scroll">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-border bg-muted/50">
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">اسم الدورة</th>
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">اسم الدرس</th>
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">النتيجة</th>
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">إجمالي الأسئلة</th>
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">الإجابات الصحيحة</th>
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">الشريحة</th>
+                                            <th class="text-right py-3 px-4 font-semibold text-foreground">تاريخ الإكمال</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="student-progress-table" class="divide-y divide-border">
+                                        <!-- Progress data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="student-progress-empty" class="hidden text-center py-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list mx-auto h-12 w-12 text-muted-foreground mb-4">
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                <path d="M12 11h4"></path>
+                                <path d="M12 16h4"></path>
+                                <path d="M8 11h.01"></path>
+                                <path d="M8 16h.01"></path>
+                            </svg>
+                            <h3 class="text-lg font-medium text-foreground mb-2">لا توجد بيانات تقدم</h3>
+                            <p class="text-muted-foreground">لم يتم العثور على أي سجلات تقدم لهذا الطالب.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
 };
+
+// close Student Modal 
+function closeStudentModal() {
+    const studentModal = document.getElementById('student-details-modal');
+    if (studentModal) {
+        studentModal.classList.add('hidden');
+    }
+    
+}

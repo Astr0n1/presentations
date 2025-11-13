@@ -594,6 +594,71 @@ async function checkForCourse() {
     }
 };
 
+/**
+ * Show the loader modal with optional progress
+ * @param {number} progress - Progress percentage (0-100)
+ * @param {string} message - Optional custom message
+ */
+window.showLoader = function (progress = 0, message = null) {
+    const loaderModal = document.getElementById('loader-modal');
+    const progressBar = document.querySelector('.loader-progress');
+    const loadingText = loaderModal?.querySelector('p');
+
+    if (loaderModal) {
+        loaderModal.classList.remove('hidden');
+
+        // Update progress if provided
+        if (progressBar && progress >= 0) {
+            progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+        }
+
+        // Update message if provided
+        if (message && loadingText) {
+            loadingText.textContent = message;
+        }
+    }
+};
+
+/**
+ * Hide the loader modal
+ */
+window.hideLoader = function () {
+    const loaderModal = document.getElementById('loader-modal');
+    if (loaderModal) {
+        loaderModal.classList.add('hidden');
+
+        // Reset progress
+        const progressBar = document.querySelector('.loader-progress');
+        if (progressBar) {
+            progressBar.style.width = '0%';
+        }
+
+        // Reset message
+        const loadingText = loaderModal.querySelector('p');
+        if (loadingText) {
+            loadingText.textContent = 'يرجى الانتظار...';
+        }
+    }
+};
+
+
+/**
+ * Update loader progress and message
+ * @param {number} progress - Progress percentage (0-100)
+ * @param {string} message - Optional custom message
+ */
+window.updateLoader = function (progress, message = null) {
+    const progressBar = document.querySelector('.loader-progress');
+    const loadingText = document.querySelector('#loader-modal p');
+
+    if (progressBar && progress >= 0) {
+        progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    }
+
+    if (message && loadingText) {
+        loadingText.textContent = message;
+    }
+};
 
 ////////////////////////////////////////////////////
 // CourseEditor — orchestrator
@@ -654,6 +719,7 @@ export default class CourseEditor {
 
         // Render initial UI
         this.setupSidebarToggles();
+        this.setupSlideNavigation();
         this.renderLessonsSidebar();
         this.updateLessonHeader();
 
@@ -669,6 +735,8 @@ export default class CourseEditor {
         // run smoke tests
         this.runSmokeTests();
     }
+
+
 
     // bootstrap helpers delegating to managers
     loadFromLocalStorage() {
@@ -692,6 +760,7 @@ export default class CourseEditor {
         };
         return types[subtype] || subtype;
     }
+
 
     // re-expose slide manager methods so old callers still work
     addNewLesson() { return this.slideManager.addNewLesson(); }
@@ -1017,7 +1086,7 @@ export default class CourseEditor {
             console.warn('Failed applying sidebar state', err);
         }
     }
-
+    // TODO
     // --- Mobile UI wiring (delegated to UIRenderer)
     renderMobileSlidesBar() { return this.ui.renderMobileSlidesBar(); }
     syncMobileActiveSlide() {
@@ -1119,10 +1188,10 @@ export default class CourseEditor {
             let newWidth = startWidth;
 
             if (targetSide === 'left') {
-                newWidth = Math.max(250, Math.min(viewportWidth * 0.4, startWidth + deltaX));
+                newWidth = Math.max(250, Math.min(700, startWidth + deltaX));
                 leftSidebar.style.width = newWidth + 'px';
             } else if (targetSide === 'right') {
-                newWidth = Math.max(200, Math.min(viewportWidth * 0.3, startWidth - deltaX));
+                newWidth = Math.max(200, Math.min(500, startWidth - deltaX));
                 rightSidebar.style.width = newWidth + 'px';
             }
             const mainContent = document.querySelector('.main-content');
@@ -1561,19 +1630,7 @@ export default class CourseEditor {
 
             const tempLesson = new Lesson({ id: -999, title: 'temp', slides: [new Slide({ id: 1 })] });
             tempLesson.slides.pop();
-            // if (tempLesson.slides.length === 0) {
-            //     console.log('⚠️ اختبار حذف آخر سلايد: تأكد أن deleteSlideById لا يترك الدرس بلا سلايدات (يوجد حماية).');
-            // }
-
-            // if (!errors.length) {
-            //     console.log('%c✔︎ جميع اختبارات smoke مرت بنجاح', 'color:green;font-weight:bold;');
-            // } else {
-            //     console.warn('%c❌ بعض اختبارات smoke فشلت:', 'color:orange;font-weight:bold;');
-            //     errors.forEach(err => console.warn(' -', err));
-            // }
-            // console.groupEnd();
         } catch (err) {
-            // console.error('خطأ أثناء تشغيل اختبارات smoke', err);
         }
 
         function findDuplicate(arr) {
@@ -1584,19 +1641,162 @@ export default class CourseEditor {
             }
             return null;
         }
+
+    }
+
+    setupSlideNavigation() {
+        const prevBtn = document.getElementById('prev-slide-btn');
+        const nextBtn = document.getElementById('next-slide-btn');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateToAdjacentSlide(-1));
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateToAdjacentSlide(1));
+        }
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                this.navigateToAdjacentSlide(-1);
+            } else if (e.key === 'ArrowRight') {
+                this.navigateToAdjacentSlide(1);
+            }
+        });
+
+        // Initial update of button states
+        this.updateNavigationButtons();
+    }
+
+    /**
+     * Navigate to previous or next slide
+     * @param {number} direction - -1 for previous, 1 for next
+     */
+    navigateToAdjacentSlide(direction) {
+        if (!this.currentLessonId || !this.currentSlideId) return;
+
+        const lesson = this.findLessonById(this.currentLessonId);
+        if (!lesson || !lesson.slides.length) return;
+
+        const currentIndex = lesson.slides.findIndex(slide => slide.id === this.currentSlideId);
+        if (currentIndex === -1) return;
+
+        const newIndex = currentIndex + direction;
+
+        // Check bounds
+        if (newIndex >= 0 && newIndex < lesson.slides.length) {
+            const newSlide = lesson.slides[newIndex];
+
+            // Add animation class
+            this.addSlideTransitionAnimation(direction);
+
+            // Small delay to allow animation to play
+            setTimeout(() => {
+                this.currentSlideId = newSlide.id;
+                this.loadSlideEditContent(newSlide.id);
+                this.loadSlidePreview(newSlide.id);
+                this.updateNavigationButtons();
+                this.syncMobileActiveSlide();
+            }, 150);
+        }
+    }
+
+    /**
+     * Add slide transition animation
+     * @param {number} direction - -1 for left, 1 for right
+     */
+    addSlideTransitionAnimation(direction) {
+        const previewContent = document.getElementById('slide-preview-content');
+        if (!previewContent) return;
+
+        // Remove any existing animation classes
+        previewContent.classList.remove('slide-transition-prev', 'slide-transition-next');
+
+        // Force reflow
+        void previewContent.offsetWidth;
+
+        // Add appropriate animation class
+        if (direction === -1) {
+            previewContent.classList.add('slide-transition-prev');
+        } else {
+            previewContent.classList.add('slide-transition-next');
+        }
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            previewContent.classList.remove('slide-transition-prev', 'slide-transition-next');
+        }, 300);
+    }
+
+    /**
+     * Update navigation button states based on current position
+     */
+    updateNavigationButtons() {
+        const prevBtn = document.getElementById('prev-slide-btn');
+        const nextBtn = document.getElementById('next-slide-btn');
+
+        if (!prevBtn || !nextBtn) return;
+
+        if (!this.currentLessonId || !this.currentSlideId) {
+            // No slide selected - hide buttons
+            prevBtn.classList.add('disabled');
+            nextBtn.classList.add('disabled');
+            return;
+        }
+
+        const lesson = this.findLessonById(this.currentLessonId);
+        if (!lesson || !lesson.slides.length) {
+            prevBtn.classList.add('disabled');
+            nextBtn.classList.add('disabled');
+            return;
+        }
+
+        const currentIndex = lesson.slides.findIndex(slide => slide.id === this.currentSlideId);
+
+        // Update previous button
+        if (currentIndex <= 0) {
+            prevBtn.classList.add('disabled');
+        } else {
+            prevBtn.classList.remove('disabled');
+        }
+
+        // Update next button
+        if (currentIndex >= lesson.slides.length - 1) {
+            nextBtn.classList.add('disabled');
+        } else {
+            nextBtn.classList.remove('disabled');
+        }
     }
 }
 
 // auto-init in browser and keep backward-compatibility on window
 if (typeof window !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        checkForCourse();
-        // getCourseLessons();
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Show loader immediately when page starts loading
+        showLoader(10, 'جاري التحقق من بيانات الدورة...');
+
         try {
+            // Check for course (this might be async)
+            await checkForCourse();
+
+            // Update loader progress
+            updateLoader(50, 'جاري تحميل المحتوى...');
+
+            // Initialize editor
             const editor = new CourseEditor();
             window.courseEditor = editor;
-        } catch (err) {
-        }
 
+            // Hide loader when everything is ready
+            setTimeout(() => {
+                updateLoader(100, 'تم التحميل بنجاح!');
+                setTimeout(hideLoader, 500);
+            }, 500);
+
+        } catch (err) {
+            console.error('Initialization error:', err);
+            updateLoader(0, 'حدث خطأ في التحميل');
+            setTimeout(hideLoader, 2000);
+        }
     });
 }

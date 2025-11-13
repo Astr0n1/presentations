@@ -4,7 +4,6 @@ class CourseManager {
         this.init();
     }
 
-
     handleApiError(error) {
         console.error('API Error:', error);
 
@@ -35,10 +34,15 @@ class CourseManager {
         };
     }
 
+
     async init() {
         try {
             // Load data first
             await AppData.loadData();
+
+            // Debug: Check if students are loaded
+            // console.log('Students after load:', AppData.getStudents());
+            // console.log('Students length:', AppData.getStudents().length);
 
             // Then render the application
             this.render();
@@ -46,7 +50,7 @@ class CourseManager {
             // Add event listeners
             this.bindEvents();
 
-            console.log('Course Manager initialized successfully');
+            // console.log('Course Manager initialized successfully');
         } catch (error) {
             console.error('Error initializing Course Manager:', error);
             this.renderError();
@@ -245,7 +249,8 @@ class CourseManager {
             this.addNavigationListeners();
             this.addViewToggleListeners();
             this.addSortListeners();
-            this.addCreateCourseListeners(); // New modal listeners
+            this.addCreateCourseListeners();
+            this.addStudentModalListeners(); // Add this line
         }, 100);
     }
 
@@ -254,7 +259,7 @@ class CourseManager {
         courseCards.forEach(card => {
             card.addEventListener('click', () => {
                 const courseTitle = card.querySelector('h3').textContent;
-                console.log('Course card clicked:', courseTitle);
+                // console.log('Course card clicked:', courseTitle);
                 // go to slides.php?name=courseTitle
                 window.location.href = `slides.html?name=${encodeURIComponent(courseTitle)}`;
             });
@@ -270,7 +275,7 @@ class CourseManager {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     const searchTerm = e.target.value;
-                    console.log('Searching for:', searchTerm);
+                    // console.log('Searching for:', searchTerm);
                     AppData.setSearchTerm(searchTerm);
 
                     // Only update courses and results count, not the entire page
@@ -292,10 +297,26 @@ class CourseManager {
         const navButtons = document.querySelectorAll('nav button');
         navButtons.forEach(button => {
             button.addEventListener('click', (e) => {
-                const navText = e.target.textContent;
-                console.log('Navigation clicked:', navText);
+                const navText = e.target.getAttribute('data');
+                // console.log('Navigation clicked:', navText);
 
-                // Update active state without re-rendering
+                const coursesContainer = document.getElementById('courses-container');
+                const searchBar = document.getElementById('search-bar');
+                const studentContainer = document.getElementById('student-container');
+
+                if (navText === 'الطلاب') {
+                    // Show student container, hide courses
+                    coursesContainer.classList.add('hidden');
+                    searchBar.classList.add('hidden');
+                    studentContainer.classList.remove('hidden');
+                } else if (navText === 'الدورات') {
+                    // Show courses, hide student container
+                    coursesContainer.classList.remove('hidden');
+                    searchBar.classList.remove('hidden');
+                    studentContainer.classList.add('hidden');
+                }
+
+                // Update active state
                 navButtons.forEach(btn => {
                     btn.classList.remove('text-primary');
                     btn.classList.add('text-muted-foreground', 'hover:text-foreground');
@@ -337,7 +358,6 @@ class CourseManager {
         }
     }
 
-    // New method to update view toggle buttons state
     updateViewToggleButtons() {
         const gridViewBtn = document.getElementById('grid-view-btn');
         const listViewBtn = document.getElementById('list-view-btn');
@@ -378,7 +398,7 @@ class CourseManager {
                 option.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const sortValue = e.target.getAttribute('data-sort');
-                    console.log('Sort by:', sortValue);
+                    // console.log('Sort by:', sortValue);
                     AppData.setCurrentSort(sortValue);
                     sortDropdown.classList.add('hidden');
 
@@ -404,7 +424,6 @@ class CourseManager {
         }
     }
 
-    // New method to update sort dropdown options highlight
     updateSortDropdownOptions() {
         const sortOptions = document.querySelectorAll('.sort-option');
         const currentSort = AppData.getCurrentSort();
@@ -421,7 +440,6 @@ class CourseManager {
         });
     }
 
-    // New method for create course modal
     addCreateCourseListeners() {
         // Use the ID selector
         const createCourseBtn = document.getElementById('create-course-btn');
@@ -431,14 +449,14 @@ class CourseManager {
         const createCourseForm = document.getElementById('create-course-form');
         const modal = document.getElementById('create-course-modal');
 
-        console.log('Create course button found:', createCourseBtn);
-        console.log('Modal found:', modal);
+        // console.log('Create course button found:', createCourseBtn);
+        // console.log('Modal found:', modal);
 
         // Open modal
         if (createCourseBtn) {
             createCourseBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Create course button clicked');
+                // console.log('Create course button clicked');
                 this.openCreateCourseModal();
             });
         } else {
@@ -472,8 +490,8 @@ class CourseManager {
         const modal = document.getElementById('create-course-modal');
         const form = document.getElementById('create-course-form');
 
-        console.log('Opening modal:', modal);
-        console.log('Form found:', form);
+        // console.log('Opening modal:', modal);
+        // console.log('Form found:', form);
 
         if (modal && form) {
             modal.classList.remove('hidden');
@@ -486,7 +504,7 @@ class CourseManager {
             const firstInput = form.querySelector('input, textarea, select');
             if (firstInput) firstInput.focus();
 
-            console.log('Modal opened successfully');
+            // console.log('Modal opened successfully');
         } else {
             console.error('Modal or form not found');
         }
@@ -546,7 +564,7 @@ class CourseManager {
         try {
             // Use the API service to create course
             const response = await ApiService.createCourse(courseData);
-            console.log('API Response:', response); // Debug log
+            // console.log('API Response:', response); // Debug log
 
             // FIXED: Check for success in different possible response formats
             if (response && (response.success === true || response.status === 'success' || response.id)) {
@@ -624,6 +642,477 @@ class CourseManager {
             toast.remove();
         }, 3000);
     }
+
+    // Add this method to the CourseManager class to handle student rendering
+    renderStudents() {
+        const studentContainer = document.getElementById('student-container');
+        if (!studentContainer) return;
+
+        const students = AppData.getStudents();
+        // console.log('Rendering students:', students); // Debug log
+
+        // Update student count
+        const studentCount = document.getElementById('student-count');
+        if (studentCount) {
+            studentCount.textContent = `${students.length} طالب`;
+        }
+
+        // Update student table
+        const studentTable = studentContainer.querySelector('tbody');
+        if (studentTable && students.length > 0) {
+            studentTable.innerHTML = students.map((student, index) =>
+                Components.createStudentRow(student, index)
+            ).join('');
+        }
+
+        // Add student event listeners
+        this.addStudentEventListeners();
+    }
+
+    // Add this method to bind student events
+    addStudentEventListeners() {
+        // Refresh students button
+        const refreshBtn = document.getElementById('refresh-students');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', async () => {
+                try {
+                    refreshBtn.disabled = true;
+                    refreshBtn.innerHTML = `
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    جاري التحديث...
+                `;
+
+                    await AppData.refreshStudents();
+                    this.renderStudents();
+                    this.showToast('تم تحديث بيانات الطلاب بنجاح', 'success');
+                } catch (error) {
+                    console.error('Error refreshing students:', error);
+                    this.showToast('فشل في تحديث بيانات الطلاب', 'error');
+                } finally {
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw h-4 w-4">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                        <path d="M21 3v5h-5"></path>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                        <path d="M3 21v-5h5"></path>
+                    </svg>
+                    تحديث
+                `;
+                }
+            });
+        }
+
+        // Student search functionality
+        const studentSearchInput = document.getElementById('student-search-input');
+        if (studentSearchInput) {
+            let searchTimeout;
+            studentSearchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.filterStudents(e.target.value);
+                }, 300);
+            });
+        }
+
+        // Student action buttons
+        this.bindStudentActionButtons();
+    }
+
+    // Add student filtering method
+    filterStudents(searchTerm) {
+        const students = AppData.getStudents();
+        const filteredStudents = students.filter(student =>
+            student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        const studentTable = document.querySelector('#student-container tbody');
+        if (studentTable) {
+            if (filteredStudents.length === 0) {
+                studentTable.innerHTML = `
+                <tr>
+                    <td colspan="6" class="py-8 text-center text-muted-foreground">
+                        لا توجد نتائج مطابقة للبحث
+                    </td>
+                </tr>
+            `;
+            } else {
+                studentTable.innerHTML = filteredStudents.map((student, index) =>
+                    Components.createStudentRow(student, index)
+                ).join('');
+            }
+        }
+
+        // Update student count
+        const studentCount = document.getElementById('student-count');
+        if (studentCount) {
+            studentCount.textContent = `${filteredStudents.length} طالب`;
+        }
+
+        this.bindStudentActionButtons();
+    }
+
+    // Add method to bind student action buttons
+    bindStudentActionButtons() {
+        // View student buttons
+        const viewButtons = document.querySelectorAll('.view-student');
+        viewButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const studentId = btn.getAttribute('data-student-id');
+                this.viewStudent(studentId);
+            });
+        });
+
+        // Edit student buttons
+        const editButtons = document.querySelectorAll('.edit-student');
+        editButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const studentId = btn.getAttribute('data-student-id');
+                this.editStudent(studentId);
+            });
+        });
+    }
+
+    // Add student view method
+    // View student method - updated
+    async viewStudent(studentId) {
+        try {
+            const students = AppData.getStudents();
+            const student = students.find(s => s.id == studentId);
+
+            if (student) {
+                this.showToast(`جاري تحميل بيانات الطالب: ${student.name}`, 'info');
+
+                // Show loading state
+                this.showStudentModalLoading(true);
+
+                // Open modal first
+                this.openStudentModal(student);
+
+                // Load student progress data
+                const progressData = await this.loadStudentProgress(studentId);
+
+                // Populate modal with data
+                this.populateStudentModal(student, progressData);
+
+            }
+        } catch (error) {
+            console.error('Error viewing student:', error);
+            this.showToast('فشل في تحميل بيانات الطالب', 'error');
+        }
+    }
+
+    // Load student progress data from API
+    async loadStudentProgress(studentId) {
+        try {
+            const response = await fetch(`api/student-progress.php?student_id=${studentId}`);
+            const data = await response.json();
+
+            // console.log('Student progress API response:', data);
+
+            // Handle the specific API response format
+            if (data.status === 'success' && data.data && data.data.scores) {
+                return data.data.scores;
+            } else if (data.scores) {
+                return data.scores;
+            } else if (data.data) {
+                return data.data;
+            } else {
+                console.warn('Unexpected API response format:', data);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error loading student progress:', error);
+            // Return mock data for demonstration
+            return this.getMockProgressData(studentId);
+        }
+    }
+
+    // Mock data for demonstration (remove when real API is available)
+    getMockProgressData(studentId) {
+        const courses = ['الروبوت الافتراضي', 'برمجة بايثون', 'الذكاء الاصطناعي', 'تعلم الآلة'];
+        const lessons = ['المقدمة', 'الأساسيات', 'المتغيرات', 'الدوال', 'المشاريع'];
+
+        return Array.from({ length: 8 }, (_, i) => ({
+            course_name: courses[i % courses.length],
+            lesson_name: lessons[i % lessons.length],
+            score: Math.floor(Math.random() * 40) + 60, // 60-100
+            total_questions: 10,
+            correct_answers: Math.floor(Math.random() * 8) + 3, // 3-10
+            created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            slide_n: (i % 5) + 1,
+            course_id: (i % 4) + 1,
+            lesson_id: (i % 5) + 1
+        }));
+    }
+
+    // Open student modal
+    openStudentModal(student) {
+        const modal = document.getElementById('student-details-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+
+            // Set basic student info
+            const title = document.getElementById('student-modal-title');
+            if (title) {
+                title.textContent = `تفاصيل الطالب: ${student.name}`;
+            }
+        }
+    }
+
+    // Populate modal with student data
+    populateStudentModal(student, progressData) {
+        // Populate student info header
+        this.populateStudentInfo(student);
+
+        // Populate statistics
+        this.populateStudentStats(progressData);
+
+        // Populate progress table
+        this.populateProgressTable(progressData);
+
+        // Hide loading state
+        this.showStudentModalLoading(false);
+    }
+
+    // Populate student information
+    populateStudentInfo(student) {
+        const header = document.getElementById('student-info-header');
+        if (header) {
+            header.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold text-xl">
+                        ${student.name ? student.name.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <div class="text-right">
+                        <h3 class="text-xl font-semibold">${student.name || 'غير معروف'}</h3>
+                        <p class="text-muted-foreground">${student.email || 'لا يوجد بريد إلكتروني'}</p>
+                        <div class="flex items-center gap-4 mt-2 text-sm">
+                            <span class="text-muted-foreground">ID: ${student.id}</span>
+                            <span class="text-muted-foreground">آخر تسجيل دخول: ${this.formatDateTime(student.last_login)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-left">
+                    <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${student.score >= 80 ? 'bg-green-50 text-green-700 border-green-200' :
+                    student.score >= 60 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                        'bg-red-50 text-red-700 border-red-200'
+                } border">
+                        النتيجة الإجمالية: ${student.score || 0}%
+                    </span>
+                </div>
+            </div>
+        `;
+        }
+
+        header.classList.add('hidden');
+    }
+
+    // Populate student statistics
+
+    populateStudentStats(progressData) {
+        const statsContainer = document.getElementById('student-stats');
+        if (!statsContainer) return;
+
+        const totalCourses = new Set(progressData.map(p => p.course_id)).size;
+        const totalLessons = new Set(progressData.map(p => p.lesson_id)).size;
+        const averageScore = progressData.length > 0
+            ? Math.round(progressData.reduce((sum, p) => sum + (p.score * 100), 0) / progressData.length)
+            : 0;
+        const totalQuestions = progressData.reduce((sum, p) => sum + p.total_questions, 0);
+
+        statsContainer.innerHTML = `
+        <div class="bg-card border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-primary">${totalCourses}</div>
+            <div class="text-sm text-muted-foreground">الدورات المسجلة</div>
+        </div>
+        <div class="bg-card border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-primary">${totalLessons}</div>
+            <div class="text-sm text-muted-foreground">الدروس المكتملة</div>
+        </div>
+        <div class="bg-card border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-primary">${averageScore}%</div>
+            <div class="text-sm text-muted-foreground">متوسط النتائج</div>
+        </div>
+        <div class="bg-card border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-primary">${totalQuestions}</div>
+            <div class="text-sm text-muted-foreground">إجمالي الأسئلة</div>
+        </div>
+    `;
+    }
+
+    populateProgressTable(progressData) {
+        const tableBody = document.getElementById('student-progress-table');
+        const emptyState = document.getElementById('student-progress-empty');
+
+        if (!tableBody || !emptyState) return;
+
+        if (progressData.length === 0) {
+            tableBody.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        tableBody.innerHTML = progressData.map((progress, index) => {
+            // Convert score to percentage (if it's a decimal like 0.75 = 75%)
+            const scorePercentage = progress.score <= 1 ? Math.round(progress.score * 100) : progress.score;
+
+            return `
+            <tr class="hover:bg-muted/30 transition-colors duration-200 animate-slide-up" style="animation-delay: ${0.1 + (index * 0.05)}s;">
+                <td class="py-3 px-4 font-medium text-foreground">${progress.course_name}</td>
+                <td class="py-3 px-4 text-foreground">${progress.lesson_name}</td>
+                <td class="py-3 px-4">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${scorePercentage >= 80 ? 'bg-green-50 text-green-700 border-green-200' :
+                    scorePercentage >= 60 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                        'bg-red-50 text-red-700 border-red-200'
+                } border">
+                        ${scorePercentage}%
+                    </span>
+                </td>
+                <td class="py-3 px-4 text-muted-foreground">${progress.total_questions}</td>
+                <td class="py-3 px-4 text-muted-foreground">${progress.correct_answers}</td>
+                <td class="py-3 px-4 text-muted-foreground">${progress.slide_n}</td>
+                <td class="py-3 px-4 text-muted-foreground">${this.formatDateTime(progress.created_at)}</td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    // Show/hide loading state in modal
+    showStudentModalLoading(show) {
+        const tableBody = document.getElementById('student-progress-table');
+        const emptyState = document.getElementById('student-progress-empty');
+
+        if (show) {
+            tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="py-8 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        <span class="text-muted-foreground">جاري تحميل بيانات التقدم...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+            if (emptyState) emptyState.classList.add('hidden');
+        }
+    }
+
+    // Date formatting helper methods
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    formatDateTime(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Add event listeners for student modal
+    addStudentModalListeners() {
+        const modal = document.getElementById('student-details-modal');
+        const closeBtn = document.getElementById('close-student-modal');
+        const backdrop = document.querySelector('[data-student-modal-backdrop]');
+
+        modal.style.overflow = 'scroll';
+        modal.style.paddingTop = '100px'
+
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeStudentModal());
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener('click', () => this.closeStudentModal());
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                this.closeStudentModal();
+            }
+        });
+    }
+
+    closeStudentModal() {
+        const modal = document.getElementById('student-details-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Add student edit method
+    editStudent(studentId) {
+        const students = AppData.getStudents();
+        const student = students.find(s => s.id == studentId);
+        if (student) {
+            this.showToast(`تعديل بيانات الطالب: ${student.name}`, 'info');
+            // You can implement an edit modal
+            // console.log('Edit student:', student);
+        }
+    }
+
+    // Update the navigation handler in bindEvents method
+    addNavigationListeners() {
+        const navButtons = document.querySelectorAll('nav button');
+        navButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const navText = e.target.getAttribute('data');
+                // console.log('Navigation clicked:', navText);
+
+                const coursesContainer = document.getElementById('courses-container');
+                const searchBar = document.getElementById('search-bar');
+                const studentContainer = document.getElementById('student-container');
+
+                if (navText === 'الطلاب') {
+                    // Show student container, hide courses
+                    coursesContainer.classList.add('hidden');
+                    searchBar.classList.add('hidden');
+                    studentContainer.classList.remove('hidden');
+
+                    // Render students when switching to students tab
+                    this.renderStudents();
+                } else if (navText === 'الدورات') {
+                    // Show courses, hide student container
+                    coursesContainer.classList.remove('hidden');
+                    searchBar.classList.remove('hidden');
+                    studentContainer.classList.add('hidden');
+                }
+
+                // Update active state
+                navButtons.forEach(btn => {
+                    btn.classList.remove('text-primary');
+                    btn.classList.add('text-muted-foreground', 'hover:text-foreground');
+                    const indicator = btn.querySelector('div');
+                    if (indicator) indicator.remove();
+                });
+
+                e.target.classList.remove('text-muted-foreground', 'hover:text-foreground');
+                e.target.classList.add('text-primary');
+                e.target.innerHTML += '<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary animate-slide-up"></div>';
+            });
+        });
+    }
 }
 
 // Initialize the application when DOM is loaded
@@ -635,5 +1124,3 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CourseManager, Components, AppData };
 }
-
-

@@ -37,6 +37,7 @@ class SlideManager {
             this.editor.currentLessonId = this.editor.lessons[0].id;
           }
           console.log(this.editor.lessons);
+          this.editor.renderMobileSlidesBar()
           this.ensureInitialState();
           this.editor.renderLessonsSidebar();
           return;
@@ -111,9 +112,19 @@ class SlideManager {
     }
   }
 
+  uploadChanges() {
+    this.editor.lessons.forEach(lesson => {
+      console.log(lesson)
+      // ApiService.updateLessonContent(lesson.id, lesson.slides, lesson.background)
+      ApiService.updateLessonContent(lesson.id, lesson.slides, lesson.background)
+    })
+
+  }
+
   // after adding the new lesson expand / collapse functionality not working
   async addNewLesson() {
     try {
+      this.uploadChanges();
       const response = await ApiService.addNewLesson(`درس جديد ${this.editor.lessons.length + 1}`, localStorage.getItem('C_id'))
       console.log(response)
       if (response.status === 'success') {
@@ -151,6 +162,7 @@ class SlideManager {
 * persist and re-render.
 */
   deleteLessonById(lessonId) {
+
     const idx = this.editor.lessons.findIndex(l => l.id === lessonId);
     if (idx === -1) return;
 
@@ -186,6 +198,7 @@ class SlideManager {
     }
 
     // Persist and re-render
+
     this.saveToLocalStorage();
     this.editor.renderLessonsSidebar();
     this.editor.updateLessonHeader();

@@ -46,11 +46,11 @@ body {
 
 /* Also ensure the resize handles stay aligned with the sidebar edges */
 .resize-handle-left {
-	top: var(--header-height) !important;
+	/* top: var(--header-height) !important; */
 	height: calc(100vh - var(--header-height)) !important;
 }
 .resize-handle-right {
-	top: var(--header-height) !important;
+	/* top: var(--header-height) !important; */
 	height: calc(100vh - var(--header-height)) !important;
 }
 
@@ -1420,13 +1420,13 @@ body {
 .quiz-feedback-icon.correct {
 	color: #10b981;
 	text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
-	filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
+	/* filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5)); */
 }
 
 .quiz-feedback-icon.incorrect {
 	color: #ef4444;
 	text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-	filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+	/* filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5)); */
 }
 
 /* Enhanced glow effects for better visibility */
@@ -1468,13 +1468,13 @@ body {
 .quiz-feedback-icon.correct {
 	color: #10b981; /* green-500 */
 	text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
-	filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4));
+	/* filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4)); */
 }
 
 .quiz-feedback-icon.incorrect {
 	color: #ef4444; /* red-500 */
 	text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-	filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.4));
+	/* filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.4)); */
 }
 
 /* Remove any old animation styles if they exist */
@@ -1492,12 +1492,12 @@ body {
 
 .quiz-feedback-icon.correct {
 	color: #10b981; /* green-500 */
-	text-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+	/* text-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); */
 }
 
 .quiz-feedback-icon.incorrect {
 	color: #ef4444; /* red-500 */
-	text-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+	/* text-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); */
 }
 
 /* Add to edit.css - Base styling for new quiz columns layout */
@@ -2388,13 +2388,13 @@ body {
 .quiz-feedback-icon.correct {
 	color: #10b981 !important;
 	text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
-	filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
+	/* filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5)); */
 }
 
 .quiz-feedback-icon.incorrect {
 	color: #ef4444 !important;
 	text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-	filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+	/* filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5)); */
 }
 
 /* Ensure quiz feedback icons maintain their colors */
@@ -2408,13 +2408,13 @@ body {
 .quiz-feedback-icon.correct {
 	color: #10b981 !important;
 	text-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
-	filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
+	/* filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5)); */
 }
 
 .quiz-feedback-icon.incorrect {
 	color: #ef4444 !important;
 	text-shadow: 0 4px 20px rgba(239, 68, 68, 0.6);
-	filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+	/* filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5)); */
 }
 
 /* Simple, performant animation */
@@ -2598,4 +2598,172 @@ body {
 .quiz-drag-item.text-italic,
 .quiz-pairs-item.text-italic {
 	font-style: italic !important;
+}
+
+/* Add these styles to your existing edit.css file */
+
+/* ----------------------------------------
+   🧭 Slide Navigation Buttons
+----------------------------------------- */
+
+/* Navigation buttons container */
+.slide-nav-btn {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.slide-nav-btn:hover {
+    background-color: white !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.slide-nav-btn:active {
+    transform: translateY(-50%) scale(0.95) !important;
+}
+
+/* Ensure buttons are visible and properly positioned */
+.slide-nav-container {
+    position: relative;
+}
+
+/* Hide buttons when no slide is selected or only one slide exists */
+.slide-nav-btn.hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .slide-nav-btn {
+        width: 10px !important;
+        height: 10px !important;
+    }
+    
+    .slide-nav-btn i {
+        font-size: 0.875rem !important;
+    }
+}
+
+/* Ensure buttons don't overlap with sidebar toggle buttons */
+@media (min-width: 1024px) {
+    #prev-slide-btn {
+        left: 2rem !important;
+    }
+    
+    #next-slide-btn {
+        right: 2rem !important;
+    }
+}
+
+/* Add these styles to your existing edit.css file */
+
+/* ----------------------------------------
+   🧭 Slide Navigation Buttons
+----------------------------------------- */
+
+.slide-nav-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+}
+
+.slide-nav-btn:hover {
+    transform: scale(1.1);
+    background-color: #ffffff !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    border-color: #9ca3af !important;
+}
+
+.slide-nav-btn:active {
+    transform: scale(0.95);
+}
+
+/* Hide buttons when there's no slide to navigate to */
+.slide-nav-btn.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Ensure proper positioning */
+.slide-nav-container {
+    position: relative;
+}
+
+/* Make sure buttons are above the slide preview */
+.slide-nav-btn {
+    z-index: 30;
+}
+
+/* Add these styles to your existing edit.css file */
+
+/* ----------------------------------------
+   🎬 Slide Transition Animations
+----------------------------------------- */
+
+/* Slide transition base styles */
+#slide-preview-content {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slide out to left (for next slide) */
+#slide-preview-content.slide-transition-next {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+/* Slide out to right (for previous slide) */
+#slide-preview-content.slide-transition-prev {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* Disabled state for navigation buttons */
+.slide-nav-btn.disabled {
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+
+.slide-nav-btn.disabled:hover {
+    background-color: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+/* Loader Modal Styles */
+#loader-modal {
+    backdrop-filter: blur(4px);
+}
+
+.loader-spinner {
+    border-top-color: #2563eb; /* blue-600 */
+}
+
+.loader-progress {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    animation: pulse-progress 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-progress {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Smooth transitions for loader */
+#loader-modal {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#loader-modal.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+#loader-modal:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
 }

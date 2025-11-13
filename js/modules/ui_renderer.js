@@ -30,7 +30,7 @@ class UIRenderer {
 
         // Apply background and text styling
         const lesson = this.editor.findLessonById(this.editor.currentLessonId);
-        let containerClasses = `slide-preview rounded-t-xl fixed-slide-size mx-auto slide-${slide.type}`;
+        let containerClasses = `slide-preview rounded-t-xl fixed-slide-size m-0 slide-${slide.type}`;
 
         // Apply background
         if (lesson && lesson.background) {
@@ -180,13 +180,10 @@ class UIRenderer {
                     bodyHtml += `<div class="text-center py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
                 }
         }
-        // TODO i want the ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr} classes to be applied only to the bodyhtml
+        // Apply content styling to the bodyHtml directly, not to a wrapper div
         previewContent.innerHTML = `
         <div class="slide-content w-full overflow-y-auto break-words hyphens-auto">
-            ${headerHtml}
-            <div class="${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
-                ${bodyHtml}
-            </div>
+            ${headerHtml} <div class=" slide-body w-full ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${bodyHtml}</div>
         </div>
 `;
 
@@ -1617,7 +1614,7 @@ class UIRenderer {
             </div>
             
             ${items.length > 1 ? `
-                <div class="text-series-nav-dots absolute bottom-4 left-1/2 transform -translate-x-1/2 flex  space-x-reverse">
+                <div class="text-series-nav-dots absolute mb-2 left-1/2 transform -translate-x-1/2 flex  space-x-reverse">
                     ${dotsHtml}
                 </div>
             ` : ''}
@@ -1741,7 +1738,7 @@ class UIRenderer {
         </div>
         
         ${items.length > 1 ? `
-            <div class="image-series-nav-dots absolute bottom-4 left-1/2 transform -translate-x-1/2 flex ">
+            <div class="image-series-nav-dots absolute mb-2 left-1/2 transform -translate-x-1/2 flex ">
                 ${dotsHtml}
             </div>
         ` : ''}
@@ -2212,8 +2209,6 @@ class UIRenderer {
                             <option value="m" ${(!slide.textStyle?.title?.size || slide.textStyle.title.size === 'm') ? 'selected' : ''}>متوسط</option>
                             <option value="l" ${(slide.textStyle?.title?.size === 'l') ? 'selected' : ''}>كبير</option>
                             <option value="xl" ${(slide.textStyle?.title?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
-                            <option value="xxl" ${(slide.textStyle?.title?.size === 'xxl') ? 'selected' : ''}>كبير جداً جداً</option>
-                            <option value="xxxl" ${(slide.textStyle?.title?.size === 'xxxl') ? 'selected' : ''}>ضخم</option>
                         </select>
                     </div>
 
@@ -2221,9 +2216,9 @@ class UIRenderer {
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
                         <select id="title-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value="300" ${(slide.textStyle?.title?.fontWeight === '300') ? 'selected' : ''}>خفيف (300)</option>
-                            <option value="500" ${(!slide.textStyle?.title?.fontWeight || slide.textStyle.title.fontWeight === '500') ? 'selected' : ''}>متوسط (500)</option>
-                            <option value="800" ${(slide.textStyle?.title?.fontWeight === '800') ? 'selected' : ''}>ثقيل (800)</option>
+                            <option value="300" ${(slide.textStyle?.title?.fontWeight === '300') ? 'selected' : ''}>خفيف </option>
+                            <option value="500" ${(!slide.textStyle?.title?.fontWeight || slide.textStyle.title.fontWeight === '500') ? 'selected' : ''}>متوسط </option>
+                            <option value="800" ${(slide.textStyle?.title?.fontWeight === '800') ? 'selected' : ''}>ثقيل</option>
                         </select>
                     </div>
 
@@ -2264,8 +2259,6 @@ class UIRenderer {
                             <option value="m" ${(!slide.textStyle?.subtitle?.size || slide.textStyle.subtitle.size === 'm') ? 'selected' : ''}>متوسط</option>
                             <option value="l" ${(slide.textStyle?.subtitle?.size === 'l') ? 'selected' : ''}>كبير</option>
                             <option value="xl" ${(slide.textStyle?.subtitle?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
-                            <option value="xxl" ${(slide.textStyle?.subtitle?.size === 'xxl') ? 'selected' : ''}>كبير جداً جداً</option>
-                            <option value="xxxl" ${(slide.textStyle?.subtitle?.size === 'xxxl') ? 'selected' : ''}>ضخم</option>
                         </select>
                     </div>
 
@@ -2273,9 +2266,9 @@ class UIRenderer {
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
                         <select id="subtitle-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value="300" ${(slide.textStyle?.subtitle?.fontWeight === '300') ? 'selected' : ''}>خفيف (300)</option>
-                            <option value="500" ${(!slide.textStyle?.subtitle?.fontWeight || slide.textStyle.subtitle.fontWeight === '500') ? 'selected' : ''}>متوسط (500)</option>
-                            <option value="800" ${(slide.textStyle?.subtitle?.fontWeight === '800') ? 'selected' : ''}>ثقيل (800)</option>
+                            <option value="300" ${(slide.textStyle?.subtitle?.fontWeight === '300') ? 'selected' : ''}>خفيف </option>
+                            <option value="500" ${(!slide.textStyle?.subtitle?.fontWeight || slide.textStyle.subtitle.fontWeight === '500') ? 'selected' : ''}>متوسط </option>
+                            <option value="800" ${(slide.textStyle?.subtitle?.fontWeight === '800') ? 'selected' : ''}>ثقيل</option>
                         </select>
                     </div>
 
@@ -2316,8 +2309,6 @@ class UIRenderer {
                             <option value="m" ${(!slide.textStyle?.content?.size || slide.textStyle.content.size === 'm') ? 'selected' : ''}>متوسط</option>
                             <option value="l" ${(slide.textStyle?.content?.size === 'l') ? 'selected' : ''}>كبير</option>
                             <option value="xl" ${(slide.textStyle?.content?.size === 'xl') ? 'selected' : ''}>كبير جداً</option>
-                            <option value="xxl" ${(slide.textStyle?.content?.size === 'xxl') ? 'selected' : ''}>كبير جداً جداً</option>
-                            <option value="xxxl" ${(slide.textStyle?.content?.size === 'xxxl') ? 'selected' : ''}>ضخم</option>
                         </select>
                     </div>
 
@@ -2325,9 +2316,9 @@ class UIRenderer {
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
                         <select id="content-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value="300" ${(slide.textStyle?.content?.fontWeight === '300') ? 'selected' : ''}>خفيف (300)</option>
-                            <option value="500" ${(!slide.textStyle?.content?.fontWeight || slide.textStyle.content.fontWeight === '500') ? 'selected' : ''}>متوسط (500)</option>
-                            <option value="800" ${(slide.textStyle?.content?.fontWeight === '800') ? 'selected' : ''}>ثقيل (800)</option>
+                            <option value="300" ${(slide.textStyle?.content?.fontWeight === '300') ? 'selected' : ''}>خفيف </option>
+                            <option value="500" ${(!slide.textStyle?.content?.fontWeight || slide.textStyle.content.fontWeight === '500') ? 'selected' : ''}>متوسط </option>
+                            <option value="800" ${(slide.textStyle?.content?.fontWeight === '800') ? 'selected' : ''}>ثقيل</option>
                         </select>
                     </div>
 
@@ -2621,6 +2612,8 @@ class UIRenderer {
             this.editor.saveToLocalStorage();
             this.loadSlideEditContent(slideId);
         });
+
+        this.editor.updateNavigationButtons();
     }
 
     getChooseSlidePlaceholder() {
@@ -2657,6 +2650,7 @@ class UIRenderer {
     }
 
     // mobile slides
+
     renderMobileSlidesBar() {
         const lessonsTabs = document.getElementById('mobile-lessons-tabs');
         const slidesScroll = document.getElementById('mobile-slides-scroll');
@@ -2676,6 +2670,12 @@ class UIRenderer {
             ${i + 1}
             </div>`
         ).join('');
+        // Add a button to add a new slide in the selected lesson
+        slidesScroll.innerHTML += `
+            <button class="add-slide-inside-lesson" data-lesson-id="${lesson.id}">
+                <i class="fas fa-plus"></i>
+            </button>
+        `;
 
         const activeSlide = slidesScroll.querySelector('.active');
         if (activeSlide) {

@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
     previewButton.addEventListener('click', function () {
         if (currentCourse) {
             // Open preview in new tab
-            window.open(`preview-course.html?name=${encodeURIComponent(currentCourse.name)}`, '_blank');
+            window.open(`preview-course.html?name=${encodeURIComponent(currentCourse.name)}&role=presenter`, '_blank');
         }
     });
 

@@ -24,7 +24,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 		<script defer src="js/auth.js"></script>
 		<script type="module" defer src="js/edit.js"></script>
-	</head>
+</head>
 	<!-- <body class="bg-gray-100 min-h-screen" onload="requireAdmin()"> -->
 
 	<body class="bg-gray-100 min-h-screen">
@@ -164,38 +164,73 @@
 					</div>
 				</div>
 
+				<!-- Replace the Slide Preview Area section with this: -->
+
 				<!-- Slide Preview Area -->
-				<div
-					class="overflow-hidden mb-6 flex justify-center items-center"
-				>
-					<div
-						id="slide-preview-container"
-						class="slide-preview rounded-t-xl fixed-slide-size mx-auto flex items-center justify-center"
-					>
-						<!-- Preview content will be dynamically loaded here -->
-						<div
-							id="slide-preview-content"
-							class="w-full h-full overflow-hidden"
+				<div class="gap-8 overflow-hidden mb-6 flex justify-center items-center relative slide-nav-container">
+						<!-- Previous Slide Button (Left side) -->
+						<button
+								id="next-slide-btn"
+								class="slide-nav-btn bg-white text-gray-800 rounded-full w-12 h-12 flex items-center justify-center shadow-lg border border-gray-300 hover:border-gray-400 z-30"
+								style="opacity: 1;"
 						>
-							<div
-								class="flex flex-col items-center justify-center text-center h-full text-white opacity-80"
-							>
-								<i class="fas fa-sliders-h text-6xl mb-6"></i>
-								<h2 class="text-2xl font-bold mb-3">
-									اختر سلايداً للمعاينة
-								</h2>
-								<p class="text-lg">
-									انقر على أي سلايد لرؤية محتواه هنا
-								</p>
-							</div>
-							`;
+								<i class="fas fa-chevron-right text-xl"></i>
+						</button>
+
+						<!-- Slide Preview Container -->
+						<div
+								id="slide-preview-container"
+								class="slide-preview rounded-t-xl fixed-slide-size m-0 flex items-center justify-center relative"
+						>
+								<!-- Preview content will be dynamically loaded here -->
+								<div
+										id="slide-preview-content"
+										class="w-full h-full overflow-hidden transition-all duration-500 ease-in-out"
+								>
+										<div
+												class="flex flex-col items-center justify-center text-center h-full text-white opacity-80"
+										>
+												<i class="fas fa-sliders-h text-6xl mb-6"></i>
+												<h2 class="text-2xl font-bold mb-3">
+														اختر سلايداً للمعاينة
+												</h2>
+												<p class="text-lg">
+														انقر على أي سلايد لرؤية محتواه هنا
+												</p>
+										</div>
+								</div>
 						</div>
-					</div>
+
+						<!-- Next Slide Button (Right side) -->
+						<button
+								id="prev-slide-btn"
+								class="slide-nav-btn bg-white text-gray-800 rounded-full w-12 h-12 flex items-center justify-center shadow-lg border border-gray-300 hover:border-gray-400 z-30"
+								style="opacity: 1;"
+						>
+								<i class="fas fa-chevron-left text-xl"></i>
+						</button>
 				</div>
 			</div>
 
+			<!-- Loader Modal -->
+			<div id="loader-modal" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-[9999] transition-opacity duration-300">
+					<div class="text-center">
+							<!-- Spinner -->
+							<div class="loader-spinner w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+							
+							<!-- Loading Text -->
+							<h3 class="text-xl font-semibold text-gray-800 mb-2">جاري تحميل المحتوى</h3>
+							<p class="text-gray-600">يرجى الانتظار...</p>
+							
+							<!-- Progress Bar (Optional) -->
+							<div class="w-48 h-2 bg-gray-200 rounded-full mt-4 mx-auto overflow-hidden">
+									<div class="loader-progress h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+							</div>
+					</div>
+			</div>
+
 			<!-- Right Lessons Sidebar - REMOVE BUTTON FROM HERE -->
-			<div class="sidebar fixed right-0 top-0 h-full bg-white border-l border-gray-200 z-10 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] hidden sm:hidden md:block transition-transform duration-300 ease-in-out">
+			<div class="sidebar fixed right-0 top-0 h-full bg-white border-l border-gray-200 z-10 flex-shrink-0 min-w-[300px] max-w-[50vw] md:min-w-[300px] md:max-w-[50vw] md:block transition-transform duration-300 ease-in-out">
 					<!-- Resize Handle -->
 					<div class="resize-handle resize-handle-left" id="resize-sidebar"></div>
 
@@ -400,6 +435,7 @@
     </div>
 </div>
 
+		<!-- fix the mobile bottom nav JS functionality -->
 		<!-- 🌐 Mobile Bottom Slide Navigator -->
 		<div
 			id="mobile-slide-nav"
@@ -444,5 +480,5 @@
 				</button>
 			</div>
 		</div>
-	</body>
+</body>
 </html>
