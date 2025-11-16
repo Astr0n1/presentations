@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalConfirm = document.getElementById('modal-confirm');
     const modalTitle = document.getElementById('modal-title');
     const modalMessage = document.getElementById('modal-message');
+    const courseCoverImage = document.getElementById('course-cover-image');
+    const Body = document.body;
+
 
     // Current course data
     let currentCourse = null;
@@ -20,6 +23,183 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get course slug from URL
     const urlParams = new URLSearchParams(window.location.search);
     const courseSlug = urlParams.get('name');
+
+
+// upload the image using the api : https://barber.herova.net/api/changeCoverForCourse.php with data body image,name by click 'course-cover-image'
+courseCoverImage.addEventListener('click', function () {
+    // Create a file input element to allow image selection
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+
+    fileInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file');
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Image size should be less than 10MB');
+            return;
+        }
+
+        // Show loading state with progress bar
+        const originalContent = Body.innerHTML;
+        const originalStyles = {
+            position: Body.style.position,
+            overflow: Body.style.overflow
+        };
+
+        // Set up container for progress
+        courseCoverImage.style.position = 'relative';
+        courseCoverImage.style.overflow = 'hidden';
+
+        // Create loader - append to courseCoverImage, not body
+        const loader = `
+            <div class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white z-10">
+                <div class="text-center mb-3">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                    <div class="text-sm font-medium">جاري رفع الصورة...</div>
+                </div>
+                <div class="w-4/5 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                    <div id="upload-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div id="upload-percentage" class="text-xs mt-1">0%</div>
+            </div>
+        `;
+
+        // Replace content with loader + set random background
+        Body.innerHTML = loader;
+        // Prepare form data with ACTUAL FILE 
+        const formData = new FormData();
+        formData.append('image', file); // Send the file blob directly
+        formData.append('name', currentCourse.name);
+
+        // Create XMLHttpRequest to track upload progress
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) {
+                const percentUploaded = Math.round((e.loaded / e.total) * 100);
+                const progressBar = document.getElementById('upload-progress-bar');
+                const percentageText = document.getElementById('upload-percentage');
+
+                if (progressBar && percentageText) {
+                    progressBar.style.width = `${percentUploaded}%`;
+                    percentageText.textContent = `${percentUploaded}% - جاري الرفع...`;
+                }
+            }
+        });
+
+        xhr.addEventListener('load', function () {
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    console.log('Upload response:', data);
+
+                    if (data.status === 'success') {
+                        // Complete progress bar
+                        const progressBar = document.getElementById('upload-progress-bar');
+                        const percentageText = document.getElementById('upload-percentage');
+                        if (progressBar && percentageText) {
+                            progressBar.style.width = `100%`;
+                            progressBar.className = 'bg-green-600 h-2 rounded-full transition-all duration-300';
+                            percentageText.textContent = `100% - تم الرفع بنجاح!`;
+                        }
+
+                        // Wait a moment to show completion, then update UI
+                        setTimeout(() => {
+                            // Create object URL for the uploaded file to display preview
+                            const objectUrl = URL.createObjectURL(file);
+
+
+                            // Restore original content and styles
+                            Body.innerHTML = originalContent;
+                            Body.style.position = originalStyles.position;
+                            Body.style.overflow = originalStyles.overflow;
+
+                            // Show success message
+                            showToast('تم تحديث صورة الغلاف بنجاح', 'success');
+
+
+                            // Clean up object URL
+                            URL.revokeObjectURL(objectUrl);
+                        }, 1000);
+
+                        // reload page
+                        window.location.reload();
+
+                    } else {
+                        throw new Error(data.message || 'Failed to upload image');
+                    }
+                } catch (error) {
+                    handleUploadError(error, originalContent, originalStyles);
+                }
+            } else {
+                throw new Error(`HTTP error! status: ${xhr.status}`);
+            }
+        });
+
+        xhr.addEventListener('error', function () {
+            handleUploadError(new Error('Network error'), originalContent, originalStyles);
+        });
+
+        xhr.open('POST', 'https://barber.herova.net/api/changeCoverForCourse.php');
+        xhr.send(formData);
+    });
+
+    // Trigger file selection
+    fileInput.click();
+});
+
+// Helper function to handle upload errors
+function handleUploadError(error, originalContent, originalStyles) {
+    console.error('Upload error:', error);
+
+    const progressBar = document.getElementById('upload-progress-bar');
+    const percentageText = document.getElementById('upload-percentage');
+
+    if (progressBar && percentageText) {
+        progressBar.style.width = `100%`;
+        progressBar.className = 'bg-red-600 h-2 rounded-full transition-all duration-300';
+        percentageText.textContent = `فشل في الرفع`;
+    }
+
+    // Show error message
+    showToast(`فشل في رفع الصورة: ${error.message}`, 'error');
+
+    // Restore original state after a delay
+    setTimeout(() => {
+        Body.innerHTML = originalContent;
+        Body.style.position = originalStyles.position;
+        Body.style.overflow = originalStyles.overflow;
+    }, 2000);
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' :
+            type === 'error' ? 'bg-red-500' :
+                'bg-blue-500'
+        } animate-slide-in-right`;
+    toast.textContent = message;
+
+    // Add to page
+    document.body.appendChild(toast);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
 
     // Back button
     backButton.addEventListener('click', function () {
@@ -37,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
     previewButton.addEventListener('click', function () {
         if (currentCourse) {
             // Open preview in new tab
-            window.open(`preview-course.html?name=${encodeURIComponent(currentCourse.name)}&role=presenter`, '_blank');
+            window.open(`preview.html?name=${encodeURIComponent(currentCourse.name)}&ps=presenter`, '_blank');
         }
     });
 
@@ -111,6 +291,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('publish-time').textContent = formatDate(course.published_at) || 'غير منشور';
         document.getElementById('last-updated').textContent = formatDate(course.last_modified) || 'غير محدد';
         document.getElementById('created-at').textContent = formatDate(course.created_at) || 'غير محدد';
+
+        // reder the image
+        renderImage(course);
 
         // Update status
         updateStatusUI(course.status);
@@ -341,4 +524,35 @@ document.addEventListener('DOMContentLoaded', function () {
         if (diffInMinutes < 1440) return `منذ ${Math.floor(diffInMinutes / 60)} ساعة`;
         return `منذ ${Math.floor(diffInMinutes / 1440)} يوم`;
     }
+
+
+    // render the image of course
+    function renderImage(currentCourse) {
+        const courseCoverImage = document.getElementById('course-cover-image');
+        if (courseCoverImage) {
+            courseCoverImage.src = currentCourse.cover;
+            courseCoverImage.alt = currentCourse.name;
+            courseCoverImage.classList.remove('hidden');
+        }
+    }
+
+
+    function showToast(message, type = 'info') {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                    'bg-blue-500'
+            } animate-slide-in-right`;
+        toast.textContent = message;
+
+        // Add to page
+        document.body.appendChild(toast);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
 });

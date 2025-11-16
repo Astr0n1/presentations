@@ -71,6 +71,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
 
             showToast(result.message, 'success');
             setTimeout(() => {
+                //go index 
                 window.location.href = 'index.html';
             }, 1000);
         } else {

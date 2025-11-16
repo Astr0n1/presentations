@@ -8,20 +8,12 @@
 :root {
 	--header-height: 72px; /* desktop header height — tweak if your header is taller/shorter */
 	--header-height-mobile: 64px; /* optional alternative for small screens */
+	--aspect-ratio: 16/9; 
 }
 body {
 	padding-top: var(--header-height);
 }
-/* Sidebars should sit below the fixed header and fill remaining viewport height */
-.sidebar,
-.edit-sidebar {
-	/* keep fixed positioning but ensure it starts below header */
-	position: fixed !important;
-	top: var(--header-height) !important;
-	height: calc(100vh - var(--header-height)) !important;
-	transition: transform 0.3s ease, opacity 0.3s ease;
-	overflow-y: auto; /* ensure sidebars scroll independently */
-}
+
 /* Resize Handles */
 .resize-handle {
 	position: absolute;
@@ -32,16 +24,6 @@ body {
 	cursor: col-resize;
 	z-index: 30;
 	transition: background-color 0.2s ease;
-}
-/* Sidebars should sit below the fixed header and fill remaining viewport height */
-.sidebar,
-.edit-sidebar {
-	/* keep fixed positioning but ensure it starts below header */
-	position: fixed !important;
-	top: var(--header-height) !important;
-	height: calc(100vh - var(--header-height)) !important;
-	transition: transform 0.3s ease, opacity 0.3s ease;
-	overflow-y: auto; /* ensure sidebars scroll independently */
 }
 
 /* Also ensure the resize handles stay aligned with the sidebar edges */
@@ -140,12 +122,19 @@ body {
 .slide-preview {
 	color: #ffffff;
 	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	aspect-ratio: 2/3;
 	overflow: hidden;
 	display: flex;
 	align-items: start;
 	justify-content: center;
-	border-radius: 12px;
+}
+
+/* TODO */
+.mobile-preview{
+	aspect-ratio: var(--aspect-ratio);
+}	
+
+.pc-preview{
+	aspect-ratio: var(--aspect-ratio);
 }
 
 /* Different slide type backgrounds */
@@ -272,18 +261,19 @@ body {
 /* ----------------------------------------
 		Responsive Slide Preview Based on Height
 	-----------------------------------------*/
+	/* TODO */
 .fixed-slide-size {
-	/* maintain 2:3 ratio using height as base */
-	height: calc(90vh - 120px); /* leave room for header/margins */
-	aspect-ratio: 2 / 3;
-	max-height: 800px; /* never exceed this even on large monitors */
-	max-width: calc((2 / 3) * 90vh); /* keep ratio synced */
+	aspect-ratio: var(--aspect-ratio);
 	width: auto;
 	margin: 0 auto;
 	border-radius: 12px;
 	overflow: hidden;
 	flex-shrink: 0;
 	position: relative;
+}
+
+body.preview-page  #slide-preview-container{
+	height:100vh;
 }
 
 /* Make sure it scales nicely across devices */
@@ -315,7 +305,6 @@ body {
 	justify-content: center; /* ✅ vertically center content */
 	align-items: start; /* ✅ horizontally center for cleaner look */
 	height: 100%;
-	padding: 3rem 2rem 1rem;
 	text-align: right;
 	direction: rtl;
 	overflow-y: auto;
@@ -331,35 +320,6 @@ body {
 	text-align: right;
 }
 
-/* Smaller, balanced typography */
-.slide-content h1 {
-	text-align: center;
-	font-size: clamp(1rem, 2vw, 1.75rem); /* ↓ ~70% smaller */
-	line-height: 1.3;
-	font-weight: 800;
-	color: #fff;
-	margin-bottom: 0.75rem;
-}
-
-.slide-content h2 {
-	font-size: clamp(0.9rem, 1.6vw, 1.3rem);
-	line-height: 1.4;
-	color: #e5e7eb;
-	margin-bottom: 1rem;
-}
-
-.slide-content h3 {
-	font-size: clamp(0.8rem, 1.45vw, 1.1rem);
-	line-height: 1.2;
-	color: #e5e7eb;
-}
-
-.slide-content p,
-.slide-content li {
-	font-size: clamp(0.8rem, 1.1vw, 1rem);
-	line-height: 1.7;
-	color: #fff;
-}
 
 /* ✅ Keep bullets visible and aligned correctly in RTL */
 .slide-content ul {
@@ -378,8 +338,6 @@ body {
 /* ✅ Buttons / call-to-action (exclude quiz-option buttons) */
 .slide-content button:not(.quiz-option) {
 	align-self: center;
-	padding: 0.75rem 1.5rem;
-	font-size: clamp(0.9rem, 1.2vw, 1rem);
 	font-weight: 600;
 	border-radius: 0.75rem;
 	background: #2563eb;
@@ -570,12 +528,6 @@ body {
 @media (max-width: 768px) {
 	:root {
 		--header-height: var(--header-height-mobile);
-	}
-	/* mobile: sidebars are often hidden — keep safe heights if visible */
-	.sidebar,
-	.edit-sidebar {
-		top: var(--header-height) !important;
-		height: calc(100vh - var(--header-height)) !important;
 	}
 }
 
@@ -843,10 +795,6 @@ body {
 }
 
 .text-series-nav-dots {
-	position: absolute;
-	bottom: 1rem;
-	left: 50%;
-	transform: translateX(-50%);
 	display: flex;
 	gap: 0.5rem;
 	z-index: 10;
@@ -856,14 +804,11 @@ body {
 /* Replace the existing text series animation styles with these smoother versions */
 
 .text-series-slide {
-	min-height: 300px;
 	transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Slower and smoother easing */
 	opacity: 0;
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100%;
-	height: 100%;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -885,7 +830,6 @@ body {
 
 .text-series-preview {
 	position: relative;
-	min-height: 300px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -894,7 +838,6 @@ body {
 
 .text-series-slides {
 	position: relative;
-	min-height: 300px;
 	transition: all 1s ease-in-out; /* Container transition for smoother overall feel */
 }
 
@@ -934,10 +877,6 @@ body {
 }
 
 .text-series-nav-dots {
-	position: absolute;
-	bottom: 1rem;
-	left: 50%;
-	transform: translateX(-50%);
 	display: flex;
 	gap: 0.5rem;
 	z-index: 10;
@@ -946,13 +885,11 @@ body {
 
 /* Image series styles */
 .image-series-slide {
-	min-height: 300px;
 	transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 	opacity: 0;
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
@@ -986,7 +923,6 @@ body {
 
 .image-series-slides {
 	position: relative;
-	min-height: 300px;
 	transition: all 0.6s ease-in-out;
 }
 
@@ -1008,10 +944,6 @@ body {
 }
 
 .image-series-nav-dots {
-	position: absolute;
-	bottom: 1rem;
-	left: 50%;
-	transform: translateX(-50%);
 	display: flex;
 	gap: 0.5rem;
 	z-index: 10;
@@ -1090,7 +1022,7 @@ body {
 
 /* Hide lessons collapse button on mobile */
 @media (max-width: 767px) {
-	#collapse-lessons-sidebar {
+	body:not(.preview-page) #collapse-lessons-sidebar {
 		display: none !important;
 	}
 }
@@ -1105,9 +1037,7 @@ body {
    🖼️ Enhanced Image Collection Styles
 ----------------------------------------- */
 
-/* Normal mode - Dynamic height distribution */
 .image-collection-grid {
-	height: 100%;
 	display: flex;
 	flex-direction: column;
 }
@@ -2438,100 +2368,13 @@ body {
 }
 
 .quiz-feedback-icon.animate-simple {
+	scale:5;
 	animation: simple-fly 2s ease-out forwards;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 }
 
-/* TODO preview styilng section */
-/* Add to edit.css - Text Size Classes for different elements */
-.slide-header h1.text-size-xs {
-	font-size: clamp(0.9rem, 2vw, 1.5rem) !important;
-}
-.slide-header h1.text-size-s {
-	font-size: clamp(1rem, 2vw, 1.6rem) !important;
-}
-.slide-header h1.text-size-m {
-	font-size: clamp(1.1rem, 2vw, 1.75rem) !important;
-}
-.slide-header h1.text-size-l {
-	font-size: clamp(1.25rem, 2vw, 2rem) !important;
-}
-.slide-header h1.text-size-xl {
-	font-size: clamp(1.4rem, 2vw, 2.25rem) !important;
-}
-.slide-header h1.text-size-xxl {
-	font-size: clamp(1.6rem, 2.5vw, 2.5rem) !important;
-}
-.slide-header h1.text-size-xxxl {
-	font-size: clamp(1.8rem, 3vw, 3rem) !important;
-}
-
-.slide-header h2.text-size-xs {
-	font-size: clamp(0.8rem, 1.6vw, 1.1rem) !important;
-}
-.slide-header h2.text-size-s {
-	font-size: clamp(0.85rem, 1.6vw, 1.2rem) !important;
-}
-.slide-header h2.text-size-m {
-	font-size: clamp(0.9rem, 1.6vw, 1.3rem) !important;
-}
-.slide-header h2.text-size-l {
-	font-size: clamp(1rem, 1.6vw, 1.5rem) !important;
-}
-.slide-header h2.text-size-xl {
-	font-size: clamp(1.1rem, 1.6vw, 1.7rem) !important;
-}
-.slide-header h2.text-size-xxl {
-	font-size: clamp(1.3rem, 2vw, 2rem) !important;
-}
-.slide-header h2.text-size-xxxl {
-	font-size: clamp(1.5rem, 2.5vw, 2.5rem) !important;
-}
-
-.text-size-xs {
-	font-size: clamp(0.7rem, 1.1vw, 0.9rem) !important;
-}
-.text-size-s {
-	font-size: clamp(0.75rem, 1.1vw, 0.95rem) !important;
-}
-.text-size-m {
-	font-size: clamp(0.8rem, 1.1vw, 1rem) !important;
-}
-.text-size-l {
-	font-size: clamp(0.9rem, 1.1vw, 1.1rem) !important;
-}
-.text-size-xl {
-	font-size: clamp(1rem, 1.1vw, 1.2rem) !important;
-}
-.text-size-xxl {
-	font-size: clamp(1.1rem, 1.3vw, 1.4rem) !important;
-}
-.text-size-xxxl {
-	font-size: clamp(1.3rem, 1.5vw, 1.6rem) !important;
-}
-
-.quiz-submit-button.text-size-xs {
-	font-size: 0.75rem !important;
-	padding: 0.5rem 1rem !important;
-}
-.quiz-submit-button.text-size-s {
-	font-size: 0.875rem !important;
-	padding: 0.6rem 1.2rem !important;
-}
-.quiz-submit-button.text-size-m {
-	font-size: 1rem !important;
-	padding: 0.75rem 1.5rem !important;
-}
-.quiz-submit-button.text-size-l {
-	font-size: 1.125rem !important;
-	padding: 0.9rem 1.8rem !important;
-}
-.quiz-submit-button.text-size-xl {
-	font-size: 1.25rem !important;
-	padding: 1rem 2rem !important;
-}
 
 /* Ensure button styles override default styles */
 .quiz-submit-button {
@@ -2766,4 +2609,74 @@ body {
 #loader-modal:not(.hidden) {
     opacity: 1;
     visibility: visible;
+}
+
+/* Add this to your existing edit.css file */
+
+/* Expandable List Smooth Transitions */
+.expandable-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+}
+
+.expandable-content.expanded {
+  max-height: 500px; /* Adjust based on your content needs */
+  opacity: 1;
+}
+
+/* Ensure smooth arrow rotation */
+.expandable-item .fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.expandable-item .fa-chevron-down.rotated {
+  transform: rotate(180deg);
+}
+
+/* Preview Mode Toggle Styles */
+.preview-mode-toggle {
+    direction: rtl;
+}
+
+.preview-mode-option {
+    transition: all 0.2s ease;
+}
+
+.preview-mode-option:hover {
+    background-color: #f3f4f6;
+}
+
+.preview-mode-option input:checked + * {
+    color: #2563eb;
+}
+
+.preview-mode-option input:checked ~ span {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.preview-mode-option.active {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+}
+
+.preview-mode-option.active i,
+.preview-mode-option.active span {
+    color: #2563eb;
+}
+
+@media (max-width: 640px) {
+    .preview-mode-toggle {
+        margin-top: 1rem;
+    }
+    
+    .preview-mode-option {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .preview-mode-option span {
+        font-size: 0.75rem;
+    }
 }

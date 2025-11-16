@@ -19,11 +19,11 @@ class SlideManager {
   }
 
   async loadFromLocalStorage() {
+    if (this.editor.page === 'preview') this.editor.progress = await ApiService.getUserProgress(localStorage.getItem('C_id'));
     try {
       const courseId = localStorage.getItem('C_id');
       if (courseId) {
         const fetchedLessons = await ApiService.getCourseLessons(courseId);
-        console.log(fetchedLessons)
         if (fetchedLessons) {
           this.editor.lessons = fetchedLessons.map(l => new Lesson({
             id: l.id,
@@ -36,7 +36,6 @@ class SlideManager {
           if (this.editor.lessons.length && !this.editor.currentLessonId) {
             this.editor.currentLessonId = this.editor.lessons[0].id;
           }
-          console.log(this.editor.lessons);
           this.editor.renderMobileSlidesBar()
           this.ensureInitialState();
           this.editor.renderLessonsSidebar();
@@ -44,7 +43,7 @@ class SlideManager {
         }
       }
       else {
-        window.location.href = 'unauthorized.html';
+        window.location.href = '404.html';
       }
 
       const raw = localStorage.getItem('course_lessons');
@@ -53,7 +52,6 @@ class SlideManager {
         this.editor.lessons = parsed.map(l => new Lesson(l));
         if (this.editor.lessons.length && !this.editor.currentLessonId) {
           this.editor.currentLessonId = this.editor.lessons[0].id;
-          console.log(this.editor.lessons);
         }
       } else {
         this.editor.lessons = [];
@@ -85,7 +83,6 @@ class SlideManager {
     })
   }
   ensureInitialState() {
-    // console.log(this.editor.lessons)
     if (!this.editor.lessons || !this.editor.lessons.length) {
       const sample = new Lesson({
         id: Date.now(),
@@ -114,8 +111,6 @@ class SlideManager {
 
   uploadChanges() {
     this.editor.lessons.forEach(lesson => {
-      console.log(lesson)
-      // ApiService.updateLessonContent(lesson.id, lesson.slides, lesson.background)
       ApiService.updateLessonContent(lesson.id, lesson.slides, lesson.background)
     })
 
@@ -126,7 +121,6 @@ class SlideManager {
     try {
       this.uploadChanges();
       const response = await ApiService.addNewLesson(`درس جديد ${this.editor.lessons.length + 1}`, localStorage.getItem('C_id'))
-      console.log(response)
       if (response.status === 'success') {
         const newLesson = new Lesson({
           C_id: response.data.C_id,
@@ -140,9 +134,9 @@ class SlideManager {
         this.editor.currentLessonId = newLesson.id;
         this.editor.currentSlideId = null;
         this.saveToLocalStorage();
-        this.editor.loadFromLocalStorage();
         this.editor.renderLessonsSidebar();
         this.editor.updateLessonHeader();
+        this.editor.loadFromLocalStorage();
         Swal.fire({ icon: 'success', text: 'تم إضافة الدرس بنجاح!' });
       } else {
         Swal.fire({ icon: 'error', text: 'حدث خطأ أثناء إضافة الدرس: ' + response.data.message });
@@ -207,7 +201,6 @@ class SlideManager {
 
 
   createNewSlide(type, subtype) {
-    console.log(this.editor.currentLessonId)
     const lesson = this.editor.findLessonById(this.editor.currentLessonId);
     if (!lesson) return;
     const nextId = lesson.nextSlideId();
@@ -257,7 +250,6 @@ class SlideManager {
   }
 
   initializeNewSlideContent(type, subtype) {
-    console.log('??')
     if (type === 'text') {
       if (subtype === 'bulleted-list') {
         return { title: 'قائمة نقطية جديدة', subtitle: '', items: ['البند الأول', 'البند الثاني', 'البند الثالث'] };
@@ -309,6 +301,14 @@ class SlideManager {
     }
     if (type === 'title') {
       return { title: 'عنوان', subtitle: '', buttonText: 'ابدأ' };
+    }
+    if (type === 'pdf' && subtype === 'pdf') {
+      return {
+        title: 'ملف PDF جديد',
+        subtitle: '',
+        pdfUrl: '',
+        description: ''
+      };
     }
     if (type === 'quiz') {
       if (subtype === 'connect-quiz') {

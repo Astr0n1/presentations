@@ -312,6 +312,65 @@ class ApiService {
             throw error;
         }
     }
+
+    static async getUserProgress(courseId) {
+        try {
+            const response = await fetch(`https://barber.herova.net/api/studentProgress.php?course_id=${encodeURIComponent(courseId)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            const data = {
+                lessonIndex: result.data.lesson_id,
+                slideIndex: result.data.slide_n
+            };
+            return data;
+
+        } catch (error) {
+            // console.error('API Service Error (getUserProgress):', error);
+            // throw error;
+            return null;
+        }
+    }
+
+    static async saveUserProgress(courseId, lessonIndex, slideIndex) {
+        try {
+            const response = await fetch(`https://barber.herova.net/api/studentProgress.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: +courseId,
+                    lesson_id: +lessonIndex,
+                    slide_n: +slideIndex
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            // console.log('Raw API response for save progress:', result);
+
+            return result;
+
+        } catch (error) {
+            console.error('API Service Error (saveUserProgress):', error);
+            throw error;
+        }
+    }
 }
 
 export { ApiService };

@@ -5,32 +5,61 @@ import { Utils } from './utils.js';
 class UIRenderer {
     constructor(editor) {
         this.editor = editor;
+
+        // initialize slide-unit observer so unit updates when preview container resizes
+        try {
+            this.initSlideUnitObserver();
+        } catch (e) {
+            // ignore if preview container not present yet
+        }
+
+    }
+    updateProgress(slide) {
+        if (!slide) return;
+        const currentProgress = this.editor.getIndices();
+        const maxProgress = this.editor.progress;
+
+        if (currentProgress.lessonIndex > maxProgress.lessonIndex) {
+            this.editor.updateProress(localStorage.getItem('C_id'), currentProgress.lessonIndex, currentProgress.slideIndex)
+        } else if (currentProgress.lessonIndex == maxProgress.lessonIndex) {
+            if (currentProgress.slideIndex > maxProgress.slideIndex) {
+                this.editor.updateProress(localStorage.getItem('C_id'), currentProgress.lessonIndex, currentProgress.slideIndex)
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
     }
 
-    // Main preview rendering method (keeps your original templates with cleaned wrappers)
     renderSlidePreview(slide) {
+
+        if (this.editor.page === 'preview') this.updateProgress(slide);
         const previewContainer = this.editor.dom.slidePreviewContainer;
         const previewContent = this.editor.dom.slidePreviewContent;
         if (!previewContent) return;
-
+        // TODO
         if (!slide) {
             previewContent.innerHTML = `
-        <div class="flex flex-col items-center justify-center text-center h-full opacity-80">
-            <i class="fas fa-sliders-h text-5xl mb-4"></i>
-            <h2 class="text-xl font-bold mb-2">اختر سلايداً للمعاينة</h2>
-            <p class="text-sm">انقر على أي سلايد لرؤية محتواه هنا</p>
+        <div class="${this.editor.page === 'editor' ? 'fixed-slide-size' : ' '} flex flex-col items-center justify-center text-center h-full opacity-80">
+            <i class="fas fa-sliders-h slide-icon-large mb-unit-4"></i>
+            <h2 class="slide-text-title mb-unit-2">اختر سلايداً للمعاينة</h2>
+            <p class="slide-text-body">انقر على أي سلايد لرؤية محتواه هنا</p>
         </div>`;
-            previewContainer.className = 'slide-preview rounded-t-xl fixed-slide-size mx-auto flex items-center justify-center';
+            previewContainer.className = `slide-preview  ${this.editor.page === 'editor' ? `rounded-unit-3  fixed-slide-size ${this.editor.preview}` : ' '} mx-auto flex items-center justify-center`;
             previewContainer.style.backgroundImage = '';
             previewContainer.style.backgroundColor = '';
+            if (this.editor.dom.previewActions) this.editor.dom.previewActions.style.opacity = '0';
             return;
         }
+        if (this.editor.dom.previewActions) this.editor.dom.previewActions.style.opacity = '1';
 
         previewContent.innerHTML = '';
 
         // Apply background and text styling
         const lesson = this.editor.findLessonById(this.editor.currentLessonId);
-        let containerClasses = `slide-preview rounded-t-xl fixed-slide-size m-0 slide-${slide.type}`;
+        // TODO variable preview
+        let containerClasses = `slide-preview ${this.editor.page === 'editor' ? `rounded-unit-3 fixed-slide-size ${this.editor.preview}` : ' '} m-0 slide-${slide.type}`;
 
         // Apply background
         if (lesson && lesson.background) {
@@ -40,13 +69,12 @@ class UIRenderer {
         } else {
             previewContainer.style.backgroundImage = '';
             previewContainer.style.backgroundColor = '';
-            // Remove the class if no background image
             containerClasses = containerClasses.replace(' has-background-image', '');
         }
 
         previewContainer.className = containerClasses;
 
-        // Apply text styling with better CSS classes
+        // Apply text styling with unit-based classes
         const textStyle = slide.textStyle || {};
 
         // Build style attributes for different elements
@@ -55,18 +83,19 @@ class UIRenderer {
         const contentStyle = textStyle.content || {};
         const buttonStyle = textStyle.button || {};
 
-        // Generate CSS classes and styles
-        const titleSizeClass = titleStyle.size ? `text-size-${titleStyle.size.toLowerCase()}` : '';
-        const subtitleSizeClass = subtitleStyle.size ? `text-size-${subtitleStyle.size.toLowerCase()}` : '';
-        const contentSizeClass = contentStyle.size ? `text-size-${contentStyle.size.toLowerCase()}` : '';
-        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        // Build unit-based classes
+        // TODO
+        const titleSizeClass = titleStyle.size ? `text-size-${titleStyle.size}` : 'text-size-l';
+        const subtitleSizeClass = subtitleStyle.size ? `text-size-${subtitleStyle.size}` : 'text-size-m';
+        const contentSizeClass = contentStyle.size ? `text-size-${contentStyle.size}` : 'text-size-m';
+        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size}` : 'text-size-m';
 
         const titleItalicClass = titleStyle.italic ? 'text-italic' : '';
         const subtitleItalicClass = subtitleStyle.italic ? 'text-italic' : '';
         const contentItalicClass = contentStyle.italic ? 'text-italic' : '';
         const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
 
-        // Build style attributes with font weight support
+        // Build style attributes
         let titleStyleAttr = '';
         if (titleStyle.color || titleStyle.fontWeight) {
             titleStyleAttr = `style="`;
@@ -92,8 +121,6 @@ class UIRenderer {
         }
 
         let buttonStyleAttr = '';
-
-        // Button styling - combine background color and text color
         if (buttonStyle.backgroundColor || buttonStyle.color) {
             buttonStyleAttr = `style="`;
             if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
@@ -102,9 +129,9 @@ class UIRenderer {
         }
 
         const headerHtml = `
-    <div class="slide-header w-full">
-        ${slide.content.title ? `<h1 class="font-extrabold mb-2 ${titleSizeClass} ${titleItalicClass}" ${titleStyleAttr}>${Utils.escapeHTML(slide.content.title)}</h1>` : ''}
-        ${slide.content.subtitle ? `<h2 class="mb-4 ${subtitleSizeClass} ${subtitleItalicClass}" ${subtitleStyleAttr}>${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
+    <div class="slide-header w-full ">
+        ${slide.content.title ? `<h1 class="font-extrabold text-center slide-my-unit-2 ${titleSizeClass} ${titleItalicClass}" ${titleStyleAttr}>${Utils.escapeHTML(slide.content.title)}</h1>` : ''}
+        ${slide.content.subtitle ? `<h2 class="slide-my-unit-2 text-center ${subtitleSizeClass} ${subtitleItalicClass}" ${subtitleStyleAttr}>${Utils.escapeHTML(slide.content.subtitle)}</h2>` : ''}
     </div>
 `;
 
@@ -113,97 +140,185 @@ class UIRenderer {
 
         switch (key) {
             case 'text-bulleted-list':
-                bodyHtml += `<ul class="space-y-2 mt-2 max-h-96 overflow-y-auto break-words">`;
+                bodyHtml += `<ul class="slide-gap-unit-2 slide-my-unit-2 max-h-unit-96 overflow-y-auto break-words ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>`;
                 if (Array.isArray(slide.content.items)) {
                     slide.content.items.forEach(it => {
-                        bodyHtml += `<li>${Utils.escapeHTML(it)}</li>`;
+                        bodyHtml += `<li class="slide-p-unit-2">${Utils.escapeHTML(it)}</li>`;
                     });
                 }
                 bodyHtml += `</ul>`;
                 break;
             case 'text-comparison':
-                bodyHtml += this.renderUniversalComparison(slide, 'text');
+                bodyHtml += this.renderUniversalComparison(slide, 'text', contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
             case 'text-expandable-list':
-                bodyHtml += this.renderExpandableListPreview(slide);
+                bodyHtml += this.renderExpandableListPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
             case 'text-text-series':
-                bodyHtml += this.renderTextSeriesPreview(slide);
+                bodyHtml += this.renderTextSeriesPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
 
             case 'video-video':
-                bodyHtml += this.renderVideoPreview(slide);
+                bodyHtml += this.renderVideoPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
 
             case 'title-undefined':
-                bodyHtml += `<div class="mt-4 text-center self-center">
-                        <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}>
-                            ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
-                        </button>
-                    </div>`;
+                bodyHtml += `<div class="slide-my-unit-4 text-center self-center">
+                    <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}>
+                        ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
+                    </button>
+                </div>`;
+                break;
+            case 'pdf-pdf':
+                bodyHtml += this.renderPDFPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
 
             case 'image-comparison':
-                bodyHtml += this.renderUniversalComparison(slide, 'image');
+                bodyHtml += this.renderUniversalComparison(slide, 'image', contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
             case 'image-image-series':
-                bodyHtml += this.renderImageSeriesPreview(slide);
+                bodyHtml += this.renderImageSeriesPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
             case 'image-image-collection':
-                bodyHtml += this.renderImageCollectionPreview(slide);
+                bodyHtml += this.renderImageCollectionPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass);
                 break;
 
             case 'quiz-multiple-choice-carousel': {
-                bodyHtml += this.renderQuizCarousel(slide);
+                bodyHtml += this.renderQuizCarousel(slide, contentStyleAttr, contentSizeClass, contentItalicClass, buttonStyleAttr, buttonSizeClass, buttonItalicClass);
                 break;
             }
             case 'quiz-categorize':
-                bodyHtml += this.renderQuizCategorize(slide);
+                bodyHtml += this.renderQuizCategorize(slide, contentStyleAttr, contentSizeClass, contentItalicClass, buttonStyleAttr, buttonSizeClass, buttonItalicClass);
                 break;
             case 'quiz-connect-quiz':
-                bodyHtml += this.renderConnectQuizPreview(slide);
+                bodyHtml += this.renderConnectQuizPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass, buttonStyleAttr, buttonSizeClass, buttonItalicClass);
                 setTimeout(() => window.drawConnectQuizLines(slide.id), 100);
                 break;
 
             case 'quiz-drag-match-quiz':
-                bodyHtml += this.renderDragMatchQuizPreview(slide);
+                bodyHtml += this.renderDragMatchQuizPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass, buttonStyleAttr, buttonSizeClass, buttonItalicClass);
                 break;
 
             case 'quiz-image-pairs-quiz':
-                bodyHtml += this.renderImagePairsQuizPreview(slide);
+                bodyHtml += this.renderImagePairsQuizPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass, buttonStyleAttr, buttonSizeClass, buttonItalicClass);
                 break;
 
             default:
                 if (slide.content.text) {
-                    bodyHtml += `<div class="prose max-w-none text-base mt-3 max-h-96 overflow-y-auto break-words hyphens-auto">${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml += `<div class="slide-p-unit-3 slide-my-unit-3 max-h-unit-96 overflow-y-auto break-words hyphens-auto ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
                 } else {
-                    bodyHtml += `<div class="text-center py-12">لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
+                    bodyHtml += `<div class="text-center slide-py-unit-12 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>لا توجد واجهة معاينة مخصصة لهذا النوع بعد.</div>`;
                 }
         }
-        // Apply content styling to the bodyHtml directly, not to a wrapper div
+
         previewContent.innerHTML = `
-        <div class="slide-content w-full overflow-y-auto break-words hyphens-auto">
-            ${headerHtml} <div class=" slide-body w-full ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${bodyHtml}</div>
+        <div class="slide-content w-full overflow-y-auto break-words hyphens-auto justify-around pb-0">
+            <div class="w-full">
+                ${headerHtml} 
+                <div class="slide-body w-full  ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}">${bodyHtml}</div>
+            </div>
+            <div class='gap-fixer'> </div>
         </div>
 `;
+        if (this.editor.page === 'preview') this.editor.setSlideCounter();
 
         const preview = document.getElementById("slide-preview-container");
-        if (preview) preview.classList.add("fixed-slide-size");
+        if (preview && this.editor.page === 'editor') preview.classList.add("fixed-slide-size");
     }
 
-    renderExpandableListPreview(slide) {
+    getUnitSize(size) {
+        const sizeMap = {
+            'xs': 4, 's': 5, 'm': 6, 'l': 7, 'xl': 8, 'xxl': 9, 'xxxl': 10
+        };
+        return sizeMap[size] || 9;
+    }
+
+    renderPDFPreview(slide, contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
+        const content = slide.content || {};
+        const pdfUrl = content.pdfUrl || '';
+
+        if (!pdfUrl) {
+            return `
+            <div class="pdf-container mx-auto flex flex-col justify-center items-center gap-unit-4 self-center aspect-video text-center  slide-py-unit-10 bg-gray-600/30 rounded-unit-4 slide-p-unit-3 border border-dashed border-white/50">
+                <i class="fas fa-file-pdf unit-20 slide-my-unit-3 opacity-70"></i>
+                <p class="${contentSizeClass} font-medium ${contentItalicClass}" ${contentStyleAttr}>الرجاء إدخال رابط ملف PDF للمعاينة</p>
+            </div>
+        `;
+        }
+
+        return `
+        <div class="pdf-preview-container pdf-container aspect-video mx-auto my-unit-4">
+            <div class="pdf-preview relative w-full overflow-hidden rounded-unit-2 shadow-2xl cursor-pointer" onclick="window.open('${Utils.escapeHTML(pdfUrl)}', '_blank')">
+                <div class="relative w-full" style="padding-top: 56.25%;">
+                    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-red-600/90 to-red-800/90 flex flex-col items-center justify-center text-white">
+                        <i class="fas fa-file-pdf unit-20 slide-my-unit-3 opacity-90"></i>
+                        <h3 class="unit-8 font-bold slide-my-unit-2">ملف PDF</h3>
+                        <p class="unit-6 opacity-80">انقر لفتح ملف PDF</p>
+                    </div>
+                </div>
+            </div>
+            ${content.description ? `
+                <div class="description-container slide-my-unit-3 text-center ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
+                    ${Utils.escapeHTML(content.description)}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    }
+
+    // Add PDF editor method
+    renderPDFEditor(slide) {
+        const c = slide.content || {};
+        return `
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+            <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات ملف PDF</h4>
+            
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">رابط ملف PDF</label>
+                <div class="asset-input-group">
+                    <input type="url" id="edit-pdf-url" value="${Utils.escapeHTML(c.pdfUrl || '')}" 
+                        class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        placeholder="https://example.com/document.pdf" />
+                    <button type="button" class="asset-button open-assets-modal !w-24 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
+                            data-asset-type="pdf" data-target-field="edit-pdf-url"
+                            title="اختر من الأصول المحفوظة">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">الوصف (اختياري)</label>
+                <textarea id="edit-pdf-description" rows="3" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">${Utils.escapeHTML(c.description || '')}</textarea>
+            </div>
+            
+            ${c.pdfUrl ? `
+                <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 ml-2"></i>
+                        <span class="text-green-700 text-sm">تم إدخال رابط PDF بنجاح</span>
+                    </div>
+                    <p class="text-green-600 text-xs mt-1 break-all">${Utils.escapeHTML(c.pdfUrl)}</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    }
+
+    renderExpandableListPreview(slide, contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
         const items = slide.content.items || [];
-        let html = `<div class="space-y-3 mt-3 w-full max-h-96 overflow-y-auto break-words">`;
+        let html = `<div class="slide-gap-unit-3 slide-my-unit-3 w-full overflow-y-auto break-words">`;
 
         items.forEach((item, idx) => {
             html += `
-        <div class="expandable-item bg-black/40 p-3 rounded-lg shadow cursor-pointer" data-index="${idx}">
+        <div class="expandable-item bg-black/40 px-unit-4 py-unit-2 rounded-unit-3 shadow cursor-pointer my-unit-3" data-index="${idx}">
             <div class="flex justify-between items-center">
-                <h3 class="text-base font-semibold">${Utils.escapeHTML(item.title || 'العنوان')}</h3>
+                <h3 class="${contentSizeClass} font-semibold ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.title || 'العنوان')}</h3>
                 <i class="fas fa-chevron-down transition-transform duration-300"></i>
             </div>
-            <div class="expandable-content mt-2 hidden">
-                <p class="text-sm leading-relaxed">${Utils.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
+            <div class="expandable-content slide-my-unit-2">
+                <p class="${contentSizeClass} leading-relaxed ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
             </div>
         </div>`;
         });
@@ -212,10 +327,10 @@ class UIRenderer {
         return html;
     }
 
-    renderImageCollectionPreview(slide) {
+    renderImageCollectionPreview(slide, contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
         const sections = slide.content.sections || [];
         if (!sections.length) {
-            return `<div class="text-center py-12">لا توجد صور في المجموعة</div>`;
+            return `<div class="text-center slide-py-unit-12 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>لا توجد صور في المجموعة</div>`;
         }
 
         const isDetailView = slide.content._selectedSection !== undefined && slide.content._selectedSection !== null;
@@ -225,31 +340,31 @@ class UIRenderer {
             const selectedSection = sections[selectedIndex];
 
             return `
-    <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center p-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
+    <div class="image-collection-detail w-full h-full absolute inset-0 flex flex-col items-center justify-center slide-p-unit-4 cursor-pointer bg-gradient-to-br from-purple-600/90 to-blue-600/90 backdrop-blur-sm overflow-hidden" 
          data-action="close-detail">
         ${selectedSection.imageUrl ? `
-            <div class="image-container flex-1 flex items-center justify-center w-full max-w-4xl overflow-hidden">
+            <div class="image-container flex-1 flex items-center justify-center w-full max-w-unit-160 overflow-hidden">
                 <img src="${Utils.escapeHTML(selectedSection.imageUrl)}" 
                      alt="الصورة المحددة" 
-                     class="max-h-full max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-300"
+                     class="max-h-full max-w-full object-contain rounded-unit-3 shadow-2xl transition-transform duration-300"
                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                <div class="fallback-placeholder hidden text-center py-8">
-                    <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                <div class="fallback-placeholder hidden text-center slide-py-unit-8">
+                    <i class="fas fa-image unit-40 slide-my-unit-3 opacity-50"></i>
                     <p class="text-center">تعذر تحميل الصورة</p>
                 </div>
             </div>
             ${selectedSection.description ? `
-                <div class="description-container bg-black/40 rounded-xl p-4 max-w-2xl w-full border border-white/20 overflow-y-auto mt-2" style="max-height: min(300px, 30vh);">
-                    <p class="text-lg leading-relaxed text-center font-medium break-words">${Utils.escapeHTML(selectedSection.description)}</p>
+                <div class="description-container bg-black/40 rounded-unit-3 slide-p-unit-4 max-w-unit-96 w-full border border-white/20 overflow-y-auto slide-my-unit-2" style="max-height: min(300px, 30vh);">
+                    <p class="leading-relaxed text-center font-medium break-words ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(selectedSection.description)}</p>
                 </div>
             ` : ''}
         ` : `
-            <div class="text-center py-8">
-                <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+            <div class="text-center slide-py-unit-8 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
+                <i class="fas fa-image unit-40 slide-my-unit-3 opacity-50"></i>
                 <p>لم يتم إدخال رابط الصورة بعد</p>
             </div>
         `}
-        <div class="absolute bottom-4 text-sm">
+        <div class="absolute bottom-unit-4 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
             انقر في أي مكان للعودة
         </div>
     </div>
@@ -262,22 +377,22 @@ class UIRenderer {
          data-action="open-detail" 
          data-index="${index}">
         ${section.imageUrl ? `
-            <div class="image-container bg-black/20 rounded-xl border-2 border-transparent hover:border-white/30 w-full h-full flex items-center justify-center p-2">
+            <div class="image-container bg-black/20 rounded-unit-1 border-unit-1 border-transparent hover:border-white/30 w-full h-full flex items-center justify-center slide-p-unit-2">
                 <img src="${Utils.escapeHTML(section.imageUrl)}" 
                      alt="صورة ${index + 1}" 
-                     class="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
+                     class="w-auto h-auto max-w-full max-h-full object-contain rounded-unit-2"
                      style="max-width: 100%; max-height: 100%;"
                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                <div class="fallback-placeholder hidden h-full w-full items-center justify-center bg-black/10 rounded-lg">
-                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                    <p class="text-xs text-center">تعذر تحميل الصورة</p>
+                <div class="fallback-placeholder hidden h-full w-full items-center justify-center bg-black/10 rounded-unit-1">
+                    <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
+                    <p class="unit-4 text-center">تعذر تحميل الصورة</p>
                 </div>
             </div>
         ` : `
-            <div class="h-full bg-black/20 rounded-xl flex items-center justify-center border-2 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full p-2">
-                <div class="text-center">
-                    <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                    <p class="text-xs">لا توجد صورة</p>
+            <div class="h-full bg-black/20 rounded-unit-3 flex items-center justify-center border-unit-1 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full slide-p-unit-2">
+                <div class="text-center ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
+                    <i class="fas fa-image unit-12 slide-my-unit-1 opacity-50"></i>
+                    <p class="unit-4">لا توجد صورة</p>
                 </div>
             </div>
         `}
@@ -286,14 +401,13 @@ class UIRenderer {
 
         return `
     <div class="image-collection-grid w-full flex items-center justify-center">
-        <div class="grid grid-cols-2 gap-3 w-full max-w-4xl p-3">
+        <div class="grid grid-cols-2 slide-gap-unit-3 slide-p-unit-3">
             ${sectionsHtml}
         </div>
     </div>
 `;
     }
 
-    // For connect quiz - update the container:
     renderConnectQuizPreview(slide) {
         const c = slide.content || {};
         const leftColumn = c.leftColumn || [];
@@ -305,7 +419,7 @@ class UIRenderer {
         // Get button styling
         const textStyle = slide.textStyle || {};
         const buttonStyle = textStyle.button || {};
-        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonSizeClass = buttonStyle.size ? `unit-${this.getUnitSize(buttonStyle.size)}` : 'unit-5';
         const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
         let buttonStyleAttr = '';
 
@@ -316,16 +430,13 @@ class UIRenderer {
             buttonStyleAttr += `"`;
         }
 
-        // Check if answer is correct
-        const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
-
         let html = `
 <div class="quiz-connect-container relative w-full flex flex-col items-center justify-center">
-    <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
+    <h3 class="unit-8 font-bold text-center slide-my-unit-4">${Utils.escapeHTML(c.question || 'قم بتوصيل العناصر المتشابهة')}</h3>
     <div class="flex justify-center items-center w-full">
-        <div class="flex gap-6 w-full max-w-3xl dir-ltr">
-            <div class="flex-1 flex flex-col h-full">
-                <div class="flex-1 flex flex-col gap-3 justify-center items-center min-h-0">
+        <div class=" flex slide-gap-unit-6 w-full max-w-fit dir-ltr">
+            <div class="flex-1 flex flex-col h-full ">
+                <div class="flex-1 flex flex-col  slide-gap-unit-3 justify-center items-center min-h-0">
 `;
 
         // Left column items - max 3, using column type
@@ -336,8 +447,8 @@ class UIRenderer {
         html += `
                 </div>
             </div>
-            <div class="flex-1 flex flex-col h-full">
-                <div class="flex-1 flex flex-col gap-3 justify-center items-center min-h-0">
+            <div class="flex-1 flex flex-col h-full ">
+                <div class="flex-1 flex flex-col  slide-gap-unit-3 justify-center items-center min-h-0">
 `;
 
         // Right column items - max 3, using column type
@@ -357,7 +468,7 @@ class UIRenderer {
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-            <div class="text-center mt-4 pt-3 border-t border-white/20">
+            <div class="text-center slide-my-unit-2 slide-pt-unit-3 border-t border-white/20">
                 <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
                         id="quiz-${slide.id}-submit">
                     تأكيد الإجابة
@@ -383,40 +494,29 @@ class UIRenderer {
         const rightColumnType = c.rightColumnType || 'image'; // Force image type
         const submitted = slide.submitted || false;
 
-        console.log('Image Pairs Debug:', {
-            leftColumn,
-            rightColumn,
-            leftColumnType,
-            rightColumnType
-        });
-
         let html = `
     <div class="quiz-image-pairs-container relative w-full flex flex-col items-center justify-center">
         <h3 class="text-xl font-bold text-center mb-2">${Utils.escapeHTML(c.question || 'اختر الصور الصحيحة من القائمتين')}</h3>
         <div class="flex justify-center items-center w-full">
             <div class="flex gap-4 w-full max-w-2xl items-center justify-center">
-                <div class="flex-1 flex flex-col h-full max-h-64">
-                    <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">القائمة اليسرى</div>
-                    <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
+                <div class="flex-1 flex flex-col h-full  max-h-64">
+                    <div class="flex-1 flex flex-col  gap-2 justify-center items-center min-h-0">
     `;
 
         // Left column - selectable items - max 3, using column type
         leftColumn.slice(0, 3).forEach((item, index) => {
-            console.log('Left item:', item, 'Type:', leftColumnType);
             html += this.renderQuizItem(item, index, 'left', 'pairs', submitted, leftColumnType);
         });
 
         html += `
                     </div>
                 </div>
-                <div class="flex-1 flex flex-col h-full max-h-64">
-                    <div class="text-center font-bold text-lg bg-black/40 py-1 px-2 rounded-lg border border-white/20 mb-2 text-sm">القائمة اليمنى</div>
-                    <div class="flex-1 flex flex-col gap-2 justify-center items-center min-h-0">
+                <div class="flex-1 flex flex-col h-full  max-h-64">
+                    <div class="flex-1 flex flex-col gap-2  justify-center items-center min-h-0">
     `;
 
         // Right column - selectable items - max 3, using column type
         rightColumn.slice(0, 3).forEach((item, index) => {
-            console.log('Right item:', item, 'Type:', rightColumnType);
             html += this.renderQuizItem(item, index, 'right', 'pairs', submitted, rightColumnType);
         });
 
@@ -459,7 +559,7 @@ class UIRenderer {
         // Get button styling
         const textStyle = slide.textStyle || {};
         const buttonStyle = textStyle.button || {};
-        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonSizeClass = buttonStyle.size ? `unit-${this.getUnitSize(buttonStyle.size)}` : 'unit-5';
         const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
         let buttonStyleAttr = '';
 
@@ -470,17 +570,16 @@ class UIRenderer {
             buttonStyleAttr += `"`;
         }
 
-
         // Check if answer is correct
         const isCorrect = this.editor.quizManager.isAnswerCorrect(slide);
 
         let html = `
 <div class="quiz-drag-match-container relative w-full flex flex-col items-center justify-center">
-    <h3 class="text-xl font-bold text-center mb-4">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
+    <h3 class="unit-8 font-bold text-center slide-my-unit-4">${Utils.escapeHTML(c.question || 'اسحب الصور إلى النصوص المناسبة')}</h3>
     <div class="flex justify-center items-center w-full">
-        <div class="flex gap-6 items-start">
+        <div class="flex slide-gap-unit-6 items-start">
             <div class="flex flex-col">
-                <div class="flex flex-col gap-2 justify-center items-center">
+                <div class="flex flex-col slide-gap-unit-2 justify-center items-center">
 `;
 
         // Left column - show only items that are NOT placed in right column
@@ -495,7 +594,7 @@ class UIRenderer {
             const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
 
             html += `
-    <div class="${zoneClass} h-28 w-28 border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
+    <div class="${zoneClass} min-h-unit-28 min-w-unit-28 border-unit-1 border-dashed rounded-unit-6 transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
          data-index="${index}" 
          data-side="left"
          ondragover="window.handleDragMatchOver(event)"
@@ -510,7 +609,7 @@ class UIRenderer {
                 </div>
             </div>
             <div class="flex flex-col">
-                <div class="flex flex-col gap-2 justify-center items-center">
+                <div class="flex flex-col slide-gap-unit-2 justify-center items-center">
 `;
 
         // Right column - show items that ARE placed in right column
@@ -544,7 +643,7 @@ class UIRenderer {
             }
 
             html += `
-    <div class="${zoneClass} w-28 h-28 border-2 border-dashed rounded-lg transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+    <div class="${zoneClass}  border-unit-1 border-dashed rounded-unit-6 transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
          data-index="${index}" 
          data-side="right"
          ondragover="window.handleDragMatchOver(event)"
@@ -566,7 +665,7 @@ class UIRenderer {
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-            <div class="text-center mt-3 pt-2 border-t border-white/20">
+            <div class="text-center slide-my-unit-3 slide-pt-unit-2 border-t border-white/20">
                 <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
                         id="quiz-${slide.id}-submit">
                     تأكيد الإجابة
@@ -587,67 +686,59 @@ class UIRenderer {
         const c = slide.content || {};
         const leftColumn = c.leftColumn || [];
         const rightColumn = c.rightColumn || [];
+        const leftColumnType = c.leftColumnType || 'image'; // Force image type
+        const rightColumnType = c.rightColumnType || 'image'; // Force image type
         const submitted = slide.submitted || false;
 
-        // Get button styling
-        const textStyle = slide.textStyle || {};
-        const buttonStyle = textStyle.button || {};
-        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
-        const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
-        let buttonStyleAttr = '';
-
-        if (buttonStyle.backgroundColor || buttonStyle.color) {
-            buttonStyleAttr = `style="`;
-            if (buttonStyle.backgroundColor) buttonStyleAttr += `background-color: ${buttonStyle.backgroundColor} !important;`;
-            if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
-            buttonStyleAttr += `"`;
-        }
-
-
         let html = `
-        <div class="quiz-image-pairs-container mt-4 mx-auto">
-            <h3 class="text-lg font-bold text-center mb-4 text-white">${Utils.escapeHTML(c.question || 'اختر العناصر الصحيحة من القائمتين')}</h3>
-            <div class="quiz-columns-container gap-10 dir-ltr">
-                <div class="quiz-column">
+    <div class="quiz-image-pairs-container relative w-full flex flex-col items-center justify-center">
+        <h3 class="unit-8 font-bold text-center slide-my-unit-2">${Utils.escapeHTML(c.question || 'اختر الصور الصحيحة من القائمتين')}</h3>
+        <div class="flex justify-center items-center w-full">
+            <div class="flex slide-gap-unit-4 w-full max-w-unit-96 items-start flex-row-reverse justify-center">
+                <div class="flex-1 flex flex-col h-full  ">
+                    <div class="flex-1 flex flex-col  slide-gap-unit-2 justify-center items-center min-h-0">
     `;
 
-        // Left column - selectable items
-        leftColumn.forEach((item, index) => {
-            html += this.renderQuizItem(item, index, 'left', 'pairs', submitted);
+        // Left column - selectable items - max 3, using column type
+        leftColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'left', 'pairs', submitted, leftColumnType);
         });
 
         html += `
+                    </div>
                 </div>
-                <div class="quiz-column">
+                <div class="flex-1 flex flex-col h-full  ">
+                    <div class="flex-1 flex flex-col  slide-gap-unit-2 justify-center items-center min-h-0">
     `;
 
-        // Right column - selectable items
-        rightColumn.forEach((item, index) => {
-            html += this.renderQuizItem(item, index, 'right', 'pairs', submitted);
+        // Right column - selectable items - max 3, using column type
+        rightColumn.slice(0, 3).forEach((item, index) => {
+            html += this.renderQuizItem(item, index, 'right', 'pairs', submitted, rightColumnType);
         });
 
         html += `
+                    </div>
                 </div>
             </div>
+        </div>
     `;
 
         // Submit button
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
         if (showSubmit) {
             html += `
-            <div class="text-center mt-3 pt-2 border-t border-white/20">
-                <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
-                    id="quiz-${slide.id}-submit">
-                    تأكيد الإجابة
-                </button>
-            </div>
-        `;
+        <div class="text-center slide-my-unit-3 slide-pt-unit-2 border-t border-white/20">
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 slide-px-unit-4 slide-py-unit-2 rounded-unit-6 font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl unit-5" 
+                id="quiz-${slide.id}-submit">
+                تأكيد الإجابة
+            </button>
+        </div>
+    `;
         }
 
         html += `
-            <!-- Feedback icon container -->
-            <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
-        </div>
+        <div id="quiz-${slide.id}-feedback" class="quiz-feedback-icon"></div>
+    </div>
     `;
 
         return html;
@@ -667,21 +758,17 @@ class UIRenderer {
         // Get text styling for this item
         const textStyle = currentSlide?.textStyle || {};
         const contentStyle = textStyle.content || {};
-        const contentSizeClass = contentStyle.size ? `text-size-${contentStyle.size.toLowerCase()}` : '';
+        const contentSizeClass = contentStyle.size ? `unit-${this.getUnitSize(contentStyle.size)}` : 'unit-6';
         const contentItalicClass = contentStyle.italic ? 'text-italic' : '';
         let contentStyleAttr = contentStyle.color ? `style="color: ${contentStyle.color} !important;"` : '';
 
-        // Base Tailwind classes for all quiz items
-        let itemClass = "w-28 h-28 border-2 border-white/30 rounded-xl p-3 flex items-center justify-center transition-all duration-300 shadow-lg";
+        // Base unit-based classes for all quiz items
+        let itemClass = "quiz-el border-unit-1 border-white/30 rounded-unit-4 slide-p-unit-3 flex items-center justify-center transition-all duration-300 shadow-lg";
 
         // Different background for image pairs vs other quiz types
         if (quizType === 'pairs') {
-            // For image pairs, use a solid background that will be clearly visible when selected
             itemClass += " bg-black/30";
-
-            // Apply blue background only when actually selected AND not submitted
             if (isActuallySelected && !submitted) {
-                console.log(`Applying blue background to ${side}-${index}`, { isActuallySelected, submitted, userSelections });
                 itemClass += " bg-blue-600/40 border-blue-400";
             }
         } else {
@@ -705,25 +792,25 @@ class UIRenderer {
 
         let content = '';
         if (type === 'text') {
-            content = `<div class="text-center font-semibold text-sm leading-relaxed break-words hyphens-auto px-2 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
+            content = `<div class="text-center font-semibold unit-5 leading-relaxed break-words hyphens-auto slide-px-unit-2 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
         } else if (type === 'image') {
             if (item.value) {
                 content = `
         <div class="w-full h-full flex items-center justify-center">
             <img src="${Utils.escapeHTML(item.value)}" alt="صورة ${index + 1}" 
-                 class="max-w-full max-h-full object-contain rounded-lg"
+                 class="max-w-full max-h-full object-contain rounded-unit-6"
                  onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
             <div class="fallback-placeholder hidden flex-col items-center justify-center">
-                <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                <p class="text-xs text-center">تعذر تحميل الصورة</p>
+                <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
+                <p class="unit-4 text-center">تعذر تحميل الصورة</p>
             </div>
         </div>
     `;
             } else {
                 content = `
         <div class="flex flex-col items-center justify-center">
-            <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-            <p class="text-xs">لا توجد صورة</p>
+            <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
+            <p class="unit-4">لا توجد صورة</p>
         </div>
     `;
             }
@@ -734,7 +821,7 @@ class UIRenderer {
             const isConnected = currentSlide?.userConnections?.some(conn =>
                 conn.leftIndex === index && side === 'left'
             );
-            const connectionClass = isConnected ? 'ring-2 ring-blue-400 bg-blue-500/20' : '';
+            const connectionClass = isConnected ? 'ring-unit-2 ring-blue-400 bg-blue-500/20' : '';
 
             // For left items, use the new drawing system
             if (side === 'left') {
@@ -767,11 +854,6 @@ class UIRenderer {
 `;
         } else if (quizType === 'pairs') {
             const selectable = !submitted;
-
-            console.log(`Rendering ${side}-${index}:`, {
-                isActuallySelected,
-                userSelections
-            });
 
             return `
     <div class="${itemClass} quiz-pairs-item" data-side="${side}" data-index="${index}" 
@@ -1297,7 +1379,7 @@ class UIRenderer {
             ${sectionsHtml}
         </div>
         <div class="mt-4">
-            ${sections.length < 4 ? `
+            ${sections.length < 6 ? `
                 <button id="add-image-collection-section-${slide.id}" 
                         class="w-full flex items-center justify-center space-x-2 space-x-reverse bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
                     <i class="fas fa-plus"></i>
@@ -1314,7 +1396,6 @@ class UIRenderer {
 `;
     }
 
-
     renderQuizCarousel(slide) {
         const c = slide.content || {};
         const answers = c.answers || [];
@@ -1326,7 +1407,7 @@ class UIRenderer {
         // Get textStyle for button styling
         const textStyle = slide.textStyle || {};
         const buttonStyle = textStyle.button || {};
-        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonSizeClass = buttonStyle.size ? `unit-${this.getUnitSize(buttonStyle.size)}` : 'unit-5';
         const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
         let buttonStyleAttr = '';
 
@@ -1343,7 +1424,7 @@ class UIRenderer {
             const isCorrect = submitted && i === correctIndex;
             const isWrong = submitted && isChosen && i !== correctIndex;
 
-            let classes = "quiz-option w-full flex items-start gap-2 px-3 py-2 rounded-lg border transition text-right break-words hyphens-auto ";
+            let classes = "quiz-option w-full flex items-start slide-gap-unit-2 slide-px-unit-3 slide-py-unit-2 rounded-unit-6 border transition text-right break-words hyphens-auto ";
             if (submitted) {
                 if (isCorrect) classes += "border-green-500 bg-green-600/30";
                 else if (isWrong) classes += "border-red-500 bg-red-600/30";
@@ -1354,11 +1435,11 @@ class UIRenderer {
                     : "border-gray-300 bg-white/10 hover:bg-white/20";
             }
 
-            const mark = submitted && isCorrect ? `<i class='fas fa-check ml-2 text-green-400 flex-shrink-0'></i>` : "";
+            const mark = submitted && isCorrect ? `<i class='fas fa-check slide-ml-unit-2 text-green-400 flex-shrink-0'></i>` : "";
             return `
     <button data-index="${i}" class="${classes}">
-        <span class="w-5 h-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
-            ${isChosen ? `<span class='w-3 h-3 bg-blue-500 rounded-full'></span>` : ""}
+        <span class="w-unit-5 h-unit-5 flex items-center justify-center border border-gray-400 rounded-full flex-shrink-0 mt-0.5">
+            ${isChosen ? `<span class='w-unit-3 h-unit-3 bg-blue-500 rounded-full'></span>` : ""}
         </span>
         <span class="flex-1 text-right break-words hyphens-auto min-w-0">${i + 1}. ${Utils.escapeHTML(a || '—')}</span>
         ${mark}
@@ -1371,12 +1452,12 @@ class UIRenderer {
 
         return `
 <div class="relative w-full flex flex-col items-center justify-center">
-    <h2 class="text-lg font-bold text-center mb-3 break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
-    <div class="space-y-2 max-w-md w-full" id="quiz-${slide.id}-answers">
+    <h2 class="unit-6 font-bold text-center slide-my-unit-3 break-words hyphens-auto">${Utils.escapeHTML(question)}</h2>
+    <div class="pc-max-w-60 slide-gap-unit-4 flex flex-col w-full" id="quiz-${slide.id}-answers">
         ${answersHTML}
     </div>
     ${showSubmit ? `
-        <div class="text-center mt-4">
+        <div class="text-center slide-my-unit-4">
             <button class="quiz-submit-button ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}
                     id="quiz-${slide.id}-submit">
                 تأكيد الإجابة
@@ -1401,7 +1482,7 @@ class UIRenderer {
         // Get button styling
         const textStyle = slide.textStyle || {};
         const buttonStyle = textStyle.button || {};
-        const buttonSizeClass = buttonStyle.size ? `text-size-${buttonStyle.size.toLowerCase()}` : '';
+        const buttonSizeClass = buttonStyle.size ? `unit-${this.getUnitSize(buttonStyle.size)}` : 'unit-5';
         const buttonItalicClass = buttonStyle.italic ? 'text-italic' : '';
         let buttonStyleAttr = '';
 
@@ -1411,7 +1492,6 @@ class UIRenderer {
             if (buttonStyle.color) buttonStyleAttr += ` color: ${buttonStyle.color} !important;`;
             buttonStyleAttr += `"`;
         }
-
 
         // Use common function to check if submit should be shown
         const showSubmit = this.editor.shouldShowQuizSubmit(slide);
@@ -1429,7 +1509,7 @@ class UIRenderer {
                 bg = 'bg-black/30 border-blue-500';
                 // Show scaled down question inside the chosen drop zone, but keep it draggable
                 questionContent = `
-            <div class="quiz-draggable bg-white/80 font-bold text-lg rounded-xl !p-2 shadow-md transition select-none max-w-xs text-center transform !text-sm"
+            <div class="quiz-draggable bg-white/80 font-bold unit-6 rounded-unit-4 max-h-unit-25 slide-p-unit-2 shadow-md transition select-none text-center truncate text-wrap !unit-4"
                  draggable="true"
                  ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
                 ${Utils.escapeHTML(question)}
@@ -1438,12 +1518,12 @@ class UIRenderer {
             }
 
             return `
-<div class="quiz-category-zone border ${bg} rounded-xl flex flex-col items-center justify-center 
-            font-semibold p-4 text-center transition relative min-h-[100px] drop-zone"
+<div class="quiz-category-zone border ${bg} rounded-unit-4 flex flex-col items-center justify-center 
+            font-semibold slide-p-unit-4 text-center transition relative min-h-unit-25 drop-zone"
      data-index="${i}"
      ondragover="event.preventDefault()"
      ondrop="window.handleCategorizeDrop(event, '${containerId}', ${i})">
-    <span class="block mb-2 text-base">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
+    <span class="block slide-my-unit-2 unit-6">${Utils.escapeHTML(cat || `التصنيف ${i + 1}`)}</span>
     ${questionContent}
 </div>`;
         }).join('');
@@ -1455,17 +1535,17 @@ class UIRenderer {
             draggableHtml = `
     <div id="${containerId}-question"
          draggable="true"
-         class="quiz-draggable bg-white/80 font-bold text-lg rounded-xl px-6 py-4 shadow-md cursor-move 
-                transition select-none mb-6 max-w-xs text-center"
+         class="quiz-draggable bg-white/80 font-bold unit-6 rounded-unit-4 slide-px-unit-6 slide-py-unit-4 shadow-md cursor-move 
+                transition select-none slide-my-unit-6  text-center"
          ondragstart="window.handleCategorizeDrag(event, '${containerId}')">
         ${Utils.escapeHTML(question)}
     </div>`;
         }
 
         return `
-    <div id="${containerId}" class="w-full flex flex-col items-center justify-center text-center">
+    <div id="${containerId}" class="pc-max-w-80 w-full flex flex-col items-center justify-center text-center">
         ${draggableHtml}
-        <div class="quiz-categorize-container grid grid-cols-2 gap-4 w-full max-w-md mx-auto mb-4">
+        <div class="quiz-categorize-container grid grid-cols-2 slide-gap-unit-4 w-full  mx-auto slide-my-unit-4">
             ${dropZones}
         </div>
         ${showSubmit ? `
@@ -1480,57 +1560,51 @@ class UIRenderer {
     </div>`;
     }
 
-    renderUniversalComparison(slide, type = 'text') {
+    renderUniversalComparison(slide, type = 'text', contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
         const c = slide.content || {};
         const id = `comparison-${slide.id}`;
 
-        // Build content per type
         const leftHtml = (type === 'image')
             ? (c.imageA
-                ? `<div class="relative w-full h-full flex items-center justify-center p-4">
-                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="max-w-full max-h-full object-contain rounded-lg"
+                ? `<div class="relative w-full h-full flex items-center justify-center slide-p-unit-4">
+                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="max-w-full max-h-full object-contain rounded-unit-6"
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
-                   <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                   <p class="text-xs text-center">تعذر تحميل الصورة</p>
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-unit-6 flex items-center justify-center">
+                   <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
+                   <p class="unit-4 text-center">تعذر تحميل الصورة</p>
                  </div>
                </div>`
-                : `<div class="text-center py-8">الصورة الأولى غير محددة</div>`)
-            : `<div class="text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
+                : `<div class="text-center slide-py-unit-8 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>الصورة الأولى غير محددة</div>`)
+            : `<div class="text-center slide-p-unit-6 break-words hyphens-auto h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}><h3 class="font-bold slide-my-unit-3 break-words">${Utils.escapeHTML(c.leftTitle || 'الجانب الأيسر')}</h3><p class="break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.leftText || '')}</p></div>`;
 
         const rightHtml = (type === 'image')
             ? (c.imageB
-                ? `<div class="relative w-full h-full flex items-center justify-center p-4">
-                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="max-w-full max-h-full object-contain rounded-lg"
+                ? `<div class="relative w-full h-full flex items-center justify-center slide-p-unit-4">
+                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="max-w-full max-h-full object-contain rounded-unit-6"
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
-                   <i class="fas fa-image text-xl mb-1 opacity-50"></i>
-                   <p class="text-xs text-center">تعذر تحميل الصورة</p>
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-unit-6 flex items-center justify-center">
+                   <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
+                   <p class="unit-4 text-center">تعذر تحميل الصورة</p>
                  </div>
                </div>`
-                : `<div class="text-center py-8">الصورة الثانية غير محددة</div>`)
-            : `<div class="text-center p-6 break-words hyphens-auto h-full overflow-y-auto"><h3 class="text-xl font-bold mb-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="text-base break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
+                : `<div class="text-center slide-py-unit-8 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>الصورة الثانية غير محددة</div>`)
+            : `<div class="text-center slide-p-unit-6 break-words hyphens-auto h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}><h3 class="font-bold slide-my-unit-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
 
-        // unified background + fully opaque top layer
         return `
-<div id="${id}" class="comparison-wrapper relative w-full rounded-lg overflow-hidden bg-gray-700" style="min-height:250px;">
-    <!-- Unified background already on wrapper -->
-
-    <!-- Bottom (right) layer -->
+<div id="${id}" class="comparison-wrapper relative w-full rounded-unit-6 overflow-hidden bg-gray-700" style="aspect-ratio: 3 / 2;
+    width: min(90%, 350px);
+    margin: auto;
+    min-height: min(200px , calc(var(--unit) * 60))">
     <div class="comparison-layer bottom absolute inset-0 z-0 flex items-center justify-center">
         ${rightHtml}
     </div>
-
-    <!-- Top (left) layer, completely opaque -->
     <div class="comparison-layer top absolute inset-0 z-10 bg-gray-700 flex items-center justify-center" 
          style="clip-path: inset(0 50% 0 0); transition: clip-path 0.12s linear;">
         ${leftHtml}
     </div>
-
-    <!-- Draggable separator -->
     <div class="comparison-separator absolute top-0 bottom-0 z-20 cursor-ew-resize" style="left:50%; width:6px;">
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:999px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.15);">
-            <i class="fas fa-arrows-left-right text-sm text-blue-600"></i>
+            <i class="fas fa-arrows-left-right unit-5 text-blue-600"></i>
         </div>
     </div>
 </div>`;
@@ -1539,7 +1613,7 @@ class UIRenderer {
     renderTextSeriesEditor(slide) {
         const items = slide.content.items || [];
         const itemsHtml = items.map((it, idx) => `
-        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200" >
             <div class="flex items-center justify-between mb-3">
                 <label class="block text-sm font-medium text-gray-700">العنصر ${idx + 1}</label>
                 <button data-action="delete-text-series" data-index="${idx}" class="p-2 text-red-600 hover:bg-red-100 rounded-full transition duration-150" ${items.length <= 1 ? 'disabled' : ''}>
@@ -1586,17 +1660,18 @@ class UIRenderer {
     `;
     }
 
-    renderTextSeriesPreview(slide) {
+    // TODO series
+    renderTextSeriesPreview(slide, contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
         const items = slide.content.items || [];
         if (!items.length) {
-            return `<div class="text-center py-12">لا توجد نصوص في السلسلة</div>`;
+            return `<div class="text-center slide-py-unit-12 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>لا توجد نصوص في السلسلة</div>`;
         }
 
         const slidesHtml = items.map((item, index) => `
-        <div class="text-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-300 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
-            <div class="text-center max-w-2xl w-full">
-                ${item.title ? `<h3 class="text-2xl font-bold mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
-                <div class="text-lg leading-relaxed break-words hyphens-auto">
+        <div class="text-series-slide flex flex-col items-center justify-center slide-p-unit-6 transition-all duration-300 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
+            <div class="text-center max-w-unit-96 w-full">
+                ${item.title ? `<h3 class="font-bold slide-my-unit-4 break-words ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.title)}</h3>` : ''}
+                <div class="leading-relaxed break-words hyphens-auto ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
                     ${Utils.escapeHTML(item.content || '').replace(/\n/g, '<br>')}
                 </div>
             </div>
@@ -1604,23 +1679,24 @@ class UIRenderer {
     `).join('');
 
         const dotsHtml = items.map((_, index) => `
-        <span class="text-series-nav-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-300 cursor-pointer ${index === 0 ? 'text-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
+        <span class="text-series-nav-dot w-unit-3 h-unit-3 rounded-full border-unit-1 border-white transition-all duration-300 cursor-pointer ${index === 0 ? 'text-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
     `).join('');
 
         return `
-        <div class="text-series-preview relative w-full overflow-hidden" id="text-series-${slide.id}">
+        <div class="text-series-preview relative w-full overflow-hidden rounded-unit-4" id="text-series-${slide.id} ">
             <div class="text-series-slides relative w-full">
                 ${slidesHtml}
             </div>
             
             ${items.length > 1 ? `
-                <div class="text-series-nav-dots absolute mb-2 left-1/2 transform -translate-x-1/2 flex  space-x-reverse">
+                <div class="text-series-nav-dots slide-my-unit-2 flex  space-x-reverse justify-center">
                     ${dotsHtml}
                 </div>
             ` : ''}
         </div>
     `;
     }
+
 
     renderSeriesEditor(slide, itemType, itemRenderer) {
         const items = slide.content.items || [];
@@ -1661,7 +1737,7 @@ class UIRenderer {
         </div>
     `;
     }
-
+    // TODO series
     renderImageSeriesEditor(slide) {
         const imageItemRenderer = (item, index) => `
     <div class="space-y-3">
@@ -1704,22 +1780,22 @@ class UIRenderer {
     renderImageSeriesPreview(slide) {
         const items = slide.content.items || [];
         if (!items.length) {
-            return `<div class="text-center py-12">لا توجد صور في السلسلة</div>`;
+            return `<div class="text-center slide-py-unit-12">لا توجد صور في السلسلة</div>`;
         }
 
         const slidesHtml = items.map((item, index) => `
-    <div class="image-series-slide min-h-[300px] w-full flex flex-col items-center justify-center p-6 transition-all duration-600 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
-        <div class="text-center max-w-2xl w-full">
-            ${item.title ? `<h3 class="text-2xl font-bold mb-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
+    <div class="image-series-slide  flex flex-col items-center justify-center slide-p-unit-6 transition-all duration-600 ease-in-out ${index === 0 ? 'block' : 'hidden'}" data-index="${index}">
+        <div class="text-center max-w-unit-96 w-full">
+            ${item.title ? `<h3 class="unit-8 font-bold slide-my-unit-4 break-words">${Utils.escapeHTML(item.title)}</h3>` : ''}
             ${item.imageUrl ? `
-                <div class="image-container mb-4">
+                <div class="image-container slide-my-unit-4">
                     <img src="${Utils.escapeHTML(item.imageUrl)}" alt="${Utils.escapeHTML(item.title || 'صورة')}" 
-                         class="max-h-64 max-w-full mx-auto rounded-lg shadow-lg object-contain" 
+                         class="max-h-unit-64 max-w-full mx-auto rounded-unit-6 shadow-lg object-contain" 
                          onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuS8muS4gOWbvueUteWtkDwvdGV4dD48L3N2Zz4='; this.alt='تعذر تحميل الصورة';" />
                 </div>
             ` : `
-                <div class="text-center py-8 bg-black/20 rounded-lg">
-                    <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+                <div class="text-center p-unit-4 bg-black/20 rounded-unit-3">
+                    <i class="fas fa-image unit-40 slide-my-unit-3 opacity-50"></i>
                     <p>لم يتم إدخال رابط الصورة بعد</p>
                 </div>
             `}
@@ -1728,7 +1804,7 @@ class UIRenderer {
 `).join('');
 
         const dotsHtml = items.map((_, index) => `
-    <span class="image-series-nav-dot w-3 h-3 rounded-full border-2 border-white transition-all duration-400 cursor-pointer ${index === 0 ? 'image-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
+    <span class="image-series-nav-dot w-unit-3 h-unit-3 rounded-full border-unit-1 border-white transition-all duration-400 cursor-pointer ${index === 0 ? 'image-series-nav-dot-active bg-white' : 'bg-transparent'}" data-index="${index}"></span>
 `).join('');
 
         return `
@@ -1738,7 +1814,7 @@ class UIRenderer {
         </div>
         
         ${items.length > 1 ? `
-            <div class="image-series-nav-dots absolute mb-2 left-1/2 transform -translate-x-1/2 flex ">
+            <div class="image-series-nav-dots slide-my-unit-2 justify-center flex ">
                 ${dotsHtml}
             </div>
         ` : ''}
@@ -1746,15 +1822,14 @@ class UIRenderer {
 `;
     }
 
-    // Video render (kept same heuristics)
-    renderVideoPreview(slide) {
+    renderVideoPreview(slide, contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
         const content = slide.content || {};
         const videoUrl = content.videoUrl || '';
         if (!videoUrl) {
             return `
-                <div class="self-center w-full text-center py-10 bg-gray-600/30 rounded-xl border border-dashed border-white/50">
-                    <i class="fas fa-video text-4xl mb-3 opacity-70"></i>
-                    <p class="text-base font-medium">الرجاء إدخال رابط الفيديو للمعاينة</p>
+                <div class="video-container mx-auto flex flex-col justify-center items-center gap-unit-4 self-center max-w-[90%]  aspect-video text-center min-h-unit-25 slide-py-unit-10 bg-gray-600/30 rounded-unit-4 slide-p-unit-3 border border-dashed border-white/50">
+                    <i class="fas fa-video unit-20 slide-my-unit-3 opacity-70 excepted"></i>
+                    <p class="${contentSizeClass} font-medium ${contentItalicClass}" ${contentStyleAttr}>الرجاء إدخال رابط الفيديو للمعاينة</p>
                 </div>
             `;
         }
@@ -1771,18 +1846,18 @@ class UIRenderer {
         } catch (e) { }
 
         return `
-            <div class="relative w-full overflow-hidden rounded-xl shadow-2xl" style="padding-top: 56.25%;">
+            <div class="video-container mx-auto my-unit-3 relative overflow-hidden max-w-[90%] min-h-unit-25 aspect-video rounded-unit-2 shadow-2xl">
                 <iframe
-                    class="absolute top-0 left-0 w-full h-full"
+                    class="video-container max-w-[90%] min-h-unit-25 aspect-video absolute top-0 left-0"
                     src="${Utils.escapeHTML(embed)}"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
-                    onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center py-10&quot;>تعذر تحميل الفيديو 🚫</div>';">
+                    onerror="this.onerror=null; this.parentElement.innerHTML='<div class=&quot;text-center slide-py-unit-10&quot;>تعذر تحميل الفيديو 🚫</div>';">
                 </iframe>
             </div>
-            ${content.description ? `<p class="mt-3 text-center text-sm">${Utils.escapeHTML(content.description)}</p>` : ''}
-            ${content.duration ? `<p class="text-center text-xs"><i class="fas fa-clock ml-1"></i> المدة: ${Utils.escapeHTML(content.duration)}</p>` : ''}
+            ${content.description ? `<p class="slide-my-unit-3 text-center ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(content.description)}</p>` : ''}
+            ${content.duration ? `<p class="text-center ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}><i class="fas fa-clock slide-ml-unit-1"></i> المدة: ${Utils.escapeHTML(content.duration)}</p>` : ''}
         `;
     }
 
@@ -2051,16 +2126,22 @@ class UIRenderer {
     `;
     }
 
+    // TODO
     renderLessonsSidebar() {
         const container = this.editor.dom.lessonsList;
         if (!container) return;
         container.innerHTML = '';
-
-        this.editor.lessons.forEach(lesson => {
+        if (this.editor.page === 'preview') {
+            this.editor.setLessonSizes();
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        this.editor.lessons.forEach((lesson, lessonIndex) => {
+            if (this.editor.page === 'preview' && urlParams.get('ps') != 'publisher' && lesson.status === 'Draft') return
             const isCurrent = lesson.id === this.editor.currentLessonId;
             const isExpanded = this.editor.isLessonExpanded(lesson.id);
             const lessonEl = document.createElement('div');
-            lessonEl.className = `lesson-item bg-white border border-gray-200 rounded-lg overflow-hidden ${isExpanded ? 'lesson-expanded' : ''}`;
+
+            lessonEl.className = `lesson-item bg-white border border-gray-200 rounded-lg overflow-hidden ${isExpanded ? 'lesson-expanded' : ''} ${this.editor.page === 'preview' && this.editor.authority != 'presenter' && !this.editor.slidesLocks[lessonIndex]?.includes(true) ? 'locked' : ''}`;
             lessonEl.dataset.lessonId = lesson.id;
             lessonEl.draggable = true;
 
@@ -2074,15 +2155,21 @@ class UIRenderer {
                         <p class="text-xs text-gray-500 ">${slidesCount} سلايد</p>
                     </div>
                     <div class="flex items-center">
-                        <button class="delete-lesson p-2 text-gray-500 hover:text-gray-700" data-lesson-id="${lesson.id}" title="حذف الدرس">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                       <button class="toggle-lesson-status p-2 text-gray-400 hover:text-blue-600" data-lesson-id="${lesson.id}" title="تبديل حالة الدرس">
-                            <i class="fas ${lesson.status === 'Published' ? 'fa-wifi text-green-500' : 'fa-wifi-slash'}"></i>
-                        </button>
-                        <button class="expand-lesson p-2 text-gray-400 hover:text-blue-600 expand-lesson-btn">
-                            <i class="fas fa-chevron-down ${isExpanded ? 'rotate-180' : ''} transition-transform"></i>
-                        </button>
+                        ${this.editor.page === 'editor' ? `
+                            <button class="delete-lesson p-2 text-gray-500 hover:text-gray-700" data-lesson-id="${lesson.id}" title="حذف الدرس">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                           <button class="toggle-lesson-status p-2 text-gray-400 hover:text-blue-600" data-lesson-id="${lesson.id}" title="تبديل حالة الدرس">
+                                <i class="fas ${lesson.status === 'Published' ? 'fa-wifi text-green-500' : 'fa-wifi-slash'}"></i>
+                            </button>
+                            `: ''}
+                            <button class="expand-lesson p-2 text-gray-400 hover:text-blue-600 expand-lesson-btn">
+                            ${this.editor.page === 'editor' || this.editor.authority == 'presenter' || this.editor.slidesLocks[lessonIndex]?.includes(true) ? `
+                                <i class="fas fa-chevron-down ${isExpanded ? 'rotate-180' : ''} transition-transform"></i>
+                                `: `
+                                <i class="fa-solid fa-lock"></i>
+                                `}
+                            </button>
                     </div>
                 </div>
             `;
@@ -2093,45 +2180,59 @@ class UIRenderer {
             slidesWrap.innerHTML = `<div class="border-t border-gray-200"></div>`;
             const listZone = slidesWrap.querySelector('div');
 
-            lesson.slides.forEach((slide, index) => {
+            lesson.slides.forEach((slide, slideIndex) => {
                 const slideItem = document.createElement('div');
-                slideItem.className = `slide-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center justify-between ${slide.id === this.editor.currentSlideId ? 'active' : ''}`;
+                slideItem.className = `slide-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center justify-between ${slide.id === this.editor.currentSlideId ? 'active' : ''}${this.editor.page === 'preview' && this.editor.authority != 'presenter' && !this.editor.slidesLocks[lessonIndex][slideIndex] ? 'locked' : ''}`;
                 slideItem.dataset.slideId = slide.id;
                 slideItem.dataset.lessonId = lesson.id;
                 slideItem.draggable = true;
                 slideItem.innerHTML = `
     <div class="flex items-center space-x-3 space-x-reverse">
-        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded text-xs flex items-center justify-center">${index + 1}</div>
+        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded text-xs flex items-center justify-center">${slideIndex + 1}</div>
         <div>
             <h5 class="text-sm font-medium text-gray-900">${Utils.escapeHTML(slide.title || '')}</h5>
             <p class="text-xs text-gray-500">${this.editor.getSlideTypeText(slide.type)}</p>
         </div>
     </div>
-    <div class="slide-actions flex space-x-1 space-x-reverse">
-        <button class="edit-slide p-1 text-gray-400 hover:text-blue-600" data-slide-id="${slide.id}">
-            <i class="fas fa-edit text-xs"></i>
-        </button>
-        <button class="delete-slide p-1 text-gray-400 hover:text-red-600" data-slide-id="${slide.id}">
-            <i class="fas fa-trash text-xs"></i>
-        </button>
-    </div>
+    ${this.editor.page === 'editor' ? `
+        <div class="slide-actions flex space-x-1 space-x-reverse">
+            <button class="edit-slide p-1 text-gray-400 hover:text-blue-600" data-slide-id="${slide.id}">
+                <i class="fas fa-edit text-xs"></i>
+            </button>
+            <button class="delete-slide p-1 text-gray-400 hover:text-red-600" data-slide-id="${slide.id}">
+                <i class="fas fa-trash text-xs"></i>
+            </button>
+        </div>
+        `: ''}
+
 `;
+                // TODO
+                if (this.editor.page === 'preview' && this.editor.authority !== 'presenter' && !this.editor.slidesLocks[lessonIndex][slideIndex]) {
+                    slideItem.insertAdjacentHTML('beforeend', `
+                            <button class="p-2 text-gray-400 hover:text-blue-600 lock-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </button>
+                        `)
+                }
                 listZone.appendChild(slideItem);
             });
 
-            listZone.innerHTML += `
-                <div class="p-3">
-                    <button class="add-slide-inside-lesson w-full flex items-center justify-center space-x-2 space-x-reverse py-2 px-3 border border-dashed border-gray-300 rounded text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors text-sm" data-lesson-id="${lesson.id}">
-                        <i class="fas fa-plus"></i>
-                        <span>إضافة سلايد</span>
-                    </button>
-                </div>
-            `;
+            if (this.editor.page === 'editor') {
+                listZone.innerHTML += `
+                    <div class="p-3">
+                        <button class="add-slide-inside-lesson w-full flex items-center justify-center space-x-2 space-x-reverse py-2 px-3 border border-dashed border-gray-300 rounded text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors text-sm" data-lesson-id="${lesson.id}">
+                            <i class="fas fa-plus"></i>
+                            <span>إضافة سلايد</span>
+                        </button>
+                    </div>
+                `;
+            }
+
             lessonEl.appendChild(slidesWrap);
             container.appendChild(lessonEl);
         });
 
-        this.editor.attachDragAndDrop();
+        if (this.editor.page === 'editor') this.editor.attachDragAndDrop();
     }
 
     // editors & edit content injection
@@ -2470,6 +2571,9 @@ class UIRenderer {
             case 'quiz-image-pairs-quiz':
                 html += this.renderImagePairsQuizEditor(slide);
                 break;
+            case 'pdf-pdf':
+                html += this.renderPDFEditor(slide);
+                break;
             default:
                 if (slide.content.text !== undefined) {
                     html += `
@@ -2598,7 +2702,7 @@ class UIRenderer {
             const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
             if (!slide.content.answers) slide.content.answers = [];
             // MISSING: Add the 4-answer limit check here
-            if (slide.content.answers.length >= 4) {
+            if (slide.content.answers.length >= 6) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'حد أقصى',
@@ -2624,18 +2728,40 @@ class UIRenderer {
             </div>`;
     }
 
+    setUnitSize() {
+        setTimeout(() => {
+            const element = document.querySelector('#slide-preview-container');
+            if (!element) { /* preview not present yet */ return; }
+
+            const rect = element.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            const smallerDimension = Math.min(width, height);
+
+            let unitSize = Math.max(1, Math.min(5, Math.floor(smallerDimension / 100)));
+
+            const unitValue = unitSize + 'px';
+
+            element.style.setProperty('--slide-unit', unitValue);
+            element.style.setProperty('--unit', unitValue);
+        }
+            , 300)
+    }
+
+
     // slide templates
     renderSlideTemplates(category = 'text') {
         const container = this.editor.dom.slideTemplatesContainer;
         if (!container) return;
         const templates = this.editor.slideTemplates[category] || [];
         if (!templates.length) {
-            container.innerHTML = `<p class="text-gray-500">لا توجد قوالب متاحة لهذا القسم.</p>`;
+            container.innerHTML = `< p class="text-gray-500" > لا توجد قوالب متاحة لهذا القسم.</ > `;
             return;
         }
         container.innerHTML = `
-            <div class="template-grid grid grid-cols-2 gap-4">
-                ${templates.map(t => `
+    <div class="template-grid grid grid-cols-2 gap-4" >
+        ${templates.map(t => `
                     <div class="template-card p-4 border rounded-lg cursor-pointer" data-type="${category}" data-subtype="${t.subtype}">
                         <div class="template-preview mb-2">
                             <i class="fas ${t.icon} text-2xl"></i>
@@ -2644,13 +2770,13 @@ class UIRenderer {
                             <h4 class="template-title font-semibold">${Utils.escapeHTML(t.title)}</h4>
                             <p class="template-description text-sm text-gray-500">${Utils.escapeHTML(t.description)}</p>
                         </div>
-                    </div>`).join('')}
-            </div>
-        `;
+                    </div>`).join('')
+            }
+    </div >
+    `;
     }
 
-    // mobile slides
-
+    // TODO
     renderMobileSlidesBar() {
         const lessonsTabs = document.getElementById('mobile-lessons-tabs');
         const slidesScroll = document.getElementById('mobile-slides-scroll');
@@ -2658,24 +2784,24 @@ class UIRenderer {
 
         lessonsTabs.innerHTML = this.editor.lessons.map(l =>
             `<button class="lesson-tab ${l.id === this.editor.currentLessonId ? 'active' : ''}" data-lesson-id="${l.id}">
-      ${Utils.escapeHTML(l.title)}
-    </button>`
-        ).join('');
+                ${Utils.escapeHTML(l.title)}
+            </button>`
+        ).join(' ');
 
         const lesson = this.editor.findLessonById(this.editor.currentLessonId);
         if (!lesson) return;
         slidesScroll.innerHTML = lesson.slides.map((s, i) =>
             `<div class="slide-square ${s.id === this.editor.currentSlideId ? 'active' : ''}"
-                data-slide-id="${s.id}" data-lesson-id="${lesson.id}">
-            ${i + 1}
+data-slide-id="${s.id}" data-lesson-id="${lesson.id}">
+    ${i + 1}
             </div>`
         ).join('');
         // Add a button to add a new slide in the selected lesson
         slidesScroll.innerHTML += `
-            <button class="add-slide-inside-lesson" data-lesson-id="${lesson.id}">
-                <i class="fas fa-plus"></i>
+    <button class="add-slide-inside-lesson" data-lesson-id="${lesson.id}">
+        <i class="fas fa-plus"></i>
             </button>
-        `;
+    `;
 
         const activeSlide = slidesScroll.querySelector('.active');
         if (activeSlide) {

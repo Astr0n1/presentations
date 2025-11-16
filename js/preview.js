@@ -210,11 +210,6 @@ window.handleImagePairsSelect = function (event, side, index) {
         currentSelections.push(index);
     }
 
-    console.log('Image Pairs Selection Updated:', {
-        side,
-        index,
-        userSelections: slide.userSelections
-    });
 
     editor.saveToLocalStorage();
 
@@ -595,17 +590,16 @@ window.finishConnectDrawing = function (event) {
 
 ////////////////////////////////////////////////////
 // Initiating course editor
+const urlParams = new URLSearchParams(window.location.search);
 ////////////////////////////////////////////////////
 async function checkForCourse() {
     try {
         // when the page tries to load use the api function in api.js module getCourseDetails sending the url attribute name as a parameter and console log the response use async await to avoid callback
-        const urlParams = new URLSearchParams(window.location.search);
         const courseId = urlParams.get('name');
 
         if (courseId) {
             ApiService.getCourseDetails(courseId)
                 .then(courseDetails => {
-                    console.log('Course Details:', courseDetails.exists);
                     if (!courseDetails.exists) window.location.href = '404.html'
                     localStorage.setItem('C_id', courseDetails.course.id);
                 })
@@ -697,15 +691,22 @@ window.updateLoader = function (progress, message = null) {
 export default class CourseEditor {
     constructor(options = {}) {
         this.preview = this.setInitialPreview();
-        this.page = 'editor';
+        this.page = 'preview';
+        document.body.classList.add('preview-page')
         // state
         this.lessons = [];
+        this.lessonSizes = [];
+        this.slidesLocks = [];
         this.currentLessonId = null;
         this.currentSlideId = null;
         this.expandedLessons = new Set(); // Track expanded lesson IDs
 
         // dom refs
         this.dom = {
+            previewActions: document.getElementById('preview-actions'),
+            previewContainer: document.getElementById('preview-container'),
+            totalSlidesNumber: document.getElementById('total-slides'),
+            currentSlideNumber: document.getElementById('current-slide'),
             lessonsList: document.getElementById('lessons-list'),
             currentLessonTitle: document.getElementById('current-lesson-title'),
             // currentLessonCode: document.getElementById('current-lesson-code'),
@@ -746,8 +747,12 @@ export default class CourseEditor {
         this.slideManager = new SlideManager(this);
         this.ui = new UIRenderer(this);
 
+        // Get ps parameter from url
+        this.authority = urlParams.get('ps'); // 'ps' for preview size
         // Load/persist and initial state
+        this.progress
         this.loadFromLocalStorage();
+
         // If current lesson exists, expand it by default
         if (this.currentLessonId) {
             this.expandedLessons.add(this.currentLessonId);
@@ -789,6 +794,47 @@ export default class CourseEditor {
             }, 250));
         }
     }
+    setLessonSizes() {
+        this.lessonSizes = this.lessons.map(l => l.slides.length)
+        this.slidesLocks = this.lessons.map((l, i) => {
+            return l.slides.map((s, j) => {
+                if (i < this.progress.lessonIndex) { return true }
+                if (i == this.progress.lessonIndex && j <= this.progress.slideIndex + 1) { return true }
+                if (i == this.progress.lessonIndex + 1 && j === 0) {
+                    if (this.lessons.at(i - 1)?.slides.length - 1 === this.progress.slideIndex) {
+                        return true
+                    }
+                }
+                return false
+            })
+
+        })
+    }
+
+    async updateProress(cid, lid, sid) {
+        // console.log(cid, lid, sid)
+        await ApiService.saveUserProgress(cid, lid, sid);
+        this.progress = await ApiService.getUserProgress(localStorage.getItem('C_id'))
+        this.ui.renderLessonsSidebar();
+    }
+
+    getIndices() {
+
+        // 1. Find lesson index
+        const lessonIndex = this.lessons.findIndex(l => l.id === this.currentLessonId);
+        if (lessonIndex === -1) return null;
+
+        const lesson = this.lessons[lessonIndex];
+        const slides = lesson.slides;
+        const slidesLength = slides.length;
+
+        // 2. Find slide index inside this lesson
+        const slideIndex = slides.findIndex(s => s.id === this.currentSlideId);
+        if (slideIndex === -1) return { lessonIndex, lessonsLength: this.lessons.length, slidesLength, slideIndex: -1 };
+
+        return { lessonIndex, lessonsLength: this.lessons.length, slideIndex, slidesLength };
+    }
+
 
     setInitialPreview() {
         const width = Math.max(
@@ -1183,7 +1229,6 @@ export default class CourseEditor {
             console.warn('Failed applying sidebar state', err);
         }
     }
-    // TODO
     // --- Mobile UI wiring (delegated to UIRenderer)
     renderMobileSlidesBar() { return this.ui.renderMobileSlidesBar(); }
     syncMobileActiveSlide() {
@@ -1235,6 +1280,7 @@ export default class CourseEditor {
     }
 
     navigateMobileSlide(direction) {
+        console.log('navigateMobileSlide')
         const lesson = this.findLessonById(this.currentLessonId);
         if (!lesson) return;
         const slides = lesson.slides;
@@ -1247,25 +1293,30 @@ export default class CourseEditor {
                 this.currentLessonId = this.lessons[currIdx - 1].id;
                 const prevLesson = this.findLessonById(this.currentLessonId);
                 this.currentSlideId = prevLesson.slides[prevLesson.slides.length - 1].id;
-            } else return;
+            } else {
+                this.setSlideCounter();
+                return
+            };
         } else if (nextIndex >= slides.length) {
             const currIdx = this.lessons.findIndex(l => l.id === this.currentLessonId);
             if (currIdx < this.lessons.length - 1) {
                 this.currentLessonId = this.lessons[currIdx + 1].id;
                 const nextLesson = this.findLessonById(this.currentLessonId);
                 this.currentSlideId = nextLesson.slides[0].id;
-            } else return;
+            } else {
+                this.setSlideCounter();
+                return
+            };
         } else {
             this.currentSlideId = slides[nextIndex].id;
         }
-
         this.renderMobileSlidesBar();
         this.loadSlideEditContent(this.currentSlideId);
         this.syncMobileActiveSlide();
+        this.setSlideCounter();
     }
 
     // ---------- Resize Handles (kept as original)
-    // TODO
     setupResizeHandles() {
         const resizeEdit = document.getElementById('resize-edit-sidebar');
         const resizeSidebar = document.getElementById('resize-sidebar');
@@ -1337,260 +1388,6 @@ export default class CourseEditor {
         }
     }
 
-    attachDragAndDrop() {
-        const lessonsContainer = this.dom.lessonsList;
-        if (!lessonsContainer) return;
-
-        let draggingLessonEl = null;
-        let draggingSlideEl = null;
-        let sourceLessonIdOfDraggingSlide = null;
-
-        // LESSON drag with visual indicators
-        lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
-            lessonEl.addEventListener('dragstart', (e) => {
-                e.stopPropagation();
-                draggingLessonEl = lessonEl;
-                e.dataTransfer.effectAllowed = 'move';
-                lessonEl.classList.add('dragging-lesson');
-            });
-
-            lessonEl.addEventListener('dragend', (e) => {
-                e.stopPropagation();
-                if (draggingLessonEl) draggingLessonEl.classList.remove('dragging-lesson');
-                draggingLessonEl = null;
-
-                // Clean up all indicators
-                this.cleanupDropIndicators();
-            });
-
-            lessonEl.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.dataTransfer.dropEffect = 'move';
-
-                if (draggingLessonEl && draggingLessonEl !== lessonEl) {
-                    this.showLessonDropIndicator(lessonEl, e);
-                }
-            });
-
-            lessonEl.addEventListener('dragleave', (e) => {
-                // Only remove indicator if we're leaving the lesson element entirely
-                if (!lessonEl.contains(e.relatedTarget)) {
-                    this.cleanupDropIndicators();
-                }
-            });
-
-            lessonEl.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!draggingLessonEl || draggingLessonEl === lessonEl) return;
-
-                const draggedLessonId = parseInt(draggingLessonEl.dataset.lessonId, 10);
-                const targetLessonId = parseInt(lessonEl.dataset.lessonId, 10); // The lesson we are dropping ON
-
-                const draggedLesson = this.lessons.find(l => l.id === draggedLessonId);
-                if (!draggedLesson) return;
-
-                // Determine if the drop is before or after the target lesson
-                const rect = lessonEl.getBoundingClientRect();
-                const isBefore = e.clientY < rect.top + rect.height / 2;
-
-                // Remove the dragged lesson from its current position in the array
-                this.lessons = this.lessons.filter(l => l.id !== draggedLessonId);
-
-                // Find the new index for insertion
-                let newIndex = this.lessons.findIndex(l => l.id === targetLessonId);
-                if (newIndex === -1) newIndex = this.lessons.length; // If target not found, append
-                if (!isBefore && newIndex < this.lessons.length) newIndex++; // Insert after if specified
-
-                // Insert the dragged lesson at the calculated new position
-                this.lessons.splice(newIndex, 0, draggedLesson);
-
-                // Prepare data for API call
-                const updatedOrder = this.lessons.map((lesson, index) => ({
-                    id: lesson.id,
-                    order_index: index + 1 // Assuming order_index is 1-based
-                }));
-
-                // Call API to update lesson order
-                ApiService.updateLessonOrder(updatedOrder)
-                    .then(response => {
-                        console.log('Lesson order updated successfully:', response);
-                        this.saveToLocalStorage();
-                        this.renderLessonsSidebar();
-                    })
-                    .catch(error => {
-                        console.error('Error updating lesson order:', error);
-                        // Revert UI changes or show error message
-                        this.loadFromLocalStorage(); // Revert to last saved state
-                        this.renderLessonsSidebar();
-                    });
-
-                // Clean up indicators before processing drop
-                this.cleanupDropIndicators();
-            });
-        });
-
-        // SLIDE drag with visual indicators
-        lessonsContainer.querySelectorAll('.lesson-item').forEach(lessonEl => {
-            const slidesContainer = lessonEl.querySelector('.lesson-slides');
-            if (!slidesContainer) return;
-
-            slidesContainer.querySelectorAll('.slide-item').forEach(slideEl => {
-                slideEl.addEventListener('dragstart', (e) => {
-                    e.stopPropagation();
-                    draggingSlideEl = slideEl;
-                    sourceLessonIdOfDraggingSlide = parseInt(slideEl.dataset.lessonId, 10);
-                    e.dataTransfer.effectAllowed = 'move';
-                    slideEl.classList.add('dragging-slide');
-                    e.dataTransfer.setData('text/plain', JSON.stringify({
-                        slideId: slideEl.dataset.slideId,
-                        sourceLessonId: sourceLessonIdOfDraggingSlide
-                    }));
-                });
-
-                slideEl.addEventListener('dragend', (e) => {
-                    e.stopPropagation();
-                    if (draggingSlideEl) draggingSlideEl.classList.remove('dragging-slide');
-                    draggingSlideEl = null;
-                    sourceLessonIdOfDraggingSlide = null;
-
-                    // Clean up all indicators
-                    this.cleanupDropIndicators();
-                });
-
-                slideEl.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.dataTransfer.dropEffect = 'move';
-
-                    if (draggingSlideEl) {
-                        this.showSlideDropIndicator(slideEl, e);
-                    }
-                });
-
-                slideEl.addEventListener('dragleave', (e) => {
-                    // Only remove indicator if we're leaving the slide element entirely
-                    if (!slideEl.contains(e.relatedTarget)) {
-                        this.cleanupDropIndicators();
-                    }
-                });
-
-                // Handle dropping slides onto other slides
-                slideEl.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Clean up indicators before processing drop
-                    this.cleanupDropIndicators();
-
-                    let payload = null;
-                    try {
-                        const txt = e.dataTransfer.getData('text/plain');
-                        if (txt) payload = JSON.parse(txt);
-                    } catch (err) { }
-                    const draggedSlideId = payload ? parseInt(payload.slideId, 10) : (draggingSlideEl ? parseInt(draggingSlideEl.dataset.slideId, 10) : null);
-                    const draggedFromLessonId = payload ? parseInt(payload.sourceLessonId, 10) : sourceLessonIdOfDraggingSlide;
-                    if (!draggedSlideId) return;
-                    const targetSlideId = parseInt(slideEl.dataset.slideId, 10);
-                    const targetLessonId = parseInt(slideEl.dataset.lessonId, 10);
-
-                    // remove from source
-                    const srcLesson = this.findLessonById(draggedFromLessonId);
-                    const srcIndex = srcLesson ? srcLesson.slides.findIndex(s => s.id === draggedSlideId) : -1;
-                    let draggedSlideObj = null;
-                    if (srcLesson && srcIndex > -1) {
-                        draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
-                    } else if (draggingSlideEl) {
-                        for (const l of this.lessons) {
-                            const idx = l.slides.findIndex(s => s.id === draggedSlideId);
-                            if (idx > -1) {
-                                draggedSlideObj = l.slides.splice(idx, 1)[0];
-                                break;
-                            }
-                        }
-                    }
-                    if (!draggedSlideObj) return;
-
-                    const targetLesson = this.findLessonById(targetLessonId);
-                    if (!targetLesson) return;
-                    const insertionIndex = Math.max(0, targetLesson.slides.findIndex(s => s.id === targetSlideId) + 1);
-                    targetLesson.slides.splice(insertionIndex, 0, draggedSlideObj);
-
-                    // Update the lesson ID of the dragged slide object
-                    draggedSlideObj.lessonId = targetLessonId;
-
-                    this.saveToLocalStorage();
-                    this.renderLessonsSidebar();
-                    this.currentLessonId = targetLessonId;
-                    this.currentSlideId = draggedSlideObj.id;
-                    this.loadSlideEditContent(this.currentSlideId);
-                });
-            });
-
-            // Handle dropping slides into empty lesson areas
-            slidesContainer.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.dataTransfer.dropEffect = 'move';
-
-                if (draggingSlideEl) {
-                    // Show indicator at the end of the slides list
-                    this.showLessonEmptyAreaIndicator(slidesContainer, e);
-                }
-            });
-
-            slidesContainer.addEventListener('dragleave', (e) => {
-                if (!slidesContainer.contains(e.relatedTarget)) {
-                    this.cleanupDropIndicators();
-                }
-            });
-
-            slidesContainer.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Clean up indicators before processing drop
-                this.cleanupDropIndicators();
-
-                let payload = null;
-                try {
-                    const txt = e.dataTransfer.getData('text/plain');
-                    if (txt) payload = JSON.parse(txt);
-                } catch (err) { }
-                const draggedSlideId = payload ? parseInt(payload.slideId, 10) : (draggingSlideEl ? parseInt(draggingSlideEl.dataset.slideId, 10) : null);
-                const draggedFromLessonId = payload ? parseInt(payload.sourceLessonId, 10) : sourceLessonIdOfDraggingSlide;
-                if (!draggedSlideId) return;
-
-                const srcLesson = this.findLessonById(draggedFromLessonId);
-                let draggedSlideObj = null;
-                if (srcLesson) {
-                    const srcIndex = srcLesson.slides.findIndex(s => s.id === draggedSlideId);
-                    if (srcIndex > -1) draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
-                }
-                if (!draggedSlideObj) {
-                    for (const l of this.lessons) {
-                        const idx = l.slides.findIndex(s => s.id === draggedSlideId);
-                        if (idx > -1) {
-                            draggedSlideObj = l.slides.splice(idx, 1)[0];
-                            break;
-                        }
-                    }
-                }
-                if (!draggedSlideObj) return;
-
-                const lessonId = parseInt(lessonEl.dataset.lessonId, 10);
-                const targetLesson = this.findLessonById(lessonId);
-                if (!targetLesson) return;
-                targetLesson.slides.push(draggedSlideObj);
-                this.saveToLocalStorage();
-                this.renderLessonsSidebar();
-                this.currentLessonId = lessonId;
-                this.currentSlideId = draggedSlideObj.id;
-                this.loadSlideEditContent(this.currentSlideId);
-            });
-        });
-    }
 
     // Add these new helper methods to the CourseEditor class:
 
@@ -1796,6 +1593,7 @@ export default class CourseEditor {
                 this.loadSlidePreview(newSlide.id);
                 this.updateNavigationButtons();
                 this.syncMobileActiveSlide();
+                this.setSlideCounter();
             }, 150);
         }
     }
@@ -1839,14 +1637,18 @@ export default class CourseEditor {
         if (!this.currentLessonId || !this.currentSlideId) {
             // No slide selected - hide buttons
             prevBtn.classList.add('disabled');
+            prevBtn.disabled = true;
             nextBtn.classList.add('disabled');
+            nextBtn.disabled = true;
             return;
         }
 
         const lesson = this.findLessonById(this.currentLessonId);
         if (!lesson || !lesson.slides.length) {
             prevBtn.classList.add('disabled');
+            prevBtn.disabled = true;
             nextBtn.classList.add('disabled');
+            nextBtn.disabled = true;
             return;
         }
 
@@ -1855,16 +1657,43 @@ export default class CourseEditor {
         // Update previous button
         if (currentIndex <= 0) {
             prevBtn.classList.add('disabled');
+            prevBtn.disabled = true;
         } else {
             prevBtn.classList.remove('disabled');
+            prevBtn.disabled = false;
         }
 
         // Update next button
         if (currentIndex >= lesson.slides.length - 1) {
             nextBtn.classList.add('disabled');
+            nextBtn.disabled = true;
         } else {
             nextBtn.classList.remove('disabled');
+            nextBtn.disabled = false;
         }
+    }
+
+    // TODO
+    // get the index of the current slide in the active lesson , total slides number in the same lesson    getSlideCounter() {
+    setSlideCounter() {
+        if (!this.currentLessonId || this.currentSlideId == null) {
+            return
+        };
+        const lesson = this.findLessonById(this.currentLessonId);
+        if (!lesson) {
+            return
+        };
+        const currentIndex = lesson.slides.findIndex(slide => slide.id === this.currentSlideId);
+        this.dom.currentSlideNumber.textContent = currentIndex + 1;
+        this.dom.totalSlidesNumber.textContent = lesson.slides.length;
+        return { currentIndex, totalSlides: lesson.slides.length }
+
+    }
+
+    updateSlideCounter(currentIndex) {
+        const slideCounter = document.getElementById('current-slide');
+        if (!slideCounter) return;
+        slideCounter.textContent = `${currentIndex + 1}/${this.currentLesson.slides.length}`;
     }
 }
 

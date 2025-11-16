@@ -1,11 +1,19 @@
+// get user data from local storage user_data -> role
+const user = JSON.parse(localStorage.getItem('user_data'));
+
+if (user === null || user === undefined || user === ''){
+    window.location.href = 'login.html';
+}
+
+
 // UI Components - All classes kept exactly as original
 const Components = {
 
-    
+
     // Main Container
     createMainContainer() {
         return `
-            <div class="min-h-screen bg-gradient-soft">
+            <div class="min-h-screen bg-gradient-soft" onload="${user.role === "admin"? "requireAdmin()": "requireAuth()"}">
                 ${this.createHeader()}
                 ${this.createMainContent()}
                 ${this.createCourseModal()}
@@ -35,13 +43,13 @@ const Components = {
                 <div class="flex items-center justify-between">
                     <h1 class="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Content</h1>
                     <div class="flex items-center gap-3 animate-slide-in-right">
-                        <button id="create-course-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 gap-2 gradient-primary text-white shadow-button hover:shadow-card-hover transition-all duration-300 hover:scale-105">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4">
-                                <path d="M5 12h14"></path>
-                                <path d="M12 5v14"></path>
-                            </svg>
-                            Create course
-                        </button>
+                    ${user.role === 'admin' ? `<button id="create-course-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 gap-2 gradient-primary text-white shadow-button hover:shadow-card-hover transition-all duration-300 hover:scale-105">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4">
+                                                        <path d="M5 12h14"></path>
+                                                        <path d="M12 5v14"></path>
+                                                    </svg>
+                                                    Create course
+                                                </button>`: ``}
                     </div>
                 </div>
             </div>
@@ -58,6 +66,8 @@ const Components = {
             </button>
         `).join('');
 
+        if (user.role === 'admin') {
+
         return `
             <nav class="mb-8 animate-fade-in" style="animation-delay: 0.1s;">
                 <div class="border-b">
@@ -67,6 +77,9 @@ const Components = {
                 </div>
             </nav>
         `;
+        } else {
+            return ``;
+        }
     },
 
     // Search and Filters
@@ -222,10 +235,13 @@ const Components = {
         const animationDelay = 0.3 + (index * 0.1);
         const currentView = AppData.getCurrentView();
 
-        if (currentView === 'list') {
-            return `
+        // check if course.cover is empty string
+
+        if (course.cover || course.cover === undefined || course.cover === 'undefined') {
+            if (currentView === 'list') {
+                return `
                 <div class="group relative bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-500 hover:-translate-y-1 cursor-pointer animate-slide-up flex" style="animation-delay: ${animationDelay}s;">
-                    <div class="w-48 gradient-card relative overflow-hidden flex-shrink-0">
+                    <div class="w-48 gradient-card relative overflow-hidden flex-shrink-0" style="${course.cover ? `background-image: url(${course.cover}); background-size: cover; background-position: center; background-repeat: no-repeat;` : ''}">
                         <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-all duration-500"></div>
                         <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -274,11 +290,11 @@ const Components = {
                     </div>
                 </div>
             `;
-        } else {
-            // Grid view (original)
-            return `
-                <div class="group relative bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-500 hover:-translate-y-2 cursor-pointer animate-slide-up" style="animation-delay: ${animationDelay}s;">
-                    <div class="h-48 gradient-card relative overflow-hidden">
+            } else {
+                // Grid view (original)
+                return `
+                <div class="group relative bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-500 hover:-translate-y-2 cursor-pointer animate-slide-up" style="animation-delay: ${animationDelay}s;"> 
+                    <div class="h-48 gradient-card relative overflow-hidden" style="background-image: url(${course.cover}); background-size: cover; background-position: center; background-repeat: no-repeat;">
                         <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-all duration-500"></div>
                         <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -322,6 +338,110 @@ const Components = {
                     </div>
                 </div>
             `;
+            }
+        }
+        else {
+            if (currentView === 'list') {
+                return `
+                <div class="group relative bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-500 hover:-translate-y-1 cursor-pointer animate-slide-up flex" style="animation-delay: ${animationDelay}s;">
+                    <div class="w-48 gradient-card relative overflow-hidden flex-shrink-0" style="${course.cover ? `background-image: url(${course.cover}); background-size: cover; background-position: center; background-repeat: no-repeat;` : ''}">
+                        <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-all duration-500"></div>
+                        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-12 w-12 text-white/30 animate-float">
+                                <path d="M12 7v14"></path>
+                                <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="p-5 bg-card flex-1">
+                        <div class="flex items-start gap-2 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-4 w-4 text-primary mt-1 flex-shrink-0">
+                                <path d="M12 7v14"></path>
+                                <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+                            </svg>
+                            <div class="flex-1">
+                                <span class="text-xs font-medium text-primary uppercase tracking-wide">${course.type}</span>
+                                <h3 class="text-lg font-semibold mt-1 group-hover:text-primary transition-colors duration-300" dir="rtl">${course.title}</h3>
+                                <p class="text-sm text-muted-foreground mt-1">${course.description}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-border">
+                            <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div class="flex items-center gap-2">
+                                    <div class="h-5 w-5 rounded bg-primary/10 flex items-center justify-center">
+                                        <span class="text-xs font-medium text-primary">${course.author}</span>
+                                    </div>
+                                    <span>${course.author}</span>
+                                </div>
+                                <span class="flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-3 w-3">
+                                        <path d="M12 7v14"></path>
+                                        <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+                                    </svg>
+                                    ${course.lessons} Lesson${course.lessons !== 1 ? 's' : ''}
+                                </span>
+                                <span class="text-xs text-muted-foreground">Modified: ${course.lastModified}</span>
+                            </div>
+                            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${course.status === 'published' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100'} transition-colors duration-300">
+                                ${course.status.charAt(0).toUpperCase() + course.status.slice(1)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+                    </div>
+                </div>
+            `;
+            } else {
+                // Grid view (original)
+                return `
+                <div class="group relative bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-500 hover:-translate-y-2 cursor-pointer animate-slide-up" style="animation-delay: ${animationDelay}s;"> 
+                    <div class="h-48 gradient-card relative overflow-hidden" style="${course.cover ? `background-image: url(${course.cover}); background-size: cover; background-position: center; background-repeat: no-repeat;` : ''}">
+                        <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-all duration-500"></div>
+                        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-16 w-16 text-white/30 animate-float">
+                                <path d="M12 7v14"></path>
+                                <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="p-5 bg-card">
+                        <div class="flex items-start gap-2 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-4 w-4 text-primary mt-1 flex-shrink-0">
+                                <path d="M12 7v14"></path>
+                                <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+                            </svg>
+                            <div class="flex-1">
+                                <span class="text-xs font-medium text-primary uppercase tracking-wide">${course.type}</span>
+                                <h3 class="text-lg font-semibold mt-1 group-hover:text-primary transition-colors duration-300" dir="rtl">${course.title}</h3>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-border">
+                            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                <div class="h-5 w-5 rounded bg-primary/10 flex items-center justify-center">
+                                    <span class="text-xs font-medium text-primary">${course.author}</span>
+                                </div>
+                                <span class="flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open h-3 w-3">
+                                        <path d="M12 7v14"></path>
+                                        <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
+                                    </svg>
+                                    ${course.lessons} Lesson${course.lessons !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${course.status === 'published' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100'} transition-colors duration-300">
+                                ${course.status.charAt(0).toUpperCase() + course.status.slice(1)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+                    </div>
+                </div>
+            `;
+            }
         }
     },
 
@@ -416,17 +536,26 @@ const Components = {
 
     // Student Container Component - FIXED VERSION
     createStudentContainer(students) {
-        return `
-            <div id="student-container" class="hidden animate-fade-in">
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-foreground mb-2">إدارة الطلاب</h2>
-                    <p class="text-muted-foreground">عرض وإدارة جميع الطلاب المسجلين في النظام</p>
-                </div>
-                
-                ${this.createStudentFilters(students)}  <!-- Pass students parameter -->
-                ${this.createStudentsTable(students)}
-            </div>
-        `;
+        if (user.role !== 'admin'){
+            return ``;
+        }
+        else {
+            if (students.length > 0) {
+                return `
+                    <div id="student-container" class="hidden animate-fade-in">
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-bold text-foreground mb-2">إدارة الطلاب</h2>
+                            <p class="text-muted-foreground">عرض وإدارة جميع الطلاب المسجلين في النظام</p>
+                        </div>
+                        
+                        ${this.createStudentFilters(students)}  <!-- Pass students parameter -->
+                        ${this.createStudentsTable(students)}
+                    </div>
+                `;
+            
+            }
+        }
+        return ``;
     },
 
     // Student Filters - FIXED VERSION
@@ -669,5 +798,5 @@ function closeStudentModal() {
     if (studentModal) {
         studentModal.classList.add('hidden');
     }
-    
+
 }

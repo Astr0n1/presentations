@@ -114,6 +114,36 @@ class UIInteractions {
     const cancelLessonEditBtn = document.getElementById('cancel-lesson-edit');
     if (cancelLessonEditBtn) cancelLessonEditBtn.addEventListener('click', () => this.editor.hideLessonEditForm());
 
+    // Preview mode toggle
+    document.addEventListener('change', (e) => {
+      if (e.target.name === 'preview-mode') {
+        const previewMode = e.target.value;
+        this.editor.setPreview(previewMode);
+
+        // Update active state visually
+        document.querySelectorAll('.preview-mode-option').forEach(option => {
+          option.classList.remove('active');
+        });
+        e.target.closest('.preview-mode-option').classList.add('active');
+
+        // Refresh current slide preview
+        const currentSlide = this.editor.getCurrentSlide();
+        if (currentSlide) {
+          this.editor.renderSlidePreview(currentSlide);
+        }
+      }
+    });
+
+    // Initialize active state
+    document.addEventListener('DOMContentLoaded', () => {
+      const initialMode = this.editor.preview === 'pc-preview' ? 'pc-preview' : 'mobile-preview';
+      const initialRadio = document.querySelector(`input[name="preview-mode"][value="${initialMode}"]`);
+      if (initialRadio) {
+        initialRadio.checked = true;
+        initialRadio.closest('.preview-mode-option').classList.add('active');
+      }
+    });
+
     // add slide buttons
     document.querySelectorAll(' .add-slide-inside-lesson').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -487,6 +517,13 @@ class UIInteractions {
       if (!isNaN(idx) && this.editor.currentSlideId != null) {
         this.editor.updateNestedContent(this.editor.currentSlideId, 'items', idx, null, target.value);
       }
+    }
+
+    if (target.id === 'edit-pdf-url') {
+      if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'pdfUrl', target.value);
+    }
+    if (target.id === 'edit-pdf-description') {
+      if (this.editor.currentSlideId != null) this.editor.updateSlideContent(this.editor.currentSlideId, 'description', target.value);
     }
 
     if (target.dataset && target.dataset.imageCollection !== undefined) {
@@ -1280,7 +1317,7 @@ class UIInteractions {
     const expandLessonBtn = target.closest('.expand-lesson-btn');
     if (expandLessonBtn) {
       const lessonItem = expandLessonBtn.closest('.lesson-item');
-      if (lessonItem) {
+      if (lessonItem && !lessonItem.classList.contains('locked')) {
         const lessonId = parseInt(lessonItem.dataset.lessonId, 10);
 
         // Toggle expansion state
@@ -1296,7 +1333,7 @@ class UIInteractions {
     const lessonHeader = target.closest('.lesson-header');
     if (lessonHeader) {
       const lessonItem = lessonHeader.closest('.lesson-item');
-      if (lessonItem) {
+      if (lessonItem && !lessonItem.classList.contains('locked')) {
         const lessonId = parseInt(lessonItem.dataset.lessonId, 10);
 
         // Toggle expansion state
@@ -1360,7 +1397,7 @@ class UIInteractions {
 
     // select slide item
     const slideItem = target.closest('.slide-item');
-    if (slideItem) {
+    if (slideItem && !slideItem.classList.contains('locked')) {
       const slideId = parseInt(slideItem.dataset.slideId, 10);
       const lessonId = parseInt(slideItem.dataset.lessonId, 10) || this.editor.currentLessonId;
       if (!isNaN(lessonId) && lessonId !== this.editor.currentLessonId) {
@@ -1403,54 +1440,28 @@ class UIInteractions {
       return;
     }
 
-    // expandable preview toggle
-    // ✅ Expandable list preview toggle (one open at a time, perfectly smooth)
     const expandableItem = target.closest('.expandable-item');
     if (expandableItem) {
-      const listContainer = expandableItem.parentElement;
+      console.log('????')
       const content = expandableItem.querySelector('.expandable-content');
       const icon = expandableItem.querySelector('.fa-chevron-down');
 
-      // Smooth toggle helper
-      const toggleSection = (el, expand) => {
-        el.style.overflow = 'hidden';
-        el.style.transition = 'max-height 0.4s ease, opacity 0.4s ease';
-        if (expand) {
-          el.style.display = 'block';
-          requestAnimationFrame(() => {
-            el.style.maxHeight = el.scrollHeight + 'px';
-            el.style.opacity = '1';
-          });
-        } else {
-          el.style.maxHeight = el.scrollHeight + 'px'; // set current height first
-          requestAnimationFrame(() => {
-            el.style.maxHeight = '0';
-            el.style.opacity = '0';
-          });
-          // hide completely after transition ends
-          setTimeout(() => {
-            el.style.display = 'none';
-          }, 400);
-        }
-      };
+      if (content && icon) {
+        // Toggle expanded state
+        const isExpanding = !content.classList.contains('expanded');
 
-      // Collapse all others smoothly
-      listContainer.querySelectorAll('.expandable-item').forEach((item) => {
-        if (item !== expandableItem) {
-          const otherContent = item.querySelector('.expandable-content');
-          const otherIcon = item.querySelector('.fa-chevron-down');
-          if (otherContent && otherContent.style.display !== 'none') {
-            toggleSection(otherContent, false);
-            if (otherIcon) otherIcon.classList.remove('rotate-180');
+        // Close all other expandable items
+        document.querySelectorAll('.expandable-content.expanded').forEach(otherContent => {
+          if (otherContent !== content) {
+            otherContent.classList.remove('expanded');
+            const otherIcon = otherContent.closest('.expandable-item').querySelector('.fa-chevron-down');
+            if (otherIcon) otherIcon.classList.remove('rotated');
           }
-        }
-      });
+        });
 
-      // Toggle current
-      if (content) {
-        const isCollapsed = content.style.display === 'none' || !content.style.display;
-        toggleSection(content, isCollapsed);
-        if (icon) icon.classList.toggle('rotate-180', isCollapsed);
+        // Toggle current item
+        content.classList.toggle('expanded', isExpanding);
+        icon.classList.toggle('rotated', isExpanding);
       }
       return;
     }

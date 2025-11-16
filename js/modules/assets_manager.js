@@ -78,7 +78,7 @@ class AssetsManager {
 
     try {
       // Fetch assets from JSON file
-      const response = await fetch(`https://barber.herova.net/api/edit/media/get${this.currentAssetsType === 'images' ? 'Images' : 'Vedioes'}.php`);
+      const response = await fetch(`https://barber.herova.net/api/edit/media/get${this.currentAssetsType === 'images' ? 'Images' : this.currentAssetsType === 'videos' ? 'Vedioes' : 'Pdf'}.php`);
       const data = await response.json();
 
       const assets = data.data || [];
@@ -114,26 +114,44 @@ class AssetsManager {
   }
 
   renderAssets(assets, container) {
-    container.innerHTML = assets.map(asset => `
+    container.innerHTML = assets.map(asset => {
+      // Determine asset type based on URL or metadata
+      const assetType = this.getAssetType(asset.url);
+
+      return `
             <div class="asset-card relative" data-asset-id="${asset.id}">
-                <div class="asset-preview">
-                    ${this.currentAssetsType === 'images' ?
-        `<img src="${Utils.escapeHTML(asset.url)}" alt="${Utils.escapeHTML(asset.name)}" 
+                <div class="asset-preview ${assetType}">
+                    ${assetType === 'images' ?
+          `<img src="${Utils.escapeHTML(asset.url)}" alt="${Utils.escapeHTML(asset.name)}" 
+                              class="w-full h-full object-cover"
                               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />` :
-        `<video src="${Utils.escapeHTML(asset.url)}" muted></video>
-                         <div class="video-icon">
-                             <i class="fas fa-play"></i>
-                         </div>`
-      }
-                    <div class="fallback-placeholder hidden absolute inset-0 flex items-center justify-center bg-gray-200">
-                        <i class="fas fa-${this.currentAssetsType === 'images' ? 'image' : 'video'} text-2xl text-gray-400"></i>
+          assetType === 'videos' ?
+            `<div class="video-preview relative w-full h-full flex items-center justify-center bg-gray-800">
+                <video src="${Utils.escapeHTML(asset.url)}" muted class="max-w-full max-h-full"></video>
+                <div class="video-icon absolute inset-0 flex items-center justify-center bg-black/30">
+                    <i class="fas fa-play text-white text-2xl"></i>
+                </div>
+            </div>` :
+            // PDF preview
+            `<div class="pdf-preview w-full h-full flex flex-col items-center justify-center bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                <i class="fas fa-file-pdf text-red-500 text-4xl mb-2"></i>
+                <span class="text-red-700 font-semibold text-sm text-center break-words">${Utils.escapeHTML(asset.name || 'PDF File')}</span>
+                <span class="text-red-500 text-xs mt-1">انقر للمعاينة</span>
+            </div>`
+        }
+                    <div class="fallback-placeholder hidden absolute inset-0 flex items-center justify-center bg-gray-200 rounded-lg">
+                        <i class="fas fa-${assetType === 'images' ? 'image' : assetType === 'videos' ? 'video' : 'file-pdf'} text-2xl text-gray-400"></i>
                     </div>
                 </div>
                 <div class="asset-info">
-                    <div class="asset-type">${this.currentAssetsType === 'images' ? 'صورة' : 'فيديو'}</div>
+                    <div class="asset-type ${assetType}-badge">
+                        ${assetType === 'images' ? 'صورة' : assetType === 'videos' ? 'فيديو' : 'PDF'}
+                    </div>
+                    <div class="asset-name">${Utils.escapeHTML(asset.name || 'ملف')}</div>
                 </div>
             </div>
-        `).join('');
+        `;
+    }).join('');
 
     // Add click listeners to asset cards
     container.querySelectorAll('.asset-card').forEach(card => {
@@ -141,6 +159,30 @@ class AssetsManager {
         this.selectAsset(card, assets.find(a => a.id == card.dataset.assetId));
       });
     });
+
+    // Auto-play videos on hover for better preview
+    container.querySelectorAll('video').forEach(video => {
+      const card = video.closest('.asset-card');
+      card.addEventListener('mouseenter', () => {
+        video.play().catch(e => console.log('Video autoplay prevented:', e));
+      });
+      card.addEventListener('mouseleave', () => {
+        video.pause();
+        video.currentTime = 0;
+      });
+    });
+  }
+
+  getAssetType(url) {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) {
+      return 'images';
+    } else if (lowerUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/)) {
+      return 'videos';
+    } else if (lowerUrl.match(/\.(pdf)$/)) {
+      return 'pdf';
+    }
+    return 'unknown';
   }
 
   selectAsset(card, asset) {
@@ -527,8 +569,12 @@ class AssetsManager {
       fileInput.accept = 'image/*';
       fileInput.value = '';
     }
-    else {
+    else if (this.currentAssetsType === 'videos') {
       fileInput.accept = 'video/*';
+      fileInput.value = '';
+    }
+    else if (this.currentAssetsType === 'pdf') {
+      fileInput.accept = 'application/pdf,.pdf';
       fileInput.value = '';
     }
     document.getElementById('file-upload-input').click();
@@ -604,9 +650,9 @@ class AssetsManager {
   async uploadSingleFileWithProgress(file, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      const url = this.currentAssetsType === 'images'
-        ? 'https://barber.herova.net/api/edit/media/uploadImage.php'
-        : 'https://barber.herova.net/api/edit/media/uploadVedio.php';
+      console.log(this.currentAssetsType)
+      const url = `https://barber.herova.net/api/edit/media/upload${this.currentAssetsType === 'images' ? 'Image' : this.currentAssetsType === 'videos' ? 'Vedio' : 'Pdf'}.php`
+
 
       // Track upload progress
       xhr.upload.addEventListener('progress', (e) => {
@@ -640,8 +686,11 @@ class AssetsManager {
       const formData = new FormData();
       if (this.currentAssetsType === 'images') {
         formData.append('image', file);
-      } else {
+      } else if (this.currentAssetsType === 'videos') {
         formData.append('video', file);
+      }
+      else {
+        formData.append('pdf', file);
       }
       formData.append('filename', file.name);
 

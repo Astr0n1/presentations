@@ -1,0 +1,313 @@
+/* Import base styles from Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Define CSS variables for easier maintenance */
+:root {
+	--sidebar-width: 320px;
+	--bottom-bar-height: 70px;
+	--mobile-bottom-sheet-height: 80vh; /* New variable for mobile sidebar */
+	--transition-speed: 0.3s;
+	--blue-primary: #2563eb;
+	--gray-dark: #374151;
+}
+
+html,
+body {
+	position: relative;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	font-family: "Tajawal", sans-serif;
+	margin: 0;
+	padding: 0;
+}
+
+.preview-container {
+	position: relative;
+	width: 100%;
+	height: 100vh;
+	display: flex;
+}
+
+/* --- Main Content Area --- */
+.main-content {
+	flex-grow: 1;
+	height: 100vh;
+	position: relative;
+	transition: margin-right var(--transition-speed) ease;
+	margin-right: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Desktop Sidebar Open State */
+.sidebar-open .main-content {
+	margin-right: var(--sidebar-width);
+}
+
+/* Swiper Styling */
+.swiper.mySwiper {
+	width: 100%;
+	flex-grow: 1;
+	height: calc(100% - var(--bottom-bar-height));
+	background: #000;
+}
+
+.swiper-slide {
+	text-align: center;
+	font-size: 18px;
+	background: #000;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
+
+/* --- Bottom Navigation Bar (Desktop & Mobile) --- */
+.bottom-bar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: var(--bottom-bar-height);
+	background-color: #ffffff;
+	border-top: 1px solid #e5e7eb;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 2rem;
+	z-index: 50;
+	transition: right var(--transition-speed) ease;
+}
+
+/* Desktop: Bottom Bar shifts when sidebar is open */
+.sidebar-open .bottom-bar {
+	right: var(--sidebar-width);
+}
+
+.bottom-nav-btn {
+	@apply flex items-center justify-center px-6 py-3 rounded-xl text-base font-bold transition-all duration-200 shadow-md;
+}
+
+.bottom-nav-btn:disabled {
+	@apply bg-gray-200 text-gray-400 cursor-not-allowed shadow-none;
+}
+
+.bottom-nav-btn:not(:disabled) {
+	@apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.bottom-nav-btn.continue {
+	@apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.bottom-nav-btn.continue:disabled {
+	@apply bg-blue-300 text-white cursor-not-allowed;
+}
+
+/* --- Lessons Sidebar (Desktop) --- */
+.lessons-sidebar {
+	position: fixed;
+	top: 0;
+	right: 0;
+	height: 100%;
+	width: var(--sidebar-width);
+	max-width: 90vw;
+	background-color: #ffffff;
+	border-left: 1px solid #e5e7eb;
+	z-index: 60;
+	display: flex;
+	flex-direction: column;
+	transition: transform var(--transition-speed) ease;
+	transform: translateX(0);
+}
+
+.preview-container:not(.sidebar-open) .lessons-sidebar {
+	transform: translateX(100%);
+}
+
+.sidebar-header {
+	@apply px-4 py-6 border-b border-gray-200 bg-white;
+}
+
+.sidebar-content {
+	flex-grow: 1;
+	overflow-y: auto;
+	padding: 1rem 0; /* Adjust padding for better lesson alignment */
+}
+
+/* --- Sidebar Toggle Button (Desktop) --- */
+.sidebar-toggle-btn {
+	/* Positioning */
+	@apply fixed top-1/2 -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow-lg hover:bg-blue-50 transition-all duration-300 z-50 w-8 h-8 flex items-center justify-center;
+	right: calc(var(--sidebar-width) + 1rem);
+	transition: right var(--transition-speed) ease,
+		transform var(--transition-speed) ease;
+}
+
+.preview-container:not(.sidebar-open) .sidebar-toggle-btn {
+	right: 1rem;
+}
+
+.sidebar-toggle-btn i {
+	transition: transform var(--transition-speed) ease;
+	transform: rotate(0deg);
+}
+
+.preview-container:not(.sidebar-open) .sidebar-toggle-btn i {
+	transform: rotate(180deg);
+}
+
+/* --- Mobile Styles (max-width: 768px) --- */
+@media (max-width: 768px) {
+	/* Hide desktop toggle button */
+	.sidebar-toggle-btn {
+		display: none;
+	}
+
+	/* Force main content to take full width */
+	.main-content {
+		margin-right: 0 !important;
+	}
+
+	/* Move lessons sidebar to bottom sheet */
+	.lessons-sidebar {
+		/* Overrides desktop fixed position */
+		height: var(--mobile-bottom-sheet-height);
+		width: 100%;
+		top: auto;
+		bottom: 0;
+		right: 0;
+		border-left: none;
+		border-top: 1px solid #e5e7eb;
+		border-radius: 1rem 1rem 0 0; /* Rounded top corners */
+		transform: translateY(100%); /* Start hidden */
+		box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+	}
+
+	/* Mobile Open State: Slide up from bottom */
+	.sidebar-open .lessons-sidebar {
+		transform: translateY(calc(100% - var(--mobile-bottom-sheet-height))) !important;
+	}
+
+	/* Mobile Header (includes the handle to drag) */
+	.sidebar-header {
+		@apply cursor-grab flex justify-center;
+		/* Add a handle for visibility */
+	}
+	.sidebar-header::before {
+		content: '';
+		display: block;
+		width: 40px;
+		height: 4px;
+		border-radius: 2px;
+		background-color: #d1d5db;
+		position: absolute;
+		top: 10px;
+	}
+
+	/* Adjust bottom bar padding for mobile to be less wide */
+	.bottom-bar {
+		padding: 0 1rem;
+	}
+
+	.bottom-nav-btn {
+		@apply px-4 py-2 text-sm;
+	}
+}
+
+/* --- UI Enhancement for Lessons Sidebar (Goal B & New Style) --- */
+
+.lesson-item {
+	@apply mb-2 mx-2 rounded-xl overflow-hidden shadow-lg transition-all duration-300;
+}
+
+.lesson-header {
+	@apply flex items-center p-4 font-extrabold text-lg transition-all duration-300;
+	background: #f7f7f9;
+	color: var(--gray-dark);
+	border-bottom: 1px solid #f0f0f4;
+}
+
+.lesson-header.active-lesson {
+	@apply bg-blue-50 text-blue-700;
+	border-color: var(--blue-primary);
+}
+
+/* Lesson Accessibility */
+.lesson-item[data-is-accessible="false"] {
+	/* Apply a lighter look to locked lessons */
+	opacity: 0.7;
+}
+
+.lesson-item[data-is-accessible="false"] .lesson-header {
+	@apply bg-gray-100 text-gray-500;
+}
+
+/* Lesson Header Hover/Interaction */
+.lesson-item[data-is-accessible="true"]:hover {
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+	transform: translateY(-2px);
+}
+
+.lesson-item[data-is-accessible="true"] .lesson-header:hover {
+	@apply bg-gray-200;
+}
+.lesson-item[data-is-accessible="true"].lesson-item:hover .lesson-header.active-lesson {
+	@apply bg-blue-100;
+}
+
+/* Slide List within Lesson */
+.lesson-slides-list {
+	@apply max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-white;
+}
+
+.lesson-slides-list.expanded {
+	max-height: 500vh;
+	padding-bottom: 0.5rem; /* Add padding at the end of the list */
+}
+
+/* Individual Slide Item */
+.slide-item {
+	@apply flex items-center p-3 pr-6 text-base transition-all duration-150 border-r-4 border-transparent mr-2;
+}
+
+.slide-item .slide-number {
+	@apply w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold bg-gray-200 text-gray-700 ml-3;
+}
+
+/* Current Slide */
+.slide-item.current-slide {
+	@apply bg-blue-50 font-medium text-blue-700 border-blue-500;
+}
+.slide-item.current-slide .slide-number {
+	@apply bg-blue-600 text-white;
+}
+
+/* Locked Slides */
+.slide-item.slide-locked {
+	@apply text-gray-400 cursor-not-allowed;
+}
+
+.slide-item.slide-locked .slide-number {
+	@apply bg-gray-100 text-gray-400;
+}
+
+.slide-item.slide-locked:hover {
+	@apply bg-white; /* Prevent hover background on locked slides */
+}
+
+/* Accessible Slides */
+.slide-item.slide-accessible {
+	@apply cursor-pointer text-gray-700 hover:bg-gray-100;
+}
+
+/* Loader */
+.loader-spinner {
+	border-color: #bfdbfe; /* blue-200 */
+	border-top-color: #2563eb; /* blue-600 */
+}

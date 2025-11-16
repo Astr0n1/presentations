@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Lessons - المنصة التعليمية</title>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link rel="stylesheet" href="css/styles.css" />
+        <link rel="stylesheet" href="css/edit.css" />
+        <link rel="stylesheet" href="css/unit-size.css" />
+        <link rel="stylesheet" href="css/mobile-nav.css" />
+
+        <link
+            href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap"
+            rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap"
+            rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap"
+            rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lateef&display=swap"
+            rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Scheherazade&display=swap"
+            rel="stylesheet">
+
+        <link rel="stylesheet"
+            href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css?v=1.09">
+
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script defer src="js/auth.js"></script>
+        <script type="module" defer src="js/preview.js"></script>
+    </head>
+
+    <body class="bg-gray-100 min-h-screen !p-0">
+        <!-- Loader Modal -->
+        <div id="loader-modal"
+            class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-[9999] transition-opacity duration-300">
+            <div class="text-center">
+                <!-- Spinner -->
+                <div
+                    class="loader-spinner w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+
+                <!-- Loading Text -->
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">جاري
+                    تحميل المحتوى</h3>
+                <p class="text-gray-600">يرجى الانتظار...</p>
+
+                <!-- Progress Bar (Optional) -->
+                <div
+                    class="w-48 h-2 bg-gray-200 rounded-full mt-4 mx-auto overflow-hidden">
+                    <div
+                        class="loader-progress h-full bg-blue-600 rounded-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Lessons Sidebar - REMOVE BUTTON FROM HERE -->
+        <div
+            class="sidebar h-full bg-white border-l border-gray-200 z-10 flex-shrink-0 w-[300px] max-w-[90vw] transition-transform duration-300 ease-in-out">
+
+            <!-- Scrollable Content Container -->
+            <div class="h-full overflow-y-auto">
+                <div class="px-4 py-6">
+                    <!-- Lessons List -->
+                    <div class="mb-6">
+                        <h3
+                            class="text-lg font-semibold text-gray-900 mb-4">قائمة
+                            الدروس</h3>
+                        <div id="lessons-list" class="space-y-3">
+                            <!-- Lessons will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button
+            id="collapse-lessons-sidebar"
+            class="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full shadow hover:bg-blue-50 transition-all duration-300 z-50 w-8 h-8 items-center justify-center sidebar-toggle-btn"
+            title="إخفاء / إظهار قائمة الدروس">
+            <i class="fas fa-chevron-left text-gray-600 text-sm"></i>
+        </button>
+
+        <!-- Slide Preview Container -->
+
+        <div id="preview-actions" style='opacity: 0;'
+            class="container absolute text-center w-full bottom-[15px] left-0 right-0 flex items-center justify-center z-3 gap-[20px]">
+            <button
+                id="next-slide-btn"
+                class="bg-white rounded-lg text-gray-800  w-24 max-w-[20vw] h-[40px] flex items-center justify-center shadow-lg hover:border-blue-600">
+                التالي
+            </button>
+            <p id='slide-counter'>
+                <span id="total-slides">0</span> /
+                <span id="current-slide">0</span>
+            </p>
+            <button
+                id="prev-slide-btn"
+                class="bg-white rounded-lg text-gray-800  w-24 max-w-[20vw] h-[40px] flex items-center justify-center shadow-lg hover:border-blue-600">
+                السابق
+            </button>
+        </div>
+        <div
+            id="slide-preview-container"
+            class="slide-preview w-full h-screen m-0 flex items-center justify-center relative">
+            <div
+                id="slide-preview-content"
+                class="w-full h-full overflow-hidden transition-all duration-500 ease-in-out">
+                <div
+                    class="flex flex-col items-center justify-center text-center h-full text-white opacity-80">
+                    <i class="fas fa-sliders-h text-6xl mb-6"></i>
+                    <h2 class="text-2xl font-bold mb-3">
+                        اختر سلايداً للمعاينة
+                    </h2>
+                    <p class="slide-text-body">
+                        انقر على أي سلايد لرؤية محتواه هنا
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

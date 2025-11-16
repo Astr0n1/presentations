@@ -121,7 +121,7 @@ class CourseManager {
             courseDiv.style.animationDelay = `${animationDelay}s`;
 
             courseDiv.innerHTML = `
-                <div class="w-48 gradient-card relative overflow-hidden flex-shrink-0">
+                <div class="w-48 gradient-card relative overflow-hidden flex-shrink-0" style="${course.cover ? `background-image: url(${course.cover}); background-size: cover; background-position: center; background-repeat: no-repeat;` : ''}">
                     <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-all duration-500"></div>
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -175,7 +175,7 @@ class CourseManager {
             courseDiv.style.animationDelay = `${animationDelay}s`;
 
             courseDiv.innerHTML = `
-                <div class="h-48 gradient-card relative overflow-hidden">
+                <div class="h-48 gradient-card relative overflow-hidden" style="${course.cover ? `background-image: url(${course.cover}); background-size: cover; background-position: center; background-repeat: no-repeat;` : ''}">
                     <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-all duration-500"></div>
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -260,8 +260,15 @@ class CourseManager {
             card.addEventListener('click', () => {
                 const courseTitle = card.querySelector('h3').textContent;
                 // console.log('Course card clicked:', courseTitle);
+                if (user.role === 'admin') {
+                    
                 // go to slides.php?name=courseTitle
                 window.location.href = `slides.html?name=${encodeURIComponent(courseTitle)}`;
+                } else {
+                    
+                // go to preview.php?name&ps=student
+                window.location.href = `preview.html?name=${encodeURIComponent(courseTitle)}&ps=student`;
+                }
             });
         });
     }
@@ -453,14 +460,16 @@ class CourseManager {
         // console.log('Modal found:', modal);
 
         // Open modal
-        if (createCourseBtn) {
-            createCourseBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                // console.log('Create course button clicked');
-                this.openCreateCourseModal();
-            });
-        } else {
-            console.error('Create course button not found with ID');
+        if (user.role === 'admin') {
+            if (createCourseBtn) {
+                createCourseBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // console.log('Create course button clicked');
+                    this.openCreateCourseModal();
+                });
+            } else {
+                console.error('Create course button not found with ID');
+            }
         }
 
         // Close modal events

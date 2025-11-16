@@ -1,15 +1,61 @@
 /* All the original CSS styles exactly as they were */
 
-:root{
+:root {
+  --background: 0 0% 99%;
+  --foreground: 218 25% 15%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 218 25% 15%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 218 25% 15%;
+
+  --primary: 199 89% 48%;
+  --primary-foreground: 0 0% 100%;
+
+  --primary-glow: 199 89% 60%;
+  --primary-dark: 199 89% 38%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 218 25% 15%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 218 15% 45%;
+
+  --accent: 199 95% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 199 89% 48%;
+
+  --radius: 0.75rem;
+
+  --gradient-primary: linear-gradient(135deg, hsl(199, 89%, 48%) 0%, hsl(199, 89%, 60%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(205, 78%, 45%) 0%, hsl(199, 89%, 52%) 50%, hsl(193, 85%, 60%) 100%);
+  --gradient-soft: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(210, 40%, 98%) 100%);
+
+  --shadow-card: 0 4px 20px -2px hsl(199, 89%, 48%, 0.08);
+  --shadow-card-hover: 0 8px 30px -4px hsl(199, 89%, 48%, 0.15);
+  --shadow-button: 0 2px 8px -1px hsl(199, 89%, 48%, 0.2);
+  
+  
   --error-bg: hsl(0, 84%, 60%);
-  --error-border: black;
+  --error-border: white;
   --error-text: white;
-   --warning-bg: hsl(40, 84%, 60%);
-  --warning-border: black;
+  --warning-bg: hsl(40, 84%, 60%);
+  --warning-border: hsl(40, 100%, 55%);
   --warning-text: white;
-  --success-bg: hsl(120, 84%, 60%);
-  --success-border: black;
+  --success-bg: hsl(120, 100%, 39%);
+  --success-border: white;
   --success-text: white;
+  --info-text: white;
+  --info-bg: hsl(200, 84%, 60%);
+  --info-border: white;
+
 }
 
 *,
@@ -734,48 +780,6 @@ video {
   display: none;
 }
 
-:root {
-  --background: 0 0% 99%;
-  --foreground: 218 25% 15%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 218 25% 15%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 218 25% 15%;
-
-  --primary: 199 89% 48%;
-  --primary-foreground: 0 0% 100%;
-
-  --primary-glow: 199 89% 60%;
-  --primary-dark: 199 89% 38%;
-
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 218 25% 15%;
-
-  --muted: 210 40% 96%;
-  --muted-foreground: 218 15% 45%;
-
-  --accent: 199 95% 55%;
-  --accent-foreground: 0 0% 100%;
-
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 199 89% 48%;
-
-  --radius: 0.75rem;
-
-  --gradient-primary: linear-gradient(135deg, hsl(199, 89%, 48%) 0%, hsl(199, 89%, 60%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(205, 78%, 45%) 0%, hsl(199, 89%, 52%) 50%, hsl(193, 85%, 60%) 100%);
-  --gradient-soft: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(210, 40%, 98%) 100%);
-
-  --shadow-card: 0 4px 20px -2px hsl(199, 89%, 48%, 0.08);
-  --shadow-card-hover: 0 8px 30px -4px hsl(199, 89%, 48%, 0.15);
-  --shadow-button: 0 2px 8px -1px hsl(199, 89%, 48%, 0.2);
-}
 
 .dark {
   --background: 218 25% 8%;
@@ -2296,7 +2300,7 @@ body {
 }
 
 .text-white\/30 {
-  color: rgb(255 255 255 / 0.3);
+  color: rgb(255 255 255 / 0.7);
 }
 
 .underline {
@@ -2672,6 +2676,22 @@ All colors MUST be HSL.
 .after\:w-1::after {
   content: var(--tw-content);
   width: 0.25rem;
+}
+
+
+.border-black{
+  --tw-border-opacity: 1;
+  border-color: rgb(0 0 0 / var(--tw-border-opacity, 1));
+}
+
+.border-blue-600{
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
+}
+
+.disabled{
+  opacity: 0.5;
+  cursor:no-drop;
 }
 
 .after\:w-\[2px\]::after {
@@ -4749,4 +4769,77 @@ All colors MUST be HSL.
 
 .bg-green-500{
   background: var(--success-bg) !important;
+  padding: 5px !important;
+  border: 1px solid var(--success-border) !important;
+  color: var(--success-text) !important;
+}
+
+
+.bg-blue-500{
+  background: var(--info-bg) !important;
+  padding: 5px !important;
+  border: 1px solid var(--info-border) !important;
+  color: var(--info-text) !important;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile{
+    display: none !important;
+  }
+}
+
+.absolute         { position: absolute; }
+.inset-0          { top: 0; right: 0; bottom: 0; left: 0; }
+.bg-black\/50      { background-color: rgba(0, 0, 0, 0.5); }
+.flex             { display: flex; }
+.flex-col         { flex-direction: column; }
+.items-center     { align-items: center; }
+.justify-center   { justify-content: center; }
+.text-white       { color: white; }
+.z-3             { z-index: 3; }
+.z-10             { z-index: 10; }
+
+.text-center      { text-align: center; }
+.mb-3             { margin-bottom: 0.75rem; }
+
+.animate-spin     { animation: spin 1s linear infinite; }
+.rounded-full     { border-radius: 9999px; }
+.h-8              { height: 2rem; }
+.w-8              { width: 2rem; }
+.border-b-2       { border-bottom-width: 2px; }
+.border-white     { border-color: white; }
+.mx-auto          { margin-left: auto; margin-right: auto; }
+.mb-2             { margin-bottom: 0.5rem; }
+
+.text-sm          { font-size: 0.875rem; line-height: 1.25rem; }
+.font-medium      { font-weight: 500; }
+
+.w-4\/5            { width: 80%; }
+.bg-gray-200      { background-color: rgb(229 231 235); }
+.rounded-full     { border-radius: 9999px; }
+.h-2              { height: 0.5rem; }
+.dark:bg-gray-700 { background-color: rgb(55 65 81); }
+
+.bg-blue-600      { background-color: rgb(37 99 235); }
+.transition-all   { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.duration-300     { transition-duration: 300ms; }
+
+.text-xs          { font-size: 0.75rem; line-height: 1rem; }
+.mt-1             { margin-top: 0.25rem; }
+
+#course-image-container {
+  cursor: pointer;
+}
+
+.text-gray-600{
+  color: var(--gray6) !important;
+} 
+
+.mb-4{
+  margin-bottom: 1rem;
+}
+
+
+#publish-date-info{
+  display: none;
 }
