@@ -14,27 +14,22 @@ class UIRenderer {
         }
 
     }
-    updateProgress(slide) {
-        if (!slide) return;
-        const currentProgress = this.editor.getIndices();
-        const maxProgress = this.editor.progress;
 
-        if (currentProgress.lessonIndex > maxProgress.lessonIndex) {
-            this.editor.updateProress(localStorage.getItem('C_id'), currentProgress.lessonIndex, currentProgress.slideIndex)
-        } else if (currentProgress.lessonIndex == maxProgress.lessonIndex) {
-            if (currentProgress.slideIndex > maxProgress.slideIndex) {
-                this.editor.updateProress(localStorage.getItem('C_id'), currentProgress.lessonIndex, currentProgress.slideIndex)
-            } else {
-                return;
-            }
-        } else {
-            return;
-        }
+    updateProgress(slide) {
+        if (!slide || this.editor.page !== 'preview') return;
+
+        const currentLessonId = this.editor.currentLessonId;
+        const slideId = slide.id;
+
+        // Mark slide as visited
+        this.editor.markSlideVisited(currentLessonId, slideId);
     }
 
     renderSlidePreview(slide) {
 
-        if (this.editor.page === 'preview') this.updateProgress(slide);
+        if (this.editor.page === 'preview' && slide) {
+            this.updateProgress(slide);
+        }
         const previewContainer = this.editor.dom.slidePreviewContainer;
         const previewContent = this.editor.dom.slidePreviewContent;
         if (!previewContent) return;
@@ -2131,17 +2126,42 @@ class UIRenderer {
         const container = this.editor.dom.lessonsList;
         if (!container) return;
         container.innerHTML = '';
+
         if (this.editor.page === 'preview') {
-            this.editor.setLessonSizes();
+            // Ensure progress system is initialized before rendering
+            if (!this.editor.progressMap) {
+                this.editor.progressMap = {};
+            }
+            if (!this.editor.progressMap[this.editor.currentCourseId]) {
+                this.editor.progressMap[this.editor.currentCourseId] = {};
+            }
+
+            // If mostRecentSlide is not set, initialize it
+            if (!this.editor.mostRecentSlide && this.editor.lessons.length > 0) {
+                const firstLesson = this.editor.lessons.find(l => l.status !== 'Draft');
+                if (firstLesson && firstLesson.slides.length > 0) {
+                    this.editor.mostRecentSlide = {
+                        lessonId: firstLesson.id,
+                        slideId: firstLesson.slides[0].id
+                    };
+                }
+            }
         }
+
         const urlParams = new URLSearchParams(window.location.search);
         this.editor.lessons.forEach((lesson, lessonIndex) => {
             if (this.editor.page === 'preview' && urlParams.get('ps') != 'publisher' && lesson.status === 'Draft') return
             const isCurrent = lesson.id === this.editor.currentLessonId;
             const isExpanded = this.editor.isLessonExpanded(lesson.id);
-            const lessonEl = document.createElement('div');
 
-            lessonEl.className = `lesson-item bg-white border border-gray-200 rounded-lg overflow-hidden ${isExpanded ? 'lesson-expanded' : ''} ${this.editor.page === 'preview' && this.editor.authority != 'presenter' && !this.editor.slidesLocks[lessonIndex]?.includes(true) ? 'locked' : ''}`;
+            const isUnlocked = this.editor.page === 'editor' ||
+                this.editor.authority === 'presenter' ||
+                this.editor.authority === 'publisher' ||
+                this.editor.isLessonUnlocked(lesson.id);
+
+            const lessonEl = document.createElement('div');
+            lessonEl.className = `lesson-item bg-white border border-gray-200 rounded-lg overflow-hidden ${isExpanded ? 'lesson-expanded' : ''} ${!isUnlocked ? 'locked' : ''}`;
+
             lessonEl.dataset.lessonId = lesson.id;
             lessonEl.draggable = true;
 
@@ -2149,30 +2169,30 @@ class UIRenderer {
 
             const inner = document.createElement('div');
             inner.innerHTML = `
-                <div class="p-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 lesson-header">
-                    <div class="flex-1">
-                        <h4 class="font-medium text-gray-900">${Utils.escapeHTML(lesson.title)}</h4>
-                        <p class="text-xs text-gray-500 ">${slidesCount} سلايد</p>
-                    </div>
-                    <div class="flex items-center">
-                        ${this.editor.page === 'editor' ? `
-                            <button class="delete-lesson p-2 text-gray-500 hover:text-gray-700" data-lesson-id="${lesson.id}" title="حذف الدرس">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                           <button class="toggle-lesson-status p-2 text-gray-400 hover:text-blue-600" data-lesson-id="${lesson.id}" title="تبديل حالة الدرس">
-                                <i class="fas ${lesson.status === 'Published' ? 'fa-wifi text-green-500' : 'fa-wifi-slash'}"></i>
-                            </button>
-                            `: ''}
-                            <button class="expand-lesson p-2 text-gray-400 hover:text-blue-600 expand-lesson-btn">
-                            ${this.editor.page === 'editor' || this.editor.authority == 'presenter' || this.editor.slidesLocks[lessonIndex]?.includes(true) ? `
-                                <i class="fas fa-chevron-down ${isExpanded ? 'rotate-180' : ''} transition-transform"></i>
-                                `: `
-                                <i class="fa-solid fa-lock"></i>
-                                `}
-                            </button>
-                    </div>
+            <div class="p-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 lesson-header">
+                <div class="flex-1">
+                    <h4 class="font-medium text-gray-900">${Utils.escapeHTML(lesson.title)}</h4>
+                    <p class="text-xs text-gray-500 ">${slidesCount} سلايد</p>
                 </div>
-            `;
+                <div class="flex items-center">
+                    ${this.editor.page === 'editor' ? `
+                        <button class="delete-lesson p-2 text-gray-500 hover:text-gray-700" data-lesson-id="${lesson.id}" title="حذف الدرس">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                       <button class="toggle-lesson-status p-2 text-gray-400 hover:text-blue-600" data-lesson-id="${lesson.id}" title="تبديل حالة الدرس">
+                            <i class="fas ${lesson.status === 'Published' ? 'fa-wifi text-green-500' : 'fa-wifi-slash'}"></i>
+                        </button>
+                        `: ''}
+                        <button class="expand-lesson p-2 text-gray-400  expand-lesson-btn">
+                        ${isUnlocked ? `
+                        <i class="fas hover:text-blue-600 fa-chevron-down ${isExpanded ? 'rotate-180' : ''} transition-transform"></i>
+                        `: `
+                        <i class="fa-solid fa-lock"></i>
+                        `}
+                        </button>
+                </div>
+            </div>
+        `;
             lessonEl.appendChild(inner.querySelector('div'));
 
             const slidesWrap = document.createElement('div');
@@ -2181,51 +2201,81 @@ class UIRenderer {
             const listZone = slidesWrap.querySelector('div');
 
             lesson.slides.forEach((slide, slideIndex) => {
+
+                const isSlideUnlocked = this.editor.page === 'editor' ||
+                    this.editor.authority === 'presenter' ||
+                    this.editor.authority === 'publisher' ||
+                    this.editor.isSlideUnlocked(lesson.id, slide.id);
+                const isMostRecent = this.editor.mostRecentSlide &&
+                    this.editor.mostRecentSlide.lessonId === lesson.id &&
+                    this.editor.mostRecentSlide.slideId === slide.id;
+
                 const slideItem = document.createElement('div');
-                slideItem.className = `slide-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center justify-between ${slide.id === this.editor.currentSlideId ? 'active' : ''}${this.editor.page === 'preview' && this.editor.authority != 'presenter' && !this.editor.slidesLocks[lessonIndex][slideIndex] ? 'locked' : ''}`;
+                slideItem.className = `slide-item p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex items-center justify-between 
+                  ${slide.id === this.editor.currentSlideId ? 'active' : ''}
+                  ${!isSlideUnlocked ? 'locked' : ''}
+                  ${isMostRecent ? 'most-recent' : ''}`;
+                slideItem.draggable = isSlideUnlocked;
+
                 slideItem.dataset.slideId = slide.id;
                 slideItem.dataset.lessonId = lesson.id;
                 slideItem.draggable = true;
+
+                // Add click event listener for preview mode
+                if (this.editor.page === 'preview' && isSlideUnlocked) {
+                    slideItem.addEventListener('click', (e) => {
+                        // Prevent event if clicking on action buttons
+                        if (e.target.closest('.slide-actions')) return;
+
+                        this.editor.currentLessonId = lesson.id;
+                        this.editor.currentSlideId = slide.id;
+                        this.editor.loadSlidePreview(slide.id);
+                        this.editor.renderLessonsSidebar();
+                        this.editor.setSlideCounter();
+                    });
+                }
                 slideItem.innerHTML = `
-    <div class="flex items-center space-x-3 space-x-reverse">
-        <div class="w-6 h-6 bg-blue-100 text-blue-600 rounded text-xs flex items-center justify-center">${slideIndex + 1}</div>
-        <div>
-            <h5 class="text-sm font-medium text-gray-900">${Utils.escapeHTML(slide.title || '')}</h5>
-            <p class="text-xs text-gray-500">${this.editor.getSlideTypeText(slide.type)}</p>
-        </div>
+<div class="flex items-center space-x-3 space-x-reverse">
+    <div class="w-6 h-6 ${isMostRecent ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'} rounded text-xs flex items-center justify-center">
+        ${slideIndex + 1}
+        ${isMostRecent ? '<i class="fas fa-star text-xs ml-1"></i>' : ''}
     </div>
-    ${this.editor.page === 'editor' ? `
-        <div class="slide-actions flex space-x-1 space-x-reverse">
-            <button class="edit-slide p-1 text-gray-400 hover:text-blue-600" data-slide-id="${slide.id}">
-                <i class="fas fa-edit text-xs"></i>
-            </button>
-            <button class="delete-slide p-1 text-gray-400 hover:text-red-600" data-slide-id="${slide.id}">
-                <i class="fas fa-trash text-xs"></i>
-            </button>
-        </div>
-        `: ''}
+    <div>
+        <h5 class="text-sm font-medium text-gray-900">${Utils.escapeHTML(slide.title || '')}</h5>
+        <p class="text-xs text-gray-500">${this.editor.getSlideTypeText(slide.type)}</p>
+    </div>
+</div>
+${this.editor.page === 'editor' ? `
+    <div class="slide-actions flex space-x-1 space-x-reverse">
+        <button class="edit-slide p-1 text-gray-400 hover:text-blue-600" data-slide-id="${slide.id}">
+            <i class="fas fa-edit text-xs"></i>
+        </button>
+        <button class="delete-slide p-1 text-gray-400 hover:text-red-600" data-slide-id="${slide.id}">
+            <i class="fas fa-trash text-xs"></i>
+        </button>
+    </div>
+    `: ''}
 
 `;
-                // TODO
-                if (this.editor.page === 'preview' && this.editor.authority !== 'presenter' && !this.editor.slidesLocks[lessonIndex][slideIndex]) {
+                if (!isSlideUnlocked) {
                     slideItem.insertAdjacentHTML('beforeend', `
-                            <button class="p-2 text-gray-400 hover:text-blue-600 lock-icon">
-                                <i class="fa-solid fa-lock"></i>
-                            </button>
-                        `)
+                    <button class="p-2 text-gray-400 hover:text-blue-600 lock-icon">
+                        <i class="fa-solid fa-lock"></i>
+                    </button>
+                `);
                 }
                 listZone.appendChild(slideItem);
             });
 
             if (this.editor.page === 'editor') {
                 listZone.innerHTML += `
-                    <div class="p-3">
-                        <button class="add-slide-inside-lesson w-full flex items-center justify-center space-x-2 space-x-reverse py-2 px-3 border border-dashed border-gray-300 rounded text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors text-sm" data-lesson-id="${lesson.id}">
-                            <i class="fas fa-plus"></i>
-                            <span>إضافة سلايد</span>
-                        </button>
-                    </div>
-                `;
+                <div class="p-3">
+                    <button class="add-slide-inside-lesson w-full flex items-center justify-center space-x-2 space-x-reverse py-2 px-3 border border-dashed border-gray-300 rounded text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors text-sm" data-lesson-id="${lesson.id}">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة سلايد</span>
+                    </button>
+                </div>
+            `;
             }
 
             lessonEl.appendChild(slidesWrap);
@@ -2297,7 +2347,7 @@ class UIRenderer {
                 </div>
             </div>
 
-            <!-- Title Styling - Improved responsive layout -->
+            <!-- Title Styling -->
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                 <h5 class="text-sm font-medium text-gray-700 mb-2">تنسيق العنوان الرئيسي</h5>
                 <div class="space-y-3">
@@ -2317,13 +2367,13 @@ class UIRenderer {
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
                         <select id="title-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value="300" ${(slide.textStyle?.title?.fontWeight === '300') ? 'selected' : ''}>خفيف </option>
-                            <option value="500" ${(!slide.textStyle?.title?.fontWeight || slide.textStyle.title.fontWeight === '500') ? 'selected' : ''}>متوسط </option>
+                            <option value="300" ${(slide.textStyle?.title?.fontWeight === '300') ? 'selected' : ''}>خفيف</option>
+                            <option value="500" ${(!slide.textStyle?.title?.fontWeight || slide.textStyle.title.fontWeight === '500') ? 'selected' : ''}>متوسط</option>
                             <option value="800" ${(slide.textStyle?.title?.fontWeight === '800') ? 'selected' : ''}>ثقيل</option>
                         </select>
                     </div>
 
-                    <!-- Text Color - Improved layout -->
+                    <!-- Text Color -->
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">لون النص</label>
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -2367,8 +2417,8 @@ class UIRenderer {
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
                         <select id="subtitle-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value="300" ${(slide.textStyle?.subtitle?.fontWeight === '300') ? 'selected' : ''}>خفيف </option>
-                            <option value="500" ${(!slide.textStyle?.subtitle?.fontWeight || slide.textStyle.subtitle.fontWeight === '500') ? 'selected' : ''}>متوسط </option>
+                            <option value="300" ${(slide.textStyle?.subtitle?.fontWeight === '300') ? 'selected' : ''}>خفيف</option>
+                            <option value="500" ${(!slide.textStyle?.subtitle?.fontWeight || slide.textStyle.subtitle.fontWeight === '500') ? 'selected' : ''}>متوسط</option>
                             <option value="800" ${(slide.textStyle?.subtitle?.fontWeight === '800') ? 'selected' : ''}>ثقيل</option>
                         </select>
                     </div>
@@ -2417,8 +2467,8 @@ class UIRenderer {
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">سمك الخط</label>
                         <select id="content-font-weight" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
-                            <option value="300" ${(slide.textStyle?.content?.fontWeight === '300') ? 'selected' : ''}>خفيف </option>
-                            <option value="500" ${(!slide.textStyle?.content?.fontWeight || slide.textStyle.content.fontWeight === '500') ? 'selected' : ''}>متوسط </option>
+                            <option value="300" ${(slide.textStyle?.content?.fontWeight === '300') ? 'selected' : ''}>خفيف</option>
+                            <option value="500" ${(!slide.textStyle?.content?.fontWeight || slide.textStyle.content.fontWeight === '500') ? 'selected' : ''}>متوسط</option>
                             <option value="800" ${(slide.textStyle?.content?.fontWeight === '800') ? 'selected' : ''}>ثقيل</option>
                         </select>
                     </div>
@@ -2465,7 +2515,7 @@ class UIRenderer {
                         </div>
                     </div>
 
-                    <!-- Text Color - FIXED: Default to white (#ffffff) -->
+                    <!-- Text Color -->
                     <div>
                         <label class="block text-xs text-gray-600 mb-1">لون النص</label>
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2">

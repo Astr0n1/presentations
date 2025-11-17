@@ -1328,6 +1328,11 @@ class UIInteractions {
         return;
       }
     }
+    const backButton = document.getElementById('back-button');
+
+    // Back button
+    if (backButton) backButton.addEventListener('click',()=> {
+      window.history.back()});
 
     // lesson header toggle & selection
     const lessonHeader = target.closest('.lesson-header');

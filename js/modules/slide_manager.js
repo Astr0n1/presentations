@@ -19,7 +19,7 @@ class SlideManager {
   }
 
   async loadFromLocalStorage() {
-    if (this.editor.page === 'preview') this.editor.progress = await ApiService.getUserProgress(localStorage.getItem('C_id'));
+    if (this.editor.page === 'preview') this.editor.progress = await ApiService.getUserProgress();
     try {
       const courseId = localStorage.getItem('C_id');
       if (courseId) {
@@ -41,9 +41,6 @@ class SlideManager {
           this.editor.renderLessonsSidebar();
           return;
         }
-      }
-      else {
-        window.location.href = '404.html';
       }
 
       const raw = localStorage.getItem('course_lessons');
@@ -203,9 +200,8 @@ class SlideManager {
   createNewSlide(type, subtype) {
     const lesson = this.editor.findLessonById(this.editor.currentLessonId);
     if (!lesson) return;
-    const nextId = lesson.nextSlideId();
     const slide = new Slide({
-      id: nextId,
+      id: parseInt(`${this.editor.currentLessonId}${Math.floor(100000 + Math.random() * 900000)}`),
       title: 'سلايد جديد',
       type,
       subtype,

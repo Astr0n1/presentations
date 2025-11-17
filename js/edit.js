@@ -606,7 +606,10 @@ async function checkForCourse() {
             ApiService.getCourseDetails(courseId)
                 .then(courseDetails => {
                     console.log('Course Details:', courseDetails.exists);
-                    if (!courseDetails.exists) window.location.href = '404.html'
+                    if (!courseDetails.exists) {
+
+                        window.location.href = '404.html'
+                    }
                     localStorage.setItem('C_id', courseDetails.course.id);
                 })
                 .catch(error => {
@@ -1286,17 +1289,12 @@ export default class CourseEditor {
             let newWidth = startWidth;
 
             if (targetSide === 'left') {
-                newWidth = Math.max(250, Math.min(400, startWidth + deltaX));
+                newWidth = Math.max(320, Math.min(500, startWidth + deltaX));
                 leftSidebar.style.width = newWidth + 'px';
             } else if (targetSide === 'right') {
-                newWidth = Math.max(250, Math.min(400, startWidth - deltaX));
+                newWidth = Math.max(320, Math.min(400, startWidth - deltaX));
                 rightSidebar.style.width = newWidth + 'px';
             }
-            // const mainContent = document.querySelector('.main-content');
-            // if (mainContent) {
-            //     mainContent.style.marginLeft = leftSidebar ? getComputedStyle(leftSidebar).width : '0px';
-            //     mainContent.style.marginRight = rightSidebar ? getComputedStyle(rightSidebar).width : '0px';
-            // }
         };
 
         const onMouseUp = () => {
@@ -1489,19 +1487,35 @@ export default class CourseEditor {
                         const txt = e.dataTransfer.getData('text/plain');
                         if (txt) payload = JSON.parse(txt);
                     } catch (err) { }
+
                     const draggedSlideId = payload ? parseInt(payload.slideId, 10) : (draggingSlideEl ? parseInt(draggingSlideEl.dataset.slideId, 10) : null);
                     const draggedFromLessonId = payload ? parseInt(payload.sourceLessonId, 10) : sourceLessonIdOfDraggingSlide;
+
                     if (!draggedSlideId) return;
+
                     const targetSlideId = parseInt(slideEl.dataset.slideId, 10);
                     const targetLessonId = parseInt(slideEl.dataset.lessonId, 10);
 
-                    // remove from source
+                    // Don't allow dropping on itself
+                    if (draggedSlideId === targetSlideId) return;
+
+                    // Determine drop position based on mouse Y position
+                    const rect = slideEl.getBoundingClientRect();
+                    const isDropBefore = e.clientY < rect.top + rect.height / 2;
+
+                    // Find and remove the dragged slide from its source lesson
                     const srcLesson = this.findLessonById(draggedFromLessonId);
-                    const srcIndex = srcLesson ? srcLesson.slides.findIndex(s => s.id === draggedSlideId) : -1;
                     let draggedSlideObj = null;
-                    if (srcLesson && srcIndex > -1) {
-                        draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
-                    } else if (draggingSlideEl) {
+
+                    if (srcLesson) {
+                        const srcIndex = srcLesson.slides.findIndex(s => s.id === draggedSlideId);
+                        if (srcIndex > -1) {
+                            draggedSlideObj = srcLesson.slides.splice(srcIndex, 1)[0];
+                        }
+                    }
+
+                    // Fallback: search all lessons if not found
+                    if (!draggedSlideObj && draggingSlideEl) {
                         for (const l of this.lessons) {
                             const idx = l.slides.findIndex(s => s.id === draggedSlideId);
                             if (idx > -1) {
@@ -1510,15 +1524,36 @@ export default class CourseEditor {
                             }
                         }
                     }
+
                     if (!draggedSlideObj) return;
 
+                    // Update the lesson ID if moving to a different lesson
+                    if (draggedFromLessonId !== targetLessonId) {
+                        draggedSlideObj.lessonId = targetLessonId;
+                    }
+
+                    // Find target lesson and calculate insertion index
                     const targetLesson = this.findLessonById(targetLessonId);
                     if (!targetLesson) return;
-                    const insertionIndex = Math.max(0, targetLesson.slides.findIndex(s => s.id === targetSlideId) + 1);
-                    targetLesson.slides.splice(insertionIndex, 0, draggedSlideObj);
 
-                    // Update the lesson ID of the dragged slide object
-                    draggedSlideObj.lessonId = targetLessonId;
+                    // Find the current position of the target slide
+                    let insertionIndex = targetLesson.slides.findIndex(s => s.id === targetSlideId);
+
+                    if (insertionIndex === -1) {
+                        // Target slide not found, append to end
+                        insertionIndex = targetLesson.slides.length;
+                    } else {
+                        // Insert before or after based on drop position
+                        if (!isDropBefore) {
+                            insertionIndex++;
+                        }
+                    }
+
+                    // Ensure index is within valid range
+                    insertionIndex = Math.max(0, Math.min(targetLesson.slides.length, insertionIndex));
+
+                    // Insert the slide at the calculated position
+                    targetLesson.slides.splice(insertionIndex, 0, draggedSlideObj);
 
                     this.saveToLocalStorage();
                     this.renderLessonsSidebar();
@@ -1796,6 +1831,8 @@ export default class CourseEditor {
                 this.loadSlidePreview(newSlide.id);
                 this.updateNavigationButtons();
                 this.syncMobileActiveSlide();
+
+                this.renderLessonsSidebar();
             }, 150);
         }
     }
@@ -1871,6 +1908,15 @@ export default class CourseEditor {
 // auto-init in browser and keep backward-compatibility on window
 if (typeof window !== 'undefined') {
     document.addEventListener('DOMContentLoaded', async () => {
+        // check if the the screen is mobile screen redirect to preview.html page with same name attribute in the url and add ps=presenter attribute
+        if (window.innerWidth < 768) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseName = urlParams.get('name');
+            if (courseName) {
+                window.location.href = `preview.html?name=${courseName}&ps=presenter`;
+                return;
+            }
+        }
         // Show loader immediately when page starts loading
         showLoader(10, 'جاري التحقق من بيانات الدورة...');
 

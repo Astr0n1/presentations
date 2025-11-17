@@ -26,6 +26,15 @@ class AssetsManager {
       }
     });
 
+    document.addEventListener('click', async (e) => {
+      if (e.target.closest('.delete-asset-btn')) {
+        const button = e.target.closest('.delete-asset-btn');
+        const assetId = button.dataset.assetId;
+        await this.deleteAsset(assetId);
+      }
+    });
+
+
     // Modal controls
     document.getElementById('close-saved-assets-modal')?.addEventListener('click', () => this.closeModal());
     document.getElementById('cancel-assets-selection')?.addEventListener('click', () => this.closeModal());
@@ -63,6 +72,75 @@ class AssetsManager {
 
     // Reset file input
     document.getElementById('file-upload-input').value = '';
+  }
+
+
+  // delete media and render media again
+  async deleteAsset(assetId) {
+    const assetType = this.currentAssetsType; // 'images', 'videos', or 'pdf'
+    const url = `https://barber.herova.net/api/edit/media/deleteMedia.php`;
+
+    const data = {
+      id: assetId,
+      type: assetType
+    };
+
+    Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: 'لن تتمكن من التراجع عن هذا!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'نعم، احذفه!',
+      cancelButtonText: 'إلغاء',
+      reverseButtons: true // Puts confirm button on the right for Arabic
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          // Show loading state
+          Swal.fire({
+            title: 'جاري الحذف...',
+            text: 'يرجى الانتظار',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+
+          const response = await ApiService.deleteAsset(url, data);
+
+          // Close loading Swal
+          Swal.close();
+
+          if (response.status === 'success') {
+            Swal.fire({
+              title: 'تم الحذف!',
+              text: 'تم حذف الملف بنجاح.',
+              icon: 'success',
+              confirmButtonText: 'حسناً'
+            });
+            this.loadAssets(); // Reload assets after deletion
+          } else {
+            Swal.fire({
+              title: 'خطأ!',
+              text: response.message || 'فشل حذف الملف.',
+              icon: 'error',
+              confirmButtonText: 'حسناً'
+            });
+          }
+        } catch (error) {
+          console.error('Error deleting asset:', error);
+          Swal.close();
+          Swal.fire({
+            title: 'خطأ!',
+            text: 'حدث خطأ أثناء حذف الملف.',
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+          });
+        }
+      }
+    });
   }
 
   async loadAssets() {
@@ -119,25 +197,34 @@ class AssetsManager {
       const assetType = this.getAssetType(asset.url);
 
       return `
-            <div class="asset-card relative" data-asset-id="${asset.id}">
-                <div class="asset-preview ${assetType}">
-                    ${assetType === 'images' ?
+                    <div class="asset-card relative" data-asset-id="${asset.id}">
+                    <!-- close button -->
+                        <button class="w-[24px] h-[24px] delete-asset-btn absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 text-xs hover:bg-red-600 z-10"
+                                id="delete-asset-${asset.id}"
+                                data-asset-id="${asset.id}"
+                                data-asset-type="${assetType}">
+                            <i class="fas fa-times"></i>
+                        </button>
+
+                        <div class="asset-preview ${assetType}">
+              ${assetType === 'images' ?
           `<img src="${Utils.escapeHTML(asset.url)}" alt="${Utils.escapeHTML(asset.name)}" 
-                              class="w-full h-full object-cover"
-                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />` :
+                                      class="w-full h-full object-cover"
+                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />` :
           assetType === 'videos' ?
             `<div class="video-preview relative w-full h-full flex items-center justify-center bg-gray-800">
-                <video src="${Utils.escapeHTML(asset.url)}" muted class="max-w-full max-h-full"></video>
-                <div class="video-icon absolute inset-0 flex items-center justify-center bg-black/30">
-                    <i class="fas fa-play text-white text-2xl"></i>
-                </div>
-            </div>` :
+                        <video src="${Utils.escapeHTML(asset.url)}" muted class="max-w-full max-h-full"></video>
+                        <div class="video-icon absolute inset-0 flex items-center justify-center bg-black/30">
+                            <i class="fas fa-play text-white text-2xl"></i>
+                        </div>
+                    </div>`
+            :
             // PDF preview
             `<div class="pdf-preview w-full h-full flex flex-col items-center justify-center bg-red-50 border-2 border-red-200 rounded-lg p-4">
-                <i class="fas fa-file-pdf text-red-500 text-4xl mb-2"></i>
-                <span class="text-red-700 font-semibold text-sm text-center break-words">${Utils.escapeHTML(asset.name || 'PDF File')}</span>
-                <span class="text-red-500 text-xs mt-1">انقر للمعاينة</span>
-            </div>`
+                        <i class="fas fa-file-pdf text-red-500 text-4xl mb-2"></i>
+                        <span class="text-red-700 font-semibold text-sm text-center break-words">${Utils.escapeHTML(asset.name || 'PDF File')}</span>
+                        <span class="text-red-500 text-xs mt-1">انقر للمعاينة</span>
+                    </div>`
         }
                     <div class="fallback-placeholder hidden absolute inset-0 flex items-center justify-center bg-gray-200 rounded-lg">
                         <i class="fas fa-${assetType === 'images' ? 'image' : assetType === 'videos' ? 'video' : 'file-pdf'} text-2xl text-gray-400"></i>

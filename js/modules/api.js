@@ -313,9 +313,30 @@ class ApiService {
         }
     }
 
-    static async getUserProgress(courseId) {
+    static async deleteAsset(url, data) {
         try {
-            const response = await fetch(`https://barber.herova.net/api/studentProgress.php?course_id=${encodeURIComponent(courseId)}`, {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('API Service Error:', error);
+            throw error;
+        }
+    }
+
+    static async getUserProgress() {
+        try {
+            const response = await fetch(`https://barber.herova.net/api/getAddSeen.php`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -329,30 +350,40 @@ class ApiService {
 
             const result = await response.json();
 
-            const data = {
-                lessonIndex: result.data.lesson_id,
-                slideIndex: result.data.slide_n
-            };
-            return data;
+            // Parse the progress map from string
+            if (result.data && result.data.seen) {
+                try {
+                    const parsedProgress = JSON.parse(result.data.seen);
+                    console.log(parsedProgress, typeof parsedProgress)
+                    // Ensure it's a valid object
+                    if (parsedProgress && typeof parsedProgress === 'object') {
+                        return parsedProgress;
+                    }
+                } catch (parseError) {
+                    console.error('Failed to parse progress data:', parseError);
+                }
+            }
+
+            // Return empty progress object structure
+            console.log('No valid progress found, returning empty object');
+            return {};
 
         } catch (error) {
-            // console.error('API Service Error (getUserProgress):', error);
-            // throw error;
-            return null;
+            console.error('API Service Error (getUserProgress):', error);
+            // Return empty object on error to allow system to initialize
+            return {};
         }
     }
 
-    static async saveUserProgress(courseId, lessonIndex, slideIndex) {
+    static async saveUserProgress(progressMap) {
         try {
-            const response = await fetch(`https://barber.herova.net/api/studentProgress.php`, {
+            const response = await fetch(`https://barber.herova.net/api/getAddSeen.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    course_id: +courseId,
-                    lesson_id: +lessonIndex,
-                    slide_n: +slideIndex
+                    seen: JSON.stringify(progressMap)
                 })
             });
 
@@ -362,12 +393,58 @@ class ApiService {
             }
 
             const result = await response.json();
-            // console.log('Raw API response for save progress:', result);
-
             return result;
 
         } catch (error) {
             console.error('API Service Error (saveUserProgress):', error);
+            throw error;
+        }
+    }
+
+    static async getQuizScores() {
+        try {
+            const response = await fetch(`https://barber.herova.net/api/newScore.php`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result.data || [];
+
+        } catch (error) {
+            console.error('API Service Error (getQuizScores):', error);
+            // Return empty array on error to allow system to continue
+            return [];
+        }
+    }
+
+    static async saveQuizScore(scoreData) {
+        try {
+            const response = await fetch(`https://barber.herova.net/api/newScore.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(scoreData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+
+        } catch (error) {
+            console.error('API Service Error (saveQuizScore):', error);
             throw error;
         }
     }

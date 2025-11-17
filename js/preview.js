@@ -695,11 +695,15 @@ export default class CourseEditor {
         document.body.classList.add('preview-page')
         // state
         this.lessons = [];
-        this.lessonSizes = [];
-        this.slidesLocks = [];
         this.currentLessonId = null;
         this.currentSlideId = null;
-        this.expandedLessons = new Set(); // Track expanded lesson IDs
+        this.expandedLessons = new Set();
+
+        this.progressMap = {}; // Stores all courses progress
+        this.mostRecentSlide = null; // { lessonId, slideId } for current course
+        this.currentCourseId = localStorage.getItem('C_id');
+        this.quizScores = {}; // Stores quiz scores by slide ID
+        this.isLoadingScores = false; // Prevent multiple simultaneous loads
 
         // dom refs
         this.dom = {
@@ -750,7 +754,6 @@ export default class CourseEditor {
         // Get ps parameter from url
         this.authority = urlParams.get('ps'); // 'ps' for preview size
         // Load/persist and initial state
-        this.progress
         this.loadFromLocalStorage();
 
         // If current lesson exists, expand it by default
@@ -764,6 +767,7 @@ export default class CourseEditor {
         this.renderLessonsSidebar();
         this.updateLessonHeader();
         this.setUnitSize();
+        this.initializeProgressSystem();
 
         // interactions & drag system
         this.assetsManager = new AssetsManager(this);
@@ -776,6 +780,9 @@ export default class CourseEditor {
 
         // run smoke tests
         this.runSmokeTests();
+
+        // Initialize progress system AFTER lessons are loaded (async)
+        this.initProgressAfterLessonsLoad();
 
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', this.debounce(() => {
@@ -809,6 +816,352 @@ export default class CourseEditor {
             })
 
         })
+    }
+
+    async loadQuizScores() {
+        if (this.isLoadingScores) return;
+
+        this.isLoadingScores = true;
+        try {
+            const scores = await ApiService.getQuizScores();
+            this.quizScores = {};
+
+            scores.forEach(score => {
+                this.quizScores[score.slide_n] = {
+                    submitted: true,
+                    content: score.content ? JSON.parse(score.content) : null,
+                    score: score.score,
+                    correctAnswers: score.correct_answers,
+                    totalQuestions: score.total_questions
+                };
+            });
+
+            console.log('Loaded quiz scores:', this.quizScores);
+        } catch (error) {
+            console.error('Failed to load quiz scores:', error);
+        } finally {
+            this.isLoadingScores = false;
+        }
+    }
+
+    // NEW: Save quiz score to backend
+    async saveQuizScore(slide) {
+        if (!slide || !slide.submitted) return;
+
+        try {
+            const isCorrect = this.isQuizAnswerCorrect(slide);
+            const totalQuestions = 1; // Each quiz slide counts as one question
+
+            const scoreData = {
+                course_id: this.currentCourseId,
+                lesson_id: this.currentLessonId,
+                score: isCorrect ? 100 : 0,
+                total_questions: totalQuestions,
+                correct_answers: isCorrect ? 1 : 0,
+                slide_n: slide.id,
+                content: JSON.stringify(slide)
+            };
+
+            await ApiService.saveQuizScore(scoreData);
+
+            // Update local cache
+            this.quizScores[slide.id] = {
+                submitted: true,
+                content: slide,
+                score: scoreData.score,
+                correctAnswers: scoreData.correct_answers,
+                totalQuestions: scoreData.total_questions
+            };
+
+            console.log('Quiz score saved successfully');
+        } catch (error) {
+            console.error('Failed to save quiz score:', error);
+        }
+    }
+
+    // NEW: Check if a quiz slide has been answered
+    isQuizAnswered(slideId) {
+        return !!this.quizScores[slideId];
+    }
+
+    // NEW: Get quiz result for a slide
+    getQuizResult(slideId) {
+        return this.quizScores[slideId] || null;
+    }
+
+    loadQuizStateFromScores() {
+        console.log('Loading quiz state from scores...', this.quizScores);
+
+        // Iterate through all lessons and their slides
+        this.lessons.forEach(lesson => {
+            lesson.slides.forEach(slide => {
+                if (slide.type === 'quiz') {
+                    const score = this.quizScores[slide.id];
+                    if (score && score.content) {
+                        console.log(`Restoring quiz state for slide ${slide.id}`, score);
+
+                        // Restore quiz state from saved content
+                        slide.submitted = true;
+
+                        // Restore user answers based on quiz type
+                        switch (slide.subtype) {
+                            case 'multiple-choice-carousel':
+                            case 'categorize':
+                                slide.userChoice = score.content.userChoice;
+                                console.log(`Restored userChoice for slide ${slide.id}:`, slide.userChoice);
+                                break;
+                            case 'connect-quiz':
+                                slide.userConnections = score.content.userConnections || [];
+                                console.log(`Restored userConnections for slide ${slide.id}:`, slide.userConnections);
+                                break;
+                            case 'drag-match-quiz':
+                                slide.userMatches = score.content.userMatches || [];
+                                console.log(`Restored userMatches for slide ${slide.id}:`, slide.userMatches);
+                                break;
+                            case 'image-pairs-quiz':
+                                slide.userSelections = score.content.userSelections || { left: [], right: [] };
+                                console.log(`Restored userSelections for slide ${slide.id}:`, slide.userSelections);
+                                break;
+                        }
+                    }
+                }
+            });
+        });
+
+        // Save to localStorage to persist the restored states
+        this.saveToLocalStorage();
+        console.log('Quiz state loading complete');
+    }
+
+    async initProgressAfterLessonsLoad() {
+        // Wait for lessons to be loaded
+        if (this.lessons.length === 0) {
+            // Retry after a short delay
+            setTimeout(() => this.initProgressAfterLessonsLoad(), 100);
+            return;
+        }
+
+        await this.initializeProgressSystem();
+
+        // After initialization, refresh the current slide to show proper quiz state
+        if (this.currentSlideId) {
+            const slide = this.findSlide(this.currentLessonId, this.currentSlideId);
+            if (slide && slide.type === 'quiz') {
+                this.loadSlidePreview(this.currentSlideId);
+            }
+        }
+    }
+
+    async initializeProgressSystem() {
+        try {
+            console.log('Starting progress initialization...');
+            // Load progress map from API
+            this.progressMap = await ApiService.getUserProgress();
+
+            // Ensure progressMap is a valid object
+            if (!this.progressMap || typeof this.progressMap !== 'object') {
+                console.warn('Invalid progressMap received, initializing empty object');
+                this.progressMap = {};
+            }
+
+            // Initialize current course progress if doesn't exist
+            if (!this.progressMap[this.currentCourseId]) {
+                console.log('Initializing progress for course:', this.currentCourseId);
+                this.progressMap[this.currentCourseId] = {};
+            }
+
+            // NEW: Load quiz scores
+            await this.loadQuizScores();
+            this.loadQuizStateFromScores();
+
+            // Set most recent slide
+            await this.findAndSetMostRecentSlide();
+            console.log('Most recent slide:', this.mostRecentSlide);
+
+            // Re-render sidebar to show unlocked status
+            this.renderLessonsSidebar();
+
+            // If there's a most recent slide, load it
+            if (this.mostRecentSlide) {
+                this.currentLessonId = this.mostRecentSlide.lessonId;
+                this.currentSlideId = this.mostRecentSlide.slideId;
+
+                // NEW: Ensure quiz state is loaded before rendering
+                const slide = this.findSlide(this.currentLessonId, this.currentSlideId);
+                const processedSlide = this.ensureQuizStateBeforeRender(slide);
+                this.renderSlidePreview(processedSlide);
+
+                this.setSlideCounter();
+            }
+
+            // Start periodic saving
+            this.startProgressAutoSave();
+
+        } catch (error) {
+            console.error('Error initializing progress system:', error);
+            // Fallback: initialize empty progress
+            this.progressMap = {};
+            this.progressMap[this.currentCourseId] = {};
+            await this.findAndSetMostRecentSlide();
+            this.renderLessonsSidebar();
+        }
+    }
+
+    // Replace the findAndSetMostRecentSlide method with this:
+    async findAndSetMostRecentSlide() {
+        const courseProgress = this.progressMap[this.currentCourseId] || {};
+        const nonDraftLessons = this.lessons.filter(lesson => lesson.status !== 'Draft');
+
+        // If no non-draft lessons, set mostRecentSlide to null
+        if (nonDraftLessons.length === 0) {
+            this.mostRecentSlide = null;
+            return;
+        }
+
+        // Case 1: Find first lesson with unvisited slides
+        for (const lesson of nonDraftLessons) {
+            const visitedSlides = courseProgress[lesson.id] || [];
+            const unvisitedSlides = lesson.slides.filter(slide => !visitedSlides.includes(slide.id));
+
+            if (unvisitedSlides.length > 0) {
+                // Take first unvisited slide in this lesson
+                this.mostRecentSlide = {
+                    lessonId: lesson.id,
+                    slideId: unvisitedSlides[0].id
+                };
+                return;
+            }
+        }
+
+        // Case 2: All slides visited or no progress - unlock first slide of first lesson
+        const firstLesson = nonDraftLessons[0];
+        if (firstLesson && firstLesson.slides.length > 0) {
+            this.mostRecentSlide = {
+                lessonId: firstLesson.id,
+                slideId: firstLesson.slides[0].id
+            };
+
+            // Initialize lesson progress if needed
+            if (!courseProgress[firstLesson.id]) {
+                courseProgress[firstLesson.id] = [];
+                this.progressMap[this.currentCourseId] = courseProgress;
+            }
+            return;
+        }
+
+        // Case 3: No lessons or slides available
+        this.mostRecentSlide = null;
+    }
+
+    // Add this helper method to check initial state
+    ensureProgressInitialized() {
+        // Ensure progressMap exists
+        if (!this.progressMap) {
+            this.progressMap = {};
+        }
+
+        // Ensure current course exists in progressMap
+        if (!this.progressMap[this.currentCourseId]) {
+            this.progressMap[this.currentCourseId] = {};
+        }
+
+        // If no mostRecentSlide set, find it
+        if (!this.mostRecentSlide) {
+            this.findAndSetMostRecentSlide();
+        }
+    }
+
+
+    // NEW: Check if a slide is unlocked
+    isSlideUnlocked(lessonId, slideId) {
+        const courseProgress = this.progressMap[this.currentCourseId] || {};
+        const lessonProgress = courseProgress[lessonId] || [];
+
+        // Check if slide is visited
+        if (lessonProgress.includes(slideId)) {
+            return true;
+        }
+
+        // Check if this is the most recent slide
+        if (this.mostRecentSlide &&
+            this.mostRecentSlide.lessonId === lessonId &&
+            this.mostRecentSlide.slideId === slideId) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // NEW: Check if a lesson is unlocked
+    isLessonUnlocked(lessonId) {
+        const courseProgress = this.progressMap[this.currentCourseId] || {};
+        const lessonProgress = courseProgress[lessonId] || [];
+
+        // Lesson is unlocked if it has any visited slides OR it contains the most recent slide
+        if (lessonProgress.length > 0) {
+            return true;
+        }
+
+        if (this.mostRecentSlide && this.mostRecentSlide.lessonId === lessonId) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // NEW: Mark slide as visited and progress to next
+    async markSlideVisited(lessonId, slideId) {
+        const courseProgress = this.progressMap[this.currentCourseId] || {};
+
+        // Initialize lesson progress if doesn't exist
+        if (!courseProgress[lessonId]) {
+            courseProgress[lessonId] = [];
+        }
+
+        // Add slide to visited if not already there
+        if (!courseProgress[lessonId].includes(slideId)) {
+            courseProgress[lessonId].push(slideId);
+        }
+
+        // Update progress map
+        this.progressMap[this.currentCourseId] = courseProgress;
+
+        // If this was the most recent slide, find next one
+        if (this.mostRecentSlide &&
+            this.mostRecentSlide.lessonId === lessonId &&
+            this.mostRecentSlide.slideId === slideId) {
+            await this.findAndSetMostRecentSlide();
+
+            // If we found a new most recent slide, mark its lesson as visited
+            if (this.mostRecentSlide) {
+                const newLessonId = this.mostRecentSlide.lessonId;
+                if (!courseProgress[newLessonId]) {
+                    courseProgress[newLessonId] = [];
+                }
+                this.progressMap[this.currentCourseId] = courseProgress;
+            }
+        }
+
+        // Save progress
+        await this.saveProgress();
+    }
+
+    // NEW: Save progress to backend
+    async saveProgress() {
+        try {
+            await ApiService.saveUserProgress(this.progressMap);
+        } catch (error) {
+            console.error('Failed to save progress:', error);
+            // Store in localStorage as fallback
+            localStorage.setItem('progressMapBackup', JSON.stringify(this.progressMap));
+        }
+    }
+
+    // NEW: Auto-save progress every 15 seconds
+    startProgressAutoSave() {
+        setInterval(() => {
+            this.saveProgress();
+        }, 15000);
     }
 
     async updateProress(cid, lid, sid) {
@@ -1085,15 +1438,64 @@ export default class CourseEditor {
     renderImageComparisonEditor(slide) { return this.ui.renderImageComparisonEditor(slide); }
     renderSlideTemplates(category) { return this.ui.renderSlideTemplates(category); }
     loadSlideEditContent(slideId) { return this.ui.loadSlideEditContent(slideId); }
+
     loadSlidePreview(slideId) {
         const slide = this.findSlide(this.currentLessonId, slideId);
-        return this.renderSlidePreview(slide);
+
+        // NEW: Ensure quiz state is loaded before rendering
+        const processedSlide = this.ensureQuizStateBeforeRender(slide);
+
+        // Save the updated slide state
+        this.saveToLocalStorage();
+
+        return this.renderSlidePreview(processedSlide);
     }
 
     // Return the currently active slide object or null if none
     getCurrentSlide() {
         if (!this.currentLessonId || this.currentSlideId == null) return null;
         return this.findSlide(this.currentLessonId, this.currentSlideId);
+    }
+
+    // NEW: Ensure quiz state is loaded before rendering
+    ensureQuizStateBeforeRender(slide) {
+        if (!slide || slide.type !== 'quiz') return slide;
+
+        const slideId = slide.id;
+
+        // Check if this quiz has been answered
+        if (this.isQuizAnswered(slideId)) {
+            const quizResult = this.getQuizResult(slideId);
+            if (quizResult && quizResult.content) {
+                console.log('Restoring quiz state for slide', slideId, quizResult);
+
+                // Restore the quiz state from saved score
+                slide.submitted = true;
+
+                // Restore user answers based on quiz type
+                switch (slide.subtype) {
+                    case 'multiple-choice-carousel':
+                    case 'categorize':
+                        slide.userChoice = quizResult.content.userChoice;
+                        console.log('Restored userChoice:', slide.userChoice);
+                        break;
+                    case 'connect-quiz':
+                        slide.userConnections = quizResult.content.userConnections || [];
+                        console.log('Restored userConnections:', slide.userConnections);
+                        break;
+                    case 'drag-match-quiz':
+                        slide.userMatches = quizResult.content.userMatches || [];
+                        console.log('Restored userMatches:', slide.userMatches);
+                        break;
+                    case 'image-pairs-quiz':
+                        slide.userSelections = quizResult.content.userSelections || { left: [], right: [] };
+                        console.log('Restored userSelections:', slide.userSelections);
+                        break;
+                }
+            }
+        }
+
+        return slide;
     }
 
     // ---------- Lost functions ----------

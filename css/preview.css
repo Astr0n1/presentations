@@ -311,3 +311,42 @@ body {
 	border-color: #bfdbfe; /* blue-200 */
 	border-top-color: #2563eb; /* blue-600 */
 }
+
+.slide-item.most-recent {
+    border-left: 3px solid #10B981;
+    background-color: #f0fdf4;
+}
+
+.slide-item.locked {
+    opacity: 0.6;
+    background-color: #f3f4f6;
+}
+
+.lesson-item.locked {
+    opacity: 0.7;
+    background-color: #f9fafb;
+}
+
+.lock-icon {
+    cursor: not-allowed;
+}
+
+.slide-item.most-recent {
+    border-left: 3px solid #10B981;
+    background-color: #f0fdf4;
+}
+
+.slide-item.locked {
+    opacity: 0.6;
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.lesson-item.locked {
+    opacity: 0.7;
+    background-color: #f9fafb;
+}
+
+.lock-icon {
+    cursor: not-allowed;
+}

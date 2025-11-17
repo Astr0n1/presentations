@@ -80,6 +80,9 @@ class QuizManager {
     this.editor.saveToLocalStorage();
     this.editor.loadSlidePreview(slideId);
 
+    if (this.editor.page === 'preview') this.editor.saveQuizScore(slide);
+
+
     // Redraw connect quiz lines with correct colors
     if (slide.subtype === 'connect-quiz') {
       setTimeout(() => {

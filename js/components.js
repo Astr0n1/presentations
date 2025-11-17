@@ -37,24 +37,28 @@ const Components = {
 
     // Header
     createHeader() {
-        return `
-        <header class="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm animate-slide-up">
-            <div class="container mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <h1 class="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Content</h1>
-                    <div class="flex items-center gap-3 animate-slide-in-right">
-                    ${user.role === 'admin' ? `<button id="create-course-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 gap-2 gradient-primary text-white shadow-button hover:shadow-card-hover transition-all duration-300 hover:scale-105">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4">
-                                                        <path d="M5 12h14"></path>
-                                                        <path d="M12 5v14"></path>
-                                                    </svg>
-                                                    Create course
-                                                </button>`: ``}
+        if(user.role === 'admin') {
+             return `
+                <header class="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm animate-slide-up">
+                    <div class="container mx-auto px-4 py-4">
+                        <div class="flex items-center justify-between">
+                            <h1 class="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Content</h1>
+                            <div class="flex items-center gap-3 animate-slide-in-right">
+                                <button id="create-course-btn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-10 px-4 py-2 gap-2 gradient-primary text-white shadow-button hover:shadow-card-hover transition-all duration-300 hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4">
+                                        <path d="M5 12h14"></path>
+                                        <path d="M12 5v14"></path>
+                                    </svg>
+                                    Create course
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </header>
-    `;
+                </header>
+            `;
+        } else {
+            return ``;
+        }
     },
 
     // Navigation
