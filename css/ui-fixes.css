@@ -1,0 +1,258 @@
+/* ==============================================
+   COMPREHENSIVE UI FIXES FOR SLIDE PREVIEWS
+   ============================================== */
+
+/* 
+   This file contains all the CSS fixes for slide preview rendering issues
+   across PC preview, mobile preview, and preview page modes.
+*/
+
+/* ==============================================
+   1. QUIZ DRAG & DROP ZONES - FIX SIZING ISSUES
+   ============================================== */
+
+.quiz-drop-zone {
+    min-width: calc(var(--slide-unit) * 28);
+    min-height: calc(var(--slide-unit) * 28);
+    max-width: calc(var(--slide-unit) * 35);
+    max-height: calc(var(--slide-unit) * 35);
+    width: calc(var(--slide-unit) * 30);
+    height: calc(var(--slide-unit) * 30);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: calc(var(--slide-unit) * 2) !important;
+}
+
+.quiz-drag-item,
+.quiz-connect-item,
+.quiz-pairs-item {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.quiz-drag-item img,
+.quiz-connect-item img,
+.quiz-pairs-item img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+.pc-preview .quiz-drop-zone,
+.pc-preview .quiz-connect-item,
+.pc-preview .quiz-pairs-item {
+    min-width: calc(0.65 * var(--slide-unit) * 28) !important;
+    min-height: calc(0.65 * var(--slide-unit) * 28) !important;
+    max-width: calc(0.65 * var(--slide-unit) * 35) !important;
+    max-height: calc(0.65 * var(--slide-unit) * 35) !important;
+    width: calc(0.65 * var(--slide-unit) * 30) !important;
+    height: calc(0.65 * var(--slide-unit) * 30) !important;
+}
+
+/* ==============================================
+   2. UNIVERSAL COMPARISON - FIX SIZE IN PREVIEW
+   ============================================== */
+
+.comparison-wrapper {
+    aspect-ratio: 3 / 2 !important;
+    width: min(80%, calc(var(--slide-unit) * 120)) !important;
+    margin: calc(var(--slide-unit) * 4) auto !important;
+    min-height: calc(var(--slide-unit) * 60) !important;
+    max-height: calc(var(--slide-unit) * 80) !important;
+}
+
+.preview-page .comparison-wrapper,
+body:not(.edit-page) .comparison-wrapper {
+    width: min(85%, calc(var(--slide-unit) * 140)) !important;
+    min-height: calc(var(--slide-unit) * 70) !important;
+    max-height: calc(var(--slide-unit) * 95) !important;
+}
+
+.pc-preview .comparison-wrapper {
+    width: min(75%, calc(0.65 * var(--slide-unit) * 120)) !important;
+    min-height: calc(0.65 * var(--slide-unit) * 60) !important;
+    max-height: calc(0.65 * var(--slide-unit) * 80) !important;
+}
+
+/* ==============================================
+   3. PDF SLIDES - FIX LARGE SIZE IN PREVIEW
+   ============================================== */
+
+.pdf-container {
+    width: min(85%, calc(var(--slide-unit) * 110)) !important;
+    height: auto !important;
+    max-height: calc(var(--slide-unit) * 70) !important;
+    margin: calc(var(--slide-unit) * 3) auto !important;
+    aspect-ratio: 3 / 2 !important;
+}
+
+.pc-preview .pdf-container {
+    width: min(75%, calc(0.65 * var(--slide-unit) * 100)) !important;
+    max-height: calc(0.65 * var(--slide-unit) * 65) !important;
+}
+
+.preview-page .pdf-container,
+body:not(.edit-page) .pdf-container {
+    width: min(70%, calc(var(--slide-unit) * 100)) !important;
+    max-height: calc(var(--slide-unit) * 65) !important;
+}
+
+/* ==============================================
+   4. VIDEO SLIDES - FIX LARGE SIZE IN PREVIEW
+   ============================================== */
+
+.video-container {
+    width: min(85%, calc(var(--slide-unit) * 110)) !important;
+    max-width: calc(var(--slide-unit) * 120) !important;
+    max-height: calc(var(--slide-unit) * 70) !important;
+    margin: calc(var(--slide-unit) * 3) auto !important;
+    aspect-ratio: 16 / 9 !important;
+}
+
+.pc-preview .video-container {
+    width: min(75%, calc(0.65 * var(--slide-unit) * 100)) !important;
+    max-height: calc(0.65 * var(--slide-unit) * 65) !important;
+}
+
+.preview-page .video-container,
+body:not(.edit-page) .video-container {
+    width: min(70%, calc(var(--slide-unit) * 100)) !important;
+    max-height: calc(var(--slide-unit) * 65) !important;
+}
+
+/* ==============================================
+   5. QUIZ SUBMIT BUTTON - FIX LARGE SIZE
+   ============================================== */
+
+.quiz-submit-button {
+    padding: calc(var(--slide-unit) * 3) calc(var(--slide-unit) * 6) !important;
+    border-radius: calc(var(--slide-unit) * 3) !important;
+    font-size: calc(var(--slide-unit) * 5) !important;
+    font-weight: 600 !important;
+    min-width: calc(var(--slide-unit) * 30) !important;
+    max-width: calc(var(--slide-unit) * 50) !important;
+}
+
+.pc-preview .quiz-submit-button {
+    padding: calc(0.65 * var(--slide-unit) * 3) calc(0.65 * var(--slide-unit) * 6) !important;
+    border-radius: calc(0.65 * var(--slide-unit) * 3) !important;
+    font-size: calc(0.65 * var(--slide-unit) * 5) !important;
+    min-width: calc(0.65 * var(--slide-unit) * 30) !important;
+    max-width: calc(0.65 * var(--slide-unit) * 50) !important;
+}
+
+.preview-page .quiz-submit-button,
+body:not(.edit-page) .quiz-submit-button {
+    padding: calc(var(--slide-unit) * 2.5) calc(var(--slide-unit) * 5) !important;
+    font-size: calc(var(--slide-unit) * 4.5) !important;
+    min-width: calc(var(--slide-unit) * 28) !important;
+    max-width: calc(var(--slide-unit) * 45) !important;
+}
+
+/* ==============================================
+   6. IMAGE PAIRS - FIX SMALL DIV & LARGE TEXT
+   ============================================== */
+
+.quiz-image-pairs-container {
+    width: 100% !important;
+    max-width: calc(var(--slide-unit) * 140) !important;
+    margin: 0 auto !important;
+}
+
+/* Remove font awesome icon when image exists */
+.quiz-pairs-item:has(img[src]:not([src=""])) .fa-image {
+    display: none !important;
+}
+
+.quiz-pairs-item img {
+    display: block !important;
+}
+
+.quiz-pairs-item img + .fallback-placeholder {
+    display: none !important;
+}
+
+.quiz-pairs-item .text-center {
+    font-size: calc(var(--slide-unit) * 4) !important;
+    padding: calc(var(--slide-unit) * 2) !important;
+    word-wrap: break-word !important;
+    overflow: hidden !important;
+}
+
+.pc-preview .quiz-pairs-item .text-center {
+    font-size: calc(0.65 * var(--slide-unit) * 4) !important;
+    padding: calc(0.65 * var(--slide-unit) * 2) !important;
+}
+
+/* ==============================================
+   7. PREVENT SLIDE SCROLLING
+   ============================================== */
+
+.slide-content {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    padding: calc(var(--slide-unit) * 8) !important;
+}
+
+.pc-preview .slide-content {
+    padding: calc(0.65 * var(--slide-unit) * 8) !important;
+}
+
+.slide-body {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+}
+
+.slide-header {
+    flex-shrink: 0 !important;
+    max-height: 25% !important;
+}
+
+/* ==============================================
+   8. RESPONSIVE ADJUSTMENTS
+   ============================================== */
+
+@media (max-width: 768px) {
+    .quiz-drop-zone,
+    .quiz-connect-item,
+    .quiz-pairs-item {
+        min-width: calc(var(--slide-unit) * 24) !important;
+        min-height: calc(var(--slide-unit) * 24) !important;
+        width: calc(var(--slide-unit) * 26) !important;
+        height: calc(var(--slide-unit) * 26) !important;
+    }
+
+    .comparison-wrapper {
+        width: 95% !important;
+        min-height: calc(var(--slide-unit) * 45) !important;
+    }
+
+    .pdf-container,
+    .video-container {
+        width: 95% !important;
+        max-height: calc(var(--slide-unit) * 55) !important;
+    }
+
+    .quiz-submit-button {
+        padding: calc(var(--slide-unit) * 2) calc(var(--slide-unit) * 4) !important;
+        font-size: calc(var(--slide-unit) * 4) !important;
+    }
+}
