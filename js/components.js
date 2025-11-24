@@ -1,7 +1,7 @@
 // get user data from local storage user_data -> role
 const user = JSON.parse(localStorage.getItem('user_data'));
 
-if (user === null || user === undefined || user === ''){
+if (user === null || user === undefined || user === '') {
     window.location.href = 'login.html';
 }
 
@@ -13,7 +13,7 @@ const Components = {
     // Main Container
     createMainContainer() {
         return `
-            <div class="min-h-screen bg-gradient-soft" onload="${user.role === "admin"? "requireAdmin()": "requireAuth()"}">
+            <div class="min-h-screen bg-gradient-soft" onload="${user.role === "admin" ? "requireAdmin()" : "requireAuth()"}">
                 ${this.createHeader()}
                 ${this.createMainContent()}
                 ${this.createCourseModal()}
@@ -37,8 +37,8 @@ const Components = {
 
     // Header
     createHeader() {
-        if(user.role === 'admin') {
-             return `
+        if (user.role === 'admin') {
+            return `
                 <header class="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm animate-slide-up">
                     <div class="container mx-auto px-4 py-4">
                         <div class="flex items-center justify-between">
@@ -70,9 +70,7 @@ const Components = {
             </button>
         `).join('');
 
-        if (user.role === 'admin') {
-
-        return `
+            return `
             <nav class="mb-8 animate-fade-in" style="animation-delay: 0.1s;">
                 <div class="border-b">
                     <div class="flex gap-8">
@@ -81,9 +79,6 @@ const Components = {
                 </div>
             </nav>
         `;
-        } else {
-            return ``;
-        }
     },
 
     // Search and Filters
@@ -540,10 +535,6 @@ const Components = {
 
     // Student Container Component - FIXED VERSION
     createStudentContainer(students) {
-        if (user.role !== 'admin'){
-            return ``;
-        }
-        else {
             if (students.length > 0) {
                 return `
                     <div id="student-container" class="hidden animate-fade-in">
@@ -556,10 +547,11 @@ const Components = {
                         ${this.createStudentsTable(students)}
                     </div>
                 `;
-            
+
+            }else {
+                return ``;
             }
-        }
-        return ``;
+                
     },
 
     // Student Filters - FIXED VERSION
@@ -617,7 +609,7 @@ const Components = {
 
         return `
         <div class="bg-card rounded-lg border border-border overflow-hidden shadow-card animate-fade-in">
-            <div class="overflow-scroll">
+            <div class="overflow-auto">
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-border bg-muted/50">

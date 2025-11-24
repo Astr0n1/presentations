@@ -54,7 +54,7 @@ class UIRenderer {
         // Apply background and text styling
         const lesson = this.editor.findLessonById(this.editor.currentLessonId);
         // TODO variable preview
-        let containerClasses = `slide-preview ${this.editor.page === 'editor' ? `rounded-unit-3 fixed-slide-size ${this.editor.preview}` : ' '} m-0 slide-${slide.type}`;
+        let containerClasses = `slide-preview ${this.editor.page === 'editor' ? `rounded-unit-3 fixed-slide-size ${this.editor.preview}` : `free-aspect ${this.editor.preview} `} m-0 slide-${slide.type}`;
 
         // Apply background
         if (lesson && lesson.background) {
@@ -198,6 +198,18 @@ class UIRenderer {
                 bodyHtml += this.renderImagePairsQuizPreview(slide, contentStyleAttr, contentSizeClass, contentItalicClass, buttonStyleAttr, buttonSizeClass, buttonItalicClass);
                 break;
 
+            case 'text-welcome':
+                bodyHtml += `<div class="gap-16 slide-p-unit-3 slide-my-unit-3 flex flex-col justify-center items-center overflow-y-auto break-words hyphens-auto  ${contentItalicClass}" ${contentStyleAttr}>
+                    <p class='min-h-unit-32 flex justify-center items-center text-size-xxxl excepted'>
+                        ${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}
+                    </p> 
+                    <button id='welcome-button' class="quiz-submit-button  ${buttonSizeClass} ${buttonItalicClass}" ${buttonStyleAttr}  >
+                        ${Utils.escapeHTML(slide.content.buttonText || 'البدء')}
+                    </button>
+                </div>`;
+
+                break;
+
             default:
                 if (slide.content.text) {
                     bodyHtml += `<div class="slide-p-unit-3 slide-my-unit-3 max-h-unit-96 overflow-y-auto break-words hyphens-auto ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(slide.content.text).replace(/\n/g, '<br>')}</div>`;
@@ -215,6 +227,11 @@ class UIRenderer {
             <div class='gap-fixer'> </div>
         </div>
 `;
+        const welcomeBtns = document.querySelectorAll("#welcome-button");
+        welcomeBtns.forEach(btn => {
+            btn.addEventListener("click", () => { this.editor.navigateToAdjacentSlide(1) });
+        })
+
         if (this.editor.page === 'preview') this.editor.setSlideCounter();
 
         const preview = document.getElementById("slide-preview-container");
@@ -261,6 +278,7 @@ class UIRenderer {
     `;
     }
 
+
     // Add PDF editor method
     renderPDFEditor(slide) {
         const c = slide.content || {};
@@ -303,7 +321,7 @@ class UIRenderer {
 
     renderExpandableListPreview(slide, contentStyleAttr = '', contentSizeClass = '', contentItalicClass = '') {
         const items = slide.content.items || [];
-        let html = `<div class="slide-gap-unit-3 slide-my-unit-3 w-full overflow-y-auto break-words">`;
+        let html = `<div class="expandable-list-container slide-gap-unit-3 slide-my-unit-3 w-full overflow-auto no-scrollbar">`;
 
         items.forEach((item, idx) => {
             html += `
@@ -312,8 +330,8 @@ class UIRenderer {
                 <h3 class="${contentSizeClass} font-semibold ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.title || 'العنوان')}</h3>
                 <i class="fas fa-chevron-down transition-transform duration-300"></i>
             </div>
-            <div class="expandable-content slide-my-unit-2">
-                <p class="${contentSizeClass} leading-relaxed ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
+            <div class="expandable-content slide-py-unit-2 max-h-0 overflow-y-auto transition-all duration-300 ease-in-out">
+                <p class="${contentSizeClass} leading-relaxed ${contentItalicClass} break-words hyphens-auto" ${contentStyleAttr}>${Utils.escapeHTML(item.text || 'لا يوجد محتوى')}</p>
             </div>
         </div>`;
         });
@@ -387,7 +405,7 @@ class UIRenderer {
             <div class="h-full bg-black/20 rounded-unit-3 flex items-center justify-center border-unit-1 border-dashed border-white/30 hover:border-white/50 hover:bg-black/30 w-full slide-p-unit-2">
                 <div class="text-center ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>
                     <i class="fas fa-image unit-12 slide-my-unit-1 opacity-50"></i>
-                    <p class="unit-4">لا توجد صورة</p>
+                    <p class="unit-4 excepted text-size-xxs">لا توجد صورة</p>
                 </div>
             </div>
         `}
@@ -431,7 +449,7 @@ class UIRenderer {
     <div class="flex justify-center items-center w-full">
         <div class=" flex slide-gap-unit-6 w-full max-w-fit dir-ltr">
             <div class="flex-1 flex flex-col h-full ">
-                <div class="flex-1 flex flex-col  slide-gap-unit-3 justify-center items-center min-h-0">
+                <div class="flex-1 flex flex-col  slide-gap-unit-2 justify-center items-center min-h-0">
 `;
 
         // Left column items - max 3, using column type
@@ -443,7 +461,7 @@ class UIRenderer {
                 </div>
             </div>
             <div class="flex-1 flex flex-col h-full ">
-                <div class="flex-1 flex flex-col  slide-gap-unit-3 justify-center items-center min-h-0">
+                <div class="flex-1 flex flex-col  slide-gap-unit-2 justify-center items-center min-h-0">
 `;
 
         // Right column items - max 3, using column type
@@ -589,12 +607,18 @@ class UIRenderer {
             const zoneClass = isPlaced ? 'quiz-drop-zone border-blue-400 bg-blue-500/10' : 'quiz-drop-zone border-white/40';
 
             html += `
-    <div class="${zoneClass} min-h-unit-28 min-w-unit-28 border-unit-1 border-dashed rounded-unit-6 transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
-         data-index="${index}" 
-         data-side="left"
-         ondragover="window.handleDragMatchOver(event)"
-         ondragleave="window.handleDragMatchLeave(event)"
-         ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')">
+    <div class="${zoneClass} min-h-unit-28 min-w-unit-28 border-unit-1 border-dashed rounded-unit-3 transition-all duration-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-500/10" 
+        data-index="${index}" 
+        data-side="left"
+        ondragover="window.handleDragMatchOver(event)"
+        ondragleave="window.handleDragMatchLeave(event)"
+        ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')"
+        onpointermove="window.handleDragMatchOver(event)"
+        onpointerleave="window.handleDragMatchLeave(event)"
+        onpointerup="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')"
+        ontouchmove="window.handleDragMatchOver(event)"
+        ontouchend="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'left')"
+         >
         ${itemHtml}
     </div>
 `;
@@ -638,12 +662,18 @@ class UIRenderer {
             }
 
             html += `
-    <div class="${zoneClass}  border-unit-1 border-dashed rounded-unit-6 transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
+    <div class="${zoneClass}  border-unit-1 border-dashed rounded-unit-3 transition-all duration-300 flex items-center justify-center hover:border-green-400 hover:bg-green-500/10" 
          data-index="${index}" 
          data-side="right"
-         ondragover="window.handleDragMatchOver(event)"
-         ondragleave="window.handleDragMatchLeave(event)"
-         ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')">
+        ondragover="window.handleDragMatchOver(event)"
+        ondragleave="window.handleDragMatchLeave(event)"
+        ondrop="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')"
+        onpointermove="window.handleDragMatchOver(event)"
+        onpointerleave="window.handleDragMatchLeave(event)"
+        onpointerup="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')"
+        ontouchmove="window.handleDragMatchOver(event)"
+        ontouchend="window.handleDragMatchDrop(event, '${slide.id}', ${index}, 'right')"
+         >
         ${itemHtml}
     </div>
 `;
@@ -723,7 +753,7 @@ class UIRenderer {
         if (showSubmit) {
             html += `
         <div class="text-center slide-my-unit-3 slide-pt-unit-2 border-t border-white/20">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 slide-px-unit-4 slide-py-unit-2 rounded-unit-6 font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl unit-5" 
+            <button class="bg-gradient-to-r from-blue-500 to-blue-600 slide-px-unit-4 slide-py-unit-2 rounded-unit-3 font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl unit-5" 
                 id="quiz-${slide.id}-submit">
                 تأكيد الإجابة
             </button>
@@ -787,13 +817,13 @@ class UIRenderer {
 
         let content = '';
         if (type === 'text') {
-            content = `<div class="text-center font-semibold unit-5 leading-relaxed break-words hyphens-auto slide-px-unit-2 ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
+            content = `<div class="text-center font-semibold unit-5 leading-relaxed break-words hyphens-auto slide-px-unit-2 excepted text-size-xxs ${contentItalicClass}" ${contentStyleAttr}>${Utils.escapeHTML(item.value || `عنصر ${index + 1}`)}</div>`;
         } else if (type === 'image') {
             if (item.value) {
                 content = `
         <div class="w-full h-full flex items-center justify-center">
             <img src="${Utils.escapeHTML(item.value)}" alt="صورة ${index + 1}" 
-                 class="max-w-full max-h-full object-contain rounded-unit-6"
+                 class="max-w-full max-h-full object-contain rounded-unit-3"
                  onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
             <div class="fallback-placeholder hidden flex-col items-center justify-center">
                 <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
@@ -805,7 +835,7 @@ class UIRenderer {
                 content = `
         <div class="flex flex-col items-center justify-center">
             <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
-            <p class="unit-4">لا توجد صورة</p>
+            <p class="unit-4 excepted text-size-xxs">لا توجد صورة</p>
         </div>
     `;
             }
@@ -843,7 +873,11 @@ class UIRenderer {
             return `
     <div class="${itemClass} quiz-drag-item" data-side="${side}" data-index="${index}" 
          ${draggable ? 'draggable="true"' : ''}
-         ondragstart="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}">
+        ondragstart="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}"
+        onpointerdown="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}"
+        ontouchstart="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}"
+        onmousedown="${draggable ? `window.handleDragMatchStart(event, '${side}', ${index})` : ''}"
+         >
         ${content}
     </div>
 `;
@@ -870,49 +904,58 @@ class UIRenderer {
         const rightColumnType = c.rightColumnType || 'text';
 
         const leftItemsHtml = leftColumn.map((item, index) => `
-        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-700">العنصر ${index + 1}</span>
-                <button data-action="delete-connect-left" data-index="${index}" 
-                        ${leftColumn.length <= 1 ? 'disabled' : ''}
-                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <i class="fas fa-trash text-xs"></i>
-                </button>
-            </div>
-            <div class="space-y-2">
-                ${leftColumnType === 'text' ? `
-                    <div>
-                        <input type="text" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                            placeholder="النص..." />
-                    </div>
-                ` : `
-                    <div>
-                        <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                        <div class="asset-input-group">
-                            <input type="url" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                                class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                                placeholder="https://example.com/image.jpg" />
-                            <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
-                                    data-asset-type="images" data-target-field="connect-left-${index}"
-                                    title="اختر من الأصول المحفوظة">
-                                <i class="fas fa-images text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                `}
+    <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700">السؤال ${index + 1}</span>
+            <button data-action="delete-connect-left" data-index="${index}" 
+                    ${leftColumn.length <= 1 ? 'disabled' : ''}
+                    class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                <i class="fas fa-trash text-xs"></i>
+            </button>
+        </div>
+        <div class="space-y-2">
+            ${leftColumnType === 'text' ? `
                 <div>
-                    <label class="block text-xs text-gray-600 mb-1">رقم العنصر الصحيح:</label>
-                    <input type="number" data-connect-left="${index}" data-field="correctIndex" 
-                        value="${item.correctIndex !== undefined ? item.correctIndex + 1 : 1}" 
+                    <input type="text" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                        min="1" max="${Math.max(1, rightColumn.length)}" 
-                        oninput="this.value = Math.max(1, Math.min(parseInt(this.value) || 1, ${Math.max(1, rightColumn.length)}))" />
-                    <p class="text-xs text-gray-500 mt-1">(من 1 إلى ${rightColumn.length})</p>
+                        placeholder="النص..." />
                 </div>
+            ` : `
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                    <div class="asset-input-group">
+                        <input type="url" data-connect-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                            class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                            placeholder="https://example.com/image.jpg" />
+                        <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
+                                data-asset-type="images" data-target-field="connect-left-${index}"
+                                title="اختر من الأصول المحفوظة">
+                            <i class="fas fa-images text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            `}
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">رقم العنصر الصحيح:</label>
+                <input type="number" data-connect-left="${index}" data-field="correctIndex" 
+                    value="${item.correctIndex !== undefined ? item.correctIndex + 1 : 1}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    min="1" max="${Math.max(1, rightColumn.length)}" 
+                    oninput="this.value = Math.max(1, Math.min(parseInt(this.value) || 1, ${Math.max(1, rightColumn.length)}))" />
+                <p class="text-xs text-gray-500 mt-1">(من 1 إلى ${rightColumn.length})</p>
+            </div>
+            <!-- ADD INDIVIDUAL SCORE INPUT FOR EACH QUESTION -->
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">درجة السؤال (0-5)</label>
+                <input type="number" data-connect-left="${index}" data-field="score" 
+                value="${item.score !== undefined ? item.score : 1}" 
+                class="quiz-score-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                min="0" max="5" placeholder="درجة السؤال من 0 إلى 5"
+                oninput="this.value = Math.max(0, Math.min(5, parseInt(this.value) || 0))" />
             </div>
         </div>
-    `).join('');
+    </div>
+`).join('');
 
         const rightItemsHtml = rightColumn.map((item, index) => `
         <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -1025,40 +1068,49 @@ class UIRenderer {
         const rightColumn = c.rightColumn || [];
 
         const leftItemsHtml = leftColumn.map((item, index) => `
-        <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-700">الصورة ${index + 1}</span>
-                <button data-action="delete-drag-left" data-index="${index}" 
-                        ${leftColumn.length <= 1 ? 'disabled' : ''}
-                        class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <i class="fas fa-trash text-xs"></i>
-                </button>
+    <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700">السؤال ${index + 1}</span>
+            <button data-action="delete-drag-left" data-index="${index}" 
+                    ${leftColumn.length <= 1 ? 'disabled' : ''}
+                    class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
+                <i class="fas fa-trash text-xs"></i>
+            </button>
+        </div>
+        <div class="space-y-2">
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
+                <div class="asset-input-group">
+                    <input type="url" data-drag-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
+                        class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        placeholder="رابط الصورة..." />
+                    <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
+                            data-asset-type="images" data-target-field="drag-left-${index}"
+                            title="اختر من الأصول المحفوظة">
+                        <i class="fas fa-images text-sm"></i>
+                    </button>
+                </div>
             </div>
-            <div class="space-y-2">
-                <div>
-                    <label class="block text-xs text-gray-600 mb-1">رابط الصورة:</label>
-                    <div class="asset-input-group">
-                        <input type="url" data-drag-left="${index}" data-field="value" value="${Utils.escapeHTML(item.value || '')}" 
-                            class="asset-input px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                            placeholder="رابط الصورة..." />
-                        <button type="button" class="asset-button open-assets-modal !w-24 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 flex items-center justify-center"
-                                data-asset-type="images" data-target-field="drag-left-${index}"
-                                title="اختر من الأصول المحفوظة">
-                            <i class="fas fa-images text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-600 mb-1">رقم النص الصحيح:</label>
-                    <input type="number" data-drag-left="${index}" data-field="correctIndex" value="${item.correctIndex !== undefined ? item.correctIndex + 1 : 1}" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                        min="1" max="${Math.max(1, rightColumn.length)}" 
-                        oninput="this.value = Math.max(1, Math.min(parseInt(this.value) || 1, ${Math.max(1, rightColumn.length)}))" />
-                    <p class="text-xs text-gray-500 mt-1">(من 1 إلى ${rightColumn.length})</p>
-                </div>
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">رقم النص الصحيح:</label>
+                <input type="number" data-drag-left="${index}" data-field="correctIndex" value="${item.correctIndex !== undefined ? item.correctIndex + 1 : 1}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                    min="1" max="${Math.max(1, rightColumn.length)}" 
+                    oninput="this.value = Math.max(1, Math.min(parseInt(this.value) || 1, ${Math.max(1, rightColumn.length)}))" />
+                <p class="text-xs text-gray-500 mt-1">(من 1 إلى ${rightColumn.length})</p>
+            </div>
+            <!-- ADD INDIVIDUAL SCORE INPUT FOR EACH DRAGGABLE ITEM -->
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">درجة السؤال (0-5)</label>
+                <input type="number" data-drag-left="${index}" data-field="score" 
+                        value="${item.score !== undefined ? item.score : 1}" 
+                        class="quiz-score-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        min="0" max="5" placeholder="درجة السؤال من 0 إلى 5"
+                        oninput="this.value = Math.max(0, Math.min(5, parseInt(this.value) || 0))" />
             </div>
         </div>
-    `).join('');
+    </div>
+`).join('');
 
         const rightItemsHtml = rightColumn.map((item, index) => `
         <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -1142,7 +1194,7 @@ class UIRenderer {
         const leftItemsHtml = leftColumn.map((item, index) => `
     <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-700">الصورة ${index + 1}</span>
+            <span class="text-sm font-medium text-gray-700">السؤال ${index + 1}</span>
             <button data-action="delete-pairs-item" data-column="left" data-index="${index}" 
                     ${leftColumn.length <= 1 ? 'disabled' : ''}
                     class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${leftColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
@@ -1177,6 +1229,15 @@ class UIRenderer {
                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
                 <label class="ms-2 text-sm font-medium text-gray-700">هذه الصورة صحيحة</label>
             </div>
+            <!-- ADD INDIVIDUAL SCORE INPUT FOR EACH IMAGE PAIRS ITEM -->
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">درجة السؤال (0-5)</label>
+                <input type="number" data-pairs-left="${index}" data-field="score" 
+                        value="${item.score !== undefined ? item.score : 1}" 
+                        class="quiz-score-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        min="0" max="5" placeholder="درجة السؤال من 0 إلى 5"
+                        oninput="this.value = Math.max(0, Math.min(5, parseInt(this.value) || 0))" />
+            </div>
         </div>
     </div>
 `).join('');
@@ -1184,7 +1245,7 @@ class UIRenderer {
         const rightItemsHtml = rightColumn.map((item, index) => `
     <div class="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
         <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-700">الصورة ${index + 1}</span>
+            <span class="text-sm font-medium text-gray-700">السؤال ${index + 1}</span>
             <button data-action="delete-pairs-item" data-column="right" data-index="${index}" 
                     ${rightColumn.length <= 1 ? 'disabled' : ''}
                     class="p-1 text-red-600 hover:bg-red-100 rounded-full transition duration-150 ${rightColumn.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}">
@@ -1218,6 +1279,15 @@ class UIRenderer {
                 <input type="checkbox" data-pairs-right="${index}" data-field="isCorrect" ${item.isCorrect ? 'checked' : ''} 
                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
                 <label class="ms-2 text-sm font-medium text-gray-700">هذه الصورة صحيحة</label>
+            </div>
+            <!-- ADD INDIVIDUAL SCORE INPUT FOR EACH IMAGE PAIRS ITEM -->
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">درجة السؤال (0-5)</label>
+                <input type="number" data-pairs-right="${index}" data-field="score" 
+                       value="${item.score !== undefined ? item.score : 1}" 
+                        class="quiz-score-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                        min="0" max="5" placeholder="درجة السؤال من 0 إلى 5"
+                        oninput="this.value = Math.max(0, Math.min(5, parseInt(this.value) || 0))" />
             </div>
         </div>
     </div>
@@ -1419,7 +1489,7 @@ class UIRenderer {
             const isCorrect = submitted && i === correctIndex;
             const isWrong = submitted && isChosen && i !== correctIndex;
 
-            let classes = "quiz-option w-full flex items-start slide-gap-unit-2 slide-px-unit-3 slide-py-unit-2 rounded-unit-6 border transition text-right break-words hyphens-auto ";
+            let classes = "quiz-option w-full flex items-start slide-gap-unit-2 slide-px-unit-3 slide-py-unit-2 rounded-unit-3 border transition text-right break-words hyphens-auto ";
             if (submitted) {
                 if (isCorrect) classes += "border-green-500 bg-green-600/30";
                 else if (isWrong) classes += "border-red-500 bg-red-600/30";
@@ -1562,9 +1632,9 @@ class UIRenderer {
         const leftHtml = (type === 'image')
             ? (c.imageA
                 ? `<div class="relative w-full h-full flex items-center justify-center slide-p-unit-4">
-                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="max-w-full max-h-full object-contain rounded-unit-6"
+                 <img src="${Utils.escapeHTML(c.imageA)}" alt="الصورة الأولى" class="max-w-full max-h-full object-contain rounded-unit-3"
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-unit-6 flex items-center justify-center">
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-unit-3 flex items-center justify-center">
                    <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
                    <p class="unit-4 text-center">تعذر تحميل الصورة</p>
                  </div>
@@ -1575,9 +1645,9 @@ class UIRenderer {
         const rightHtml = (type === 'image')
             ? (c.imageB
                 ? `<div class="relative w-full h-full flex items-center justify-center slide-p-unit-4">
-                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="max-w-full max-h-full object-contain rounded-unit-6"
+                 <img src="${Utils.escapeHTML(c.imageB)}" alt="الصورة الثانية" class="max-w-full max-h-full object-contain rounded-unit-3"
                       onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-unit-6 flex items-center justify-center">
+                 <div class="fallback-placeholder hidden absolute inset-0 bg-black/20 rounded-unit-3 flex items-center justify-center">
                    <i class="fas fa-image unit-6 slide-my-unit-1 opacity-50"></i>
                    <p class="unit-4 text-center">تعذر تحميل الصورة</p>
                  </div>
@@ -1586,8 +1656,8 @@ class UIRenderer {
             : `<div class="text-center slide-p-unit-6 break-words hyphens-auto h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${contentSizeClass} ${contentItalicClass}" ${contentStyleAttr}><h3 class="font-bold slide-my-unit-3 break-words">${Utils.escapeHTML(c.rightTitle || 'الجانب الأيمن')}</h3><p class="break-words hyphens-auto leading-relaxed">${Utils.escapeHTML(c.rightText || '')}</p></div>`;
 
         return `
-<div id="${id}" class="comparison-wrapper relative w-full rounded-unit-6 overflow-hidden bg-gray-700" style="aspect-ratio: 3 / 2;
-    width: min(90%, 350px);
+<div id="${id}" class="comparison-wrapper relative w-full rounded-unit-3 overflow-hidden bg-gray-700" style="aspect-ratio: 3 / 2;
+    width: min(100%, 350px);
     margin: auto;
     min-height: min(200px , calc(var(--unit) * 60))">
     <div class="comparison-layer bottom absolute inset-0 z-0 flex items-center justify-center">
@@ -1599,7 +1669,7 @@ class UIRenderer {
     </div>
     <div class="comparison-separator absolute top-0 bottom-0 z-20 cursor-ew-resize" style="left:50%; width:6px;">
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:999px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.15);">
-            <i class="fas fa-arrows-left-right unit-5 text-blue-600"></i>
+            <i class="fas fa-arrows-left-right unit-5 !text-blue-600"></i>
         </div>
     </div>
 </div>`;
@@ -1785,7 +1855,7 @@ class UIRenderer {
             ${item.imageUrl ? `
                 <div class="image-container slide-my-unit-4">
                     <img src="${Utils.escapeHTML(item.imageUrl)}" alt="${Utils.escapeHTML(item.title || 'صورة')}" 
-                         class="max-h-unit-64 max-w-full mx-auto rounded-unit-6 shadow-lg object-contain" 
+                         class="max-h-unit-64 max-w-full mx-auto rounded-unit-3 shadow-lg object-contain" 
                          onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuS8muS4gOWbvueUteWtkDwvdGV4dD48L3N2Zz4='; this.alt='تعذر تحميل الصورة';" />
                 </div>
             ` : `
@@ -1822,7 +1892,7 @@ class UIRenderer {
         const videoUrl = content.videoUrl || '';
         if (!videoUrl) {
             return `
-                <div class="video-container mx-auto flex flex-col justify-center items-center gap-unit-4 self-center max-w-[90%]  aspect-video text-center min-h-unit-25 slide-py-unit-10 bg-gray-600/30 rounded-unit-4 slide-p-unit-3 border border-dashed border-white/50">
+                <div class="video-container mx-auto flex flex-col justify-center items-center gap-unit-4 self-center  aspect-video text-center slide-py-unit-10 bg-gray-600/30 rounded-unit-4 slide-p-unit-3 border border-dashed border-white/50">
                     <i class="fas fa-video unit-20 slide-my-unit-3 opacity-70 excepted"></i>
                     <p class="${contentSizeClass} font-medium ${contentItalicClass}" ${contentStyleAttr}>الرجاء إدخال رابط الفيديو للمعاينة</p>
                 </div>
@@ -1841,9 +1911,9 @@ class UIRenderer {
         } catch (e) { }
 
         return `
-            <div class="video-container mx-auto my-unit-3 relative overflow-hidden max-w-[90%] min-h-unit-25 aspect-video rounded-unit-2 shadow-2xl">
+            <div class="video-container mx-auto my-unit-3 relative overflow-hidden aspect-video rounded-unit-2 shadow-2xl">
                 <iframe
-                    class="video-container max-w-[90%] min-h-unit-25 aspect-video absolute top-0 left-0"
+                    class="aspect-video absolute top-0 left-0"
                     src="${Utils.escapeHTML(embed)}"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1979,48 +2049,58 @@ class UIRenderer {
         const answers = c.answers || [];
         const question = c.question || '';
         const correct = c.correct || 1;
+        // ADD THIS LINE - Define the score variable
+        const score = c.score !== undefined ? c.score : 1;
 
         let html = `
-        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
-            <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات الاختبار</h4>
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+        <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات الاختبار</h4>
+        <!-- ADD SCORE INPUT FIELD -->
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">درجة السؤال (0-5)</label>
+            <input type="number" data-quiz-type="single" min="0" max="5" value="${score}" 
+                class="quiz-score-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="أدخل درجة السؤال من 0 إلى 5"
+                oninput="this.value = Math.max(0, Math.min(5, parseInt(this.value) || 0))" />
 
-            <div class="mb-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">السؤال</label>
-                <input type="text" id="quiz-question" value="${Utils.escapeHTML(question)}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="أدخل نص السؤال هنا" />
-            </div>
+        </div>
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">السؤال</label>
+            <input type="text" id="quiz-question" value="${Utils.escapeHTML(question)}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="أدخل نص السؤال هنا" />
+        </div>
 
-            <div class="mb-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">الإجابات</label>
-                <ul id="quiz-answers" class="space-y-2 w-full min-w-0">
-                    ${answers.map((a, i) => `
-                        <li class="flex items-center gap-2 w-full min-w-0">
-                            <span class="w-6 text-gray-500 text-center flex-shrink-0">${i + 1}.</span>
-                            <input type="text" class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg quiz-answer-input truncate" data-index="${i}" value="${Utils.escapeHTML(a)}" placeholder="الإجابة ${i + 1}" />
-                            <button class="text-red-500 hover:text-red-700 remove-answer flex-shrink-0" data-index="${i}"><i class="fas fa-trash"></i></button>
-                        </li>
-                    `).join('')}
-                </ul>
-                <div class="mt-3">
-                    ${answers.length < 4 ? `
-                        <button id="add-answer" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-plus"></i>
-                            <span>إضافة إجابة</span>
-                        </button>
-                    ` : `
-                        <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
-                            <i class="fas fa-info-circle ml-1"></i>
-                            الحد الأقصى 4 إجابات
-                        </div>
-                    `}
-                </div>
-            </div>
-
-            <div class="w-full">
-                <label class="block text-sm font-medium text-gray-700 mb-1">رقم الإجابة الصحيحة</label>
-                <input type="number" id="quiz-correct" min="1" max="${Math.max(1, answers.length)}" value="${Math.min(correct, Math.max(1, answers.length))}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">الإجابات</label>
+            <ul id="quiz-answers" class="space-y-2 w-full min-w-0">
+                ${answers.map((a, i) => `
+                    <li class="flex items-center gap-2 w-full min-w-0">
+                        <span class="w-6 text-gray-500 text-center flex-shrink-0">${i + 1}.</span>
+                        <input type="text" class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg quiz-answer-input truncate" data-index="${i}" value="${Utils.escapeHTML(a)}" placeholder="الإجابة ${i + 1}" />
+                        <button class="text-red-500 hover:text-red-700 remove-answer flex-shrink-0" data-index="${i}"><i class="fas fa-trash"></i></button>
+                    </li>
+                `).join('')}
+            </ul>
+            <div class="mt-3">
+                ${answers.length < 4 ? `
+                    <button id="add-answer" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>إضافة إجابة</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-center py-2 text-gray-500 text-sm bg-gray-50 rounded-lg border border-gray-200">
+                        <i class="fas fa-info-circle ml-1"></i>
+                        الحد الأقصى 4 إجابات
+                    </div>
+                `}
             </div>
         </div>
-    `;
+
+        <div class="w-full">
+            <label class="block text-sm font-medium text-gray-700 mb-1">رقم الإجابة الصحيحة</label>
+            <input type="number" id="quiz-correct" min="1" max="${Math.max(1, answers.length)}" value="${Math.min(correct, Math.max(1, answers.length))}" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+        </div>
+    </div>
+`;
         return html;
     }
 
@@ -2029,11 +2109,23 @@ class UIRenderer {
         const question = c.question || '';
         const categories = Array.isArray(c.categories) ? c.categories : [];
         const correct = c.correct ?? 0;
+        const score = c.score !== undefined ? c.score : 1;
+
 
         // Mirror the carousel editor layout and visual style, but keep IDs/classes expected by other code
         return `
     <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
         <h4 class="text-base font-semibold mb-2 text-gray-800">إعدادات الاختبار</h4>
+
+        <!-- ADD SCORE INPUT FIELD -->
+        <div class="mb-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">درجة السؤال (0-5)</label>
+            <input type="number" data-quiz-type="single" min="0" max="5" value="${score}" 
+                class="quiz-score-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="أدخل درجة السؤال من 0 إلى 5"
+                oninput="this.value = Math.max(0, Math.min(5, parseInt(this.value) || 0))" />
+
+        </div>
 
         <div class="mb-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">نص السؤال</label>
@@ -2624,6 +2716,14 @@ ${this.editor.page === 'editor' ? `
             case 'pdf-pdf':
                 html += this.renderPDFEditor(slide);
                 break;
+            case 'text-welcome':
+                html += `
+                    <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mt-4">
+                        <h4 class="text-lg font-semibold mb-3 text-gray-800">النص الترحيبي</h4>
+                        <textarea id="edit-generic-text" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg">${Utils.escapeHTML(slide.content.text || '')}</textarea>
+                    </div>
+                `;
+                break;
             default:
                 if (slide.content.text !== undefined) {
                     html += `
@@ -2694,6 +2794,55 @@ ${this.editor.page === 'editor' ? `
                 const isValidVideo = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be|vimeo\.com)\//i.test(val);
                 e.target.classList.toggle('border-red-400', val && !isValidVideo);
             });
+        }
+
+        if (this.editor.page === 'editor') {
+            if (this._quizScoreHandler) {
+                this.editor.dom.slideEditContent.removeEventListener('input', this._quizScoreHandler);
+            }
+
+            // Create a named function for the event handler
+            this._quizScoreHandler = (e) => {
+                if (e.target.classList.contains('quiz-score-input')) {
+                    let value = parseInt(e.target.value) || 0;
+                    // Double validation to ensure value is between 0 and 5
+                    value = Math.max(0, Math.min(5, value));
+                    e.target.value = value;
+
+                    // Handle single question quizzes (using data attribute)
+                    if (e.target.hasAttribute('data-quiz-type') && e.target.getAttribute('data-quiz-type') === 'single') {
+                        this.editor.updateSlideContent(slideId, 'score', value);
+                        console.log('Updating single quiz score for slide:', slideId, 'value:', value);
+                    }
+                    // Handle multi-question quizzes
+                    else {
+                        // Get the quiz type and index from data attributes
+                        if (e.target.hasAttribute('data-connect-left')) {
+                            const index = parseInt(e.target.getAttribute('data-connect-left'));
+                            this.editor.updateNestedContent(slideId, 'leftColumn', index, 'score', value);
+                            console.log('Updating connect quiz score for slide:', slideId, 'left index:', index, 'value:', value);
+                        }
+                        else if (e.target.hasAttribute('data-drag-left')) {
+                            const index = parseInt(e.target.getAttribute('data-drag-left'));
+                            this.editor.updateNestedContent(slideId, 'leftColumn', index, 'score', value);
+                            console.log('Updating drag quiz score for slide:', slideId, 'left index:', index, 'value:', value);
+                        }
+                        else if (e.target.hasAttribute('data-pairs-left')) {
+                            const index = parseInt(e.target.getAttribute('data-pairs-left'));
+                            this.editor.updateNestedContent(slideId, 'leftColumn', index, 'score', value);
+                            console.log('Updating pairs quiz score for slide:', slideId, 'left index:', index, 'value:', value);
+                        }
+                        else if (e.target.hasAttribute('data-pairs-right')) {
+                            const index = parseInt(e.target.getAttribute('data-pairs-right'));
+                            this.editor.updateNestedContent(slideId, 'rightColumn', index, 'score', value);
+                            console.log('Updating pairs quiz score for slide:', slideId, 'right index:', index, 'value:', value);
+                        }
+                    }
+                }
+            };
+
+            // Add the event listener
+            this.editor.dom.slideEditContent?.addEventListener('input', this._quizScoreHandler);
         }
 
         const quizQuestion = document.getElementById('quiz-question');

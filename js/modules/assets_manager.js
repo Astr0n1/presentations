@@ -160,7 +160,7 @@ class AssetsManager {
       const data = await response.json();
 
       const assets = data.data || [];
-      console.log(assets)
+      //console.log(assets)
 
       // Update title
       const titleEl = document.getElementById('assets-type-title');
@@ -306,19 +306,19 @@ class AssetsManager {
     const slide = editor.findSlide(editor.currentLessonId, slideId);
     if (!slide) return;
 
-    console.log('🔄 Direct content update for slide:', slideId);
-    console.log('📋 Input attributes:', {
-      id: targetInput.id,
-      dataset: targetInput.dataset,
-      dataTargetField: targetInput.dataset.targetField
-    });
+    //console.log('🔄 Direct content update for slide:', slideId);
+    //console.log('📋 Input attributes:', {
+    //   id: targetInput.id,
+    //     dataset: targetInput.dataset,
+    //       dataTargetField: targetInput.dataset.targetField
+    // });
 
     // Get the target field from data-target-field attribute
     const targetField = targetInput.dataset.targetField;
 
     // Handle inputs with data-target-field attribute
     if (targetField) {
-      console.log('🎯 Processing data-target-field:', targetField);
+      //console.log('🎯 Processing data-target-field:', targetField);
       this.handleTargetFieldInput(editor, slideId, targetInput, targetField);
       return;
     }
@@ -329,7 +329,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'items', index, field, targetInput.value);
-        console.log('✅ Updated image series item:', index, field, targetInput.value);
+        //console.log('✅ Updated image series item:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.imageCollection !== undefined) {
@@ -337,7 +337,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'sections', index, field, targetInput.value);
-        console.log('✅ Updated image collection section:', index, field, targetInput.value);
+        //console.log('✅ Updated image collection section:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.connectLeft !== undefined) {
@@ -345,7 +345,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'leftColumn', index, field, targetInput.value);
-        console.log('✅ Updated connect quiz left item:', index, field, targetInput.value);
+        //console.log('✅ Updated connect quiz left item:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.connectRight !== undefined) {
@@ -353,7 +353,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'rightColumn', index, field, targetInput.value);
-        console.log('✅ Updated connect quiz right item:', index, field, targetInput.value);
+        //console.log('✅ Updated connect quiz right item:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.dragLeft !== undefined) {
@@ -361,7 +361,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'leftColumn', index, field, targetInput.value);
-        console.log('✅ Updated drag match left item:', index, field, targetInput.value);
+        //console.log('✅ Updated drag match left item:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.dragRight !== undefined) {
@@ -369,7 +369,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'rightColumn', index, field, targetInput.value);
-        console.log('✅ Updated drag match right item:', index, field, targetInput.value);
+        //console.log('✅ Updated drag match right item:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.pairsLeft !== undefined) {
@@ -377,7 +377,7 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'leftColumn', index, field, targetInput.value);
-        console.log('✅ Updated image pairs left item:', index, field, targetInput.value);
+        //console.log('✅ Updated image pairs left item:', index, field, targetInput.value);
       }
     }
     else if (targetInput.dataset.pairsRight !== undefined) {
@@ -385,11 +385,11 @@ class AssetsManager {
       const field = targetInput.dataset.field;
       if (!isNaN(index) && field) {
         editor.updateNestedContent(slideId, 'rightColumn', index, field, targetInput.value);
-        console.log('✅ Updated image pairs right item:', index, field, targetInput.value);
+        //console.log('✅ Updated image pairs right item:', index, field, targetInput.value);
       }
     }
     else {
-      console.log('⚠️ No specific handler for input type, relying on event system');
+      //console.log('⚠️ No specific handler for input type, relying on event system');
     }
 
     // Force save to localStorage
@@ -398,7 +398,7 @@ class AssetsManager {
 
   // Improved method to handle data-target-field inputs with proper UI refresh
   handleTargetFieldInput(editor, slideId, targetInput, targetField) {
-    console.log('🎯 Handling target field:', targetField);
+    //console.log('🎯 Handling target field:', targetField);
 
     // Store the original value for comparison
     const originalValue = targetInput.value;
@@ -408,93 +408,93 @@ class AssetsManager {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'items', index, 'imageUrl', targetInput.value);
-        console.log('✅ Updated image series via target-field:', index, targetInput.value);
+        //console.log('✅ Updated image series via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('image-collection-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'sections', index, 'imageUrl', targetInput.value);
-        console.log('✅ Updated image collection via target-field:', index, targetInput.value);
+        //console.log('✅ Updated image collection via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('connect-left-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'leftColumn', index, 'value', targetInput.value);
-        console.log('✅ Updated connect left via target-field:', index, targetInput.value);
+        //console.log('✅ Updated connect left via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('connect-right-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'rightColumn', index, 'value', targetInput.value);
-        console.log('✅ Updated connect right via target-field:', index, targetInput.value);
+        //console.log('✅ Updated connect right via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('drag-left-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'leftColumn', index, 'value', targetInput.value);
-        console.log('✅ Updated drag left via target-field:', index, targetInput.value);
+        //console.log('✅ Updated drag left via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('drag-right-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'rightColumn', index, 'value', targetInput.value);
-        console.log('✅ Updated drag right via target-field:', index, targetInput.value);
+        //console.log('✅ Updated drag right via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('pairs-left-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'leftColumn', index, 'value', targetInput.value);
-        console.log('✅ Updated pairs left via target-field:', index, targetInput.value);
+        //console.log('✅ Updated pairs left via target-field:', index, targetInput.value);
       }
     }
     else if (targetField.startsWith('pairs-right-')) {
       const index = parseInt(targetField.split('-')[2]);
       if (!isNaN(index)) {
         editor.updateNestedContent(slideId, 'rightColumn', index, 'value', targetInput.value);
-        console.log('✅ Updated pairs right via target-field:', index, targetInput.value);
+        //console.log('✅ Updated pairs right via target-field:', index, targetInput.value);
       }
     }
     else {
-      console.log('⚠️ Unknown target field pattern:', targetField);
+      //console.log('⚠️ Unknown target field pattern:', targetField);
     }
 
     // Force save to localStorage
     editor.saveToLocalStorage();
 
     // Refresh the edit form to update the input field display
-    console.log('🔄 Refreshing edit form for slide:', slideId);
+    //console.log('🔄 Refreshing edit form for slide:', slideId);
     editor.loadSlideEditContent(slideId);
 
     // Single preview refresh after a short delay to allow form refresh
     setTimeout(() => {
-      console.log('🔄 Single preview refresh for slide:', slideId);
+      //console.log('🔄 Single preview refresh for slide:', slideId);
       editor.loadSlidePreview(slideId);
     }, 300);
   }
 
   confirmSelection() {
     if (this.selectedAsset && this.targetInputField) {
-      console.log('🔧 Setting field:', this.targetInputField, 'to URL:', this.selectedAsset.url);
+      //console.log('🔧 Setting field:', this.targetInputField, 'to URL:', this.selectedAsset.url);
 
       let targetInput = null;
 
       // Strategy 1: Direct ID lookup (for simple fields like video URL)
       targetInput = document.getElementById(this.targetInputField);
       if (targetInput) {
-        console.log('✅ Found by ID:', this.targetInputField);
+        //console.log('✅ Found by ID:', this.targetInputField);
       }
 
       // Strategy 2: Data attribute lookup for dynamic fields
       if (!targetInput) {
         targetInput = document.querySelector(`[data-target-field="${this.targetInputField}"]`);
         if (targetInput) {
-          console.log('✅ Found by data-target-field:', this.targetInputField);
+          //console.log('✅ Found by data-target-field:', this.targetInputField);
         }
       }
 
@@ -502,13 +502,13 @@ class AssetsManager {
       if (!targetInput) {
         targetInput = this.findTargetInputByPattern(this.targetInputField);
         if (targetInput) {
-          console.log('✅ Found by pattern:', this.targetInputField);
+          //console.log('✅ Found by pattern:', this.targetInputField);
         }
       }
 
       // Strategy 4: Fallback - search all inputs with data attributes
       if (!targetInput) {
-        console.log('🔍 Fallback search for:', this.targetInputField);
+        //console.log('🔍 Fallback search for:', this.targetInputField);
         // Look for any input that might match our target pattern
         const allInputs = document.querySelectorAll('input[data-connect-left], input[data-connect-right], input[data-drag-left], input[data-drag-right], input[data-pairs-left], input[data-pairs-right], input[data-image-collection], input[data-image-series]');
 
@@ -517,7 +517,7 @@ class AssetsManager {
           const inputId = this.getInputIdentifier(input);
           if (inputId === this.targetInputField) {
             targetInput = input;
-            console.log('✅ Found in fallback search:', this.targetInputField);
+            //console.log('✅ Found in fallback search:', this.targetInputField);
             break;
           }
         }
@@ -531,7 +531,7 @@ class AssetsManager {
         targetInput.dispatchEvent(new Event('input', { bubbles: true }));
         targetInput.dispatchEvent(new Event('change', { bubbles: true }));
 
-        console.log('🎉 Successfully set value for:', this.targetInputField, 'New value:', targetInput.value);
+        //console.log('🎉 Successfully set value for:', this.targetInputField, 'New value:', targetInput.value);
 
         // Force immediate content update and UI refresh
         const editor = window.courseEditor || window.editor;
@@ -543,9 +543,9 @@ class AssetsManager {
         this.closeModal();
       } else {
         console.warn('❌ Could not find target input field:', this.targetInputField);
-        console.log('Available inputs with data attributes:');
+        //console.log('Available inputs with data attributes:');
         document.querySelectorAll('input[data-connect-left], input[data-connect-right], input[data-drag-left], input[data-drag-right], input[data-pairs-left], input[data-pairs-right], input[data-image-collection], input[data-image-series]').forEach(input => {
-          console.log(' - ', this.getInputIdentifier(input), input);
+          //console.log(' - ', this.getInputIdentifier(input), input);
         });
 
         Swal.fire({
@@ -594,7 +594,7 @@ class AssetsManager {
   findTargetInputByPattern(targetField) {
     let targetInput = null;
 
-    console.log('🔍 Pattern search for:', targetField);
+    //console.log('🔍 Pattern search for:', targetField);
 
     // Handle image collection sections
     if (targetField.startsWith('image-collection-')) {
@@ -642,9 +642,9 @@ class AssetsManager {
     }
 
     if (targetInput) {
-      console.log('✅ Pattern match found:', targetField);
+      //console.log('✅ Pattern match found:', targetField);
     } else {
-      console.log('❌ Pattern match failed:', targetField);
+      //console.log('❌ Pattern match failed:', targetField);
     }
 
     return targetInput;
@@ -737,7 +737,7 @@ class AssetsManager {
   async uploadSingleFileWithProgress(file, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      console.log(this.currentAssetsType)
+      //console.log(this.currentAssetsType)
       const url = `https://barber.herova.net/api/edit/media/upload${this.currentAssetsType === 'images' ? 'Image' : this.currentAssetsType === 'videos' ? 'Vedio' : 'Pdf'}.php`
 
 

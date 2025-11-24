@@ -65,6 +65,7 @@ class QuizManager {
   }
 
   // In QuizManager.handleQuizSubmit, add this after the existing code:
+  // In QuizManager.js, update the handleQuizSubmit method:
   handleQuizSubmit(slideId, containerId = null) {
     const slide = this.editor.findSlide(this.editor.currentLessonId, slideId);
     if (!slide || slide.submitted) return;
@@ -82,7 +83,6 @@ class QuizManager {
 
     if (this.editor.page === 'preview') this.editor.saveQuizScore(slide);
 
-
     // Redraw connect quiz lines with correct colors
     if (slide.subtype === 'connect-quiz') {
       setTimeout(() => {
@@ -92,6 +92,44 @@ class QuizManager {
 
     // Show feedback animation
     this.showQuizFeedback(slide, containerId);
+
+    // NEW: Show motivational popup if answer is correct
+    const isCorrect = this.isAnswerCorrect(slide);
+    if (isCorrect) {
+      this.showMotivationalPopup();
+    }
+  }
+
+  // Add this new method to QuizManager class:
+  showMotivationalPopup() {
+    const messages = [
+      "ممتاز! أحسنت العمل 🌟",
+      "رائع! استمر في التقدم 💪",
+      "إجابتك صحيحة! أنت ذكي 🧠",
+      "أحسنت! مستواك ممتاز 🚀",
+      "عمل رائع! أنت تتقدم بسرعة ⚡",
+      "إجابة صحيحة! فخور بك 🏆",
+      "مذهل! استمر في التميز ✨",
+      "برافو! أداء ممتاز 🎯",
+      "إجابتك صحيحة! ذكاء خارق 🦸",
+      "متفوق كالعادة! 🌈"
+    ];
+
+    // Select random message
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+    // Show SweetAlert popup
+    Swal.fire({
+      title: 'تهانينا!',
+      text: randomMessage,
+      icon: 'success',
+      timer: 2500, // 2.5 seconds
+      timerProgressBar: true,
+      showConfirmButton: false,
+      position: 'top',
+      background: '#f0fdf4',
+      iconColor: '#16a34a'
+    });
   }
 
   // Common feedback display

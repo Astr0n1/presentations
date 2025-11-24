@@ -45,6 +45,7 @@ class UIInteractions {
       }
     });
 
+
     const saveBtn = document.getElementById('save-changes');
     if (saveBtn) saveBtn.addEventListener('click', async () => {
       const course = this.editor.lessons
@@ -1331,8 +1332,9 @@ class UIInteractions {
     const backButton = document.getElementById('back-button');
 
     // Back button
-    if (backButton) backButton.addEventListener('click',()=> {
-      window.history.back()});
+    if (backButton) backButton.addEventListener('click', () => {
+      window.history.back()
+    });
 
     // lesson header toggle & selection
     const lessonHeader = target.closest('.lesson-header');

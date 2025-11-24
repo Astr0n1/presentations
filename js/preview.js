@@ -225,45 +225,106 @@ window.handleDragMatchStart = function (event, side, index) {
     const editor = window.courseEditor || window.editor;
     if (!editor) return;
 
-    const slide = editor.getCurrentSlide();
+    const slide = editor.getCurrentSlide ? editor.getCurrentSlide() : null;
     if (!slide || slide.submitted) return;
 
-    event.dataTransfer.setData('text/plain', JSON.stringify({
-        side: side,
-        index: index,
-        slideId: slide.id
-    }));
+    const payload = { side: side, index: index, slideId: slide.id };
 
-    event.target.classList.add('scale-95', 'ring-2', 'ring-blue-400');
+    // If it's native drag (desktop)
+    if (event.dataTransfer && typeof event.dataTransfer.setData === 'function') {
+        try {
+            event.dataTransfer.setData('text/plain', JSON.stringify(payload));
+        } catch (err) {
+            // ignore setData errors
+        }
+        // Mark dragging for our other handlers
+        window.isDragging = true;
+    } else {
+        // Pointer / touch fallback
+        window.dragData = payload;
+        window.isDragging = true;
+
+        // Capture pointer so move/up events target this element (if supported)
+        try {
+            if (event.pointerId && event.target && event.target.setPointerCapture) {
+                event.target.setPointerCapture(event.pointerId);
+                window._dragPointerTarget = event.target;
+                window._dragPointerId = event.pointerId;
+            }
+        } catch (err) {
+            // ignore capture errors in older browsers
+        }
+    }
+
+    const el = event.target || event.currentTarget;
+    if (el && el.classList) el.classList.add('scale-95', 'ring-2', 'ring-blue-400');
 
     // Store original position for potential return
     window.dragOriginalPosition = {
-        element: event.target,
-        parent: event.target.parentNode,
+        element: el,
+        parent: el ? el.parentNode : null,
         side: side,
         index: index
     };
 };
 
 window.handleDragMatchOver = function (event) {
-    event.preventDefault();
-    event.currentTarget.classList.add('border-blue-400', 'bg-blue-500/10', 'scale-105');
+    // For pointer events we rely on window.isDragging
+    // For native drag events, window.isDragging may not be set — allow native drag by checking dataTransfer types
+    if (!window.isDragging) {
+        // allow native dragover if dataTransfer says text/plain is present (desktop)
+        if (!(event.dataTransfer && event.dataTransfer.types && (event.dataTransfer.types.includes ? event.dataTransfer.types.includes('text/plain') : event.dataTransfer.types.indexOf && event.dataTransfer.types.indexOf('text/plain') !== -1))) {
+            return;
+        }
+    }
+
+    // prevent default to allow drop
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+
+    const ct = event.currentTarget || event.target;
+    if (ct && ct.classList) ct.classList.add('border-blue-400', 'bg-blue-500/10', 'scale-105');
 };
 
 window.handleDragMatchLeave = function (event) {
-    event.currentTarget.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
+    const ct = event.currentTarget || event.target;
+    if (ct && ct.classList) ct.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
 };
 
 window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'right') {
-    event.preventDefault();
+    if (typeof event.preventDefault === 'function') event.preventDefault();
     const editor = window.courseEditor || window.editor;
     if (!editor) return;
 
-    const slide = editor.findSlide(editor.currentLessonId, parseInt(slideId));
+    const slide = editor.findSlide ? editor.findSlide(editor.currentLessonId, parseInt(slideId)) : null;
     if (!slide || slide.submitted) return;
 
+    let dragData = null;
+
+    // 1) try native dataTransfer first
     try {
-        const dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+        if (event.dataTransfer && typeof event.dataTransfer.getData === 'function') {
+            const txt = event.dataTransfer.getData('text/plain');
+            if (txt) dragData = JSON.parse(txt);
+        }
+    } catch (err) {
+        // ignore parse errors
+    }
+
+    // 2) fallback to window.dragData (pointer/touch)
+    if (!dragData && window.dragData) {
+        dragData = window.dragData;
+    }
+
+    if (!dragData) {
+        // nothing to do
+        // cleanup visuals
+        document.querySelectorAll('.quiz-drag-item').forEach(item => item.classList.remove('scale-95', 'ring-2', 'ring-blue-400'));
+        document.querySelectorAll('.quiz-drop-zone').forEach(zone => zone.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105'));
+        window.dragData = null; window.isDragging = false;
+        return;
+    }
+
+    try {
         const draggedSide = dragData.side;
         const draggedIndex = dragData.index;
 
@@ -275,50 +336,53 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
             zone.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
         });
 
-        // Initialize user matches if not exists
-        if (!slide.userMatches) {
-            slide.userMatches = [];
-        }
+        // Initialize userMatches if missing
+        if (!slide.userMatches) slide.userMatches = [];
 
         if (draggedSide === 'left' && dropSide === 'right') {
-            // Moving from left to right
-            // Remove any existing match for this dragged item
+            // Move left -> right
             slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
-
-            // Also remove any match that uses the target right slot
             slide.userMatches = slide.userMatches.filter(match => match.rightIndex !== dropIndex);
-
-            // Add new match
-            slide.userMatches.push({
-                leftIndex: draggedIndex,
-                rightIndex: dropIndex
-            });
-
+            slide.userMatches.push({ leftIndex: draggedIndex, rightIndex: dropIndex });
         } else if (draggedSide === 'right' && dropSide === 'left') {
-            // Moving from right back to left - remove the match
+            // Remove match (right -> left)
             slide.userMatches = slide.userMatches.filter(match =>
                 !(match.leftIndex === draggedIndex && match.rightIndex === dropIndex)
             );
         } else if (draggedSide === 'left' && dropSide === 'left') {
-            // Moving within left column - remove any match for this item
+            // placing within left column -> remove matches for this left item
             slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
         }
 
-        editor.saveToLocalStorage();
+        editor.saveToLocalStorage && editor.saveToLocalStorage();
 
-        // Force complete re-render by using the editor's render method
-        editor.renderSlidePreview(slide);
+        // Force UI refresh
+        if (editor.renderSlidePreview) {
+            editor.renderSlidePreview(slide);
+        } else if (editor.loadSlidePreview) {
+            editor.loadSlidePreview(slide.id);
+        }
 
         // Update submit button visibility
-        window.updateDragMatchSubmitButton(slide);
+        window.updateDragMatchSubmitButton && window.updateDragMatchSubmitButton(slide);
 
     } catch (err) {
         console.error('Error handling drag drop:', err);
     }
 
-    // Clean up
+    // Cleanup pointer capture and global state
+    if (window._dragPointerTarget && window._dragPointerTarget.releasePointerCapture && window._dragPointerId !== undefined) {
+        try {
+            window._dragPointerTarget.releasePointerCapture(window._dragPointerId);
+        } catch (e) { }
+    }
+    window._dragPointerTarget = null;
+    window._dragPointerId = null;
+    window.dragData = null;
+    window.isDragging = false;
     window.dragOriginalPosition = null;
 };
+
 
 window.updateDragMatchSubmitButton = function (slide) {
     const submitButton = document.getElementById(`quiz-${slide.id}-submit`);
@@ -724,6 +788,7 @@ export default class CourseEditor {
         // templates (same as before)
         this.slideTemplates = options.slideTemplates || {
             text: [
+                { subtype: 'welcome', title: 'شريحة ترحيب', description: 'شريحة ترحيبية بسيطة', icon: 'fa-hand-sparkles' },
                 { subtype: 'bulleted-list', title: 'قائمة نقطية', description: 'عرض قائمة نقطية', icon: 'fa-list-ul' },
                 { subtype: 'comparison', title: 'مقارنة', description: 'مقارنة نصية', icon: 'fa-columns' },
                 { subtype: 'expandable-list', title: 'قائمة قابلة للتوسيع', description: 'قائمة قابلة للتوسيع', icon: 'fa-layer-group' },
@@ -836,7 +901,6 @@ export default class CourseEditor {
                 };
             });
 
-            console.log('Loaded quiz scores:', this.quizScores);
         } catch (error) {
             console.error('Failed to load quiz scores:', error);
         } finally {
@@ -849,15 +913,18 @@ export default class CourseEditor {
         if (!slide || !slide.submitted) return;
 
         try {
-            const isCorrect = this.isQuizAnswerCorrect(slide);
-            const totalQuestions = 1; // Each quiz slide counts as one question
+            // Calculate score based on custom scoring system
+            const { earnedScore, maxScore } = this.calculateQuizScore(slide);
+
+            // Calculate percentage for backward compatibility
+            const percentage = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 0;
 
             const scoreData = {
                 course_id: this.currentCourseId,
                 lesson_id: this.currentLessonId,
-                score: isCorrect ? 100 : 0,
-                total_questions: totalQuestions,
-                correct_answers: isCorrect ? 1 : 0,
+                score: percentage, // Keep percentage for API compatibility
+                total_questions: 1, // Keep as 1 for API compatibility
+                correct_answers: earnedScore, // Store actual earned points
                 slide_n: slide.id,
                 content: JSON.stringify(slide)
             };
@@ -868,15 +935,109 @@ export default class CourseEditor {
             this.quizScores[slide.id] = {
                 submitted: true,
                 content: slide,
-                score: scoreData.score,
-                correctAnswers: scoreData.correct_answers,
-                totalQuestions: scoreData.total_questions
+                score: percentage,
+                correctAnswers: earnedScore,
+                totalQuestions: maxScore
             };
 
-            console.log('Quiz score saved successfully');
+            console.log('Quiz score saved successfully. Earned:', earnedScore, 'Max:', maxScore);
         } catch (error) {
             console.error('Failed to save quiz score:', error);
         }
+    }
+
+    calculateQuizScore(slide) {
+        const c = slide.content || {};
+        let earnedScore = 0;
+        let maxScore = 0;
+
+        switch (slide.subtype) {
+            case 'multiple-choice-carousel':
+            case 'categorize':
+                // Single question quizzes
+                const isCorrect = this.isQuizAnswerCorrect(slide);
+                const questionScore = c.score !== undefined ? c.score : 1;
+                maxScore = questionScore;
+                earnedScore = isCorrect ? questionScore : 0;
+                break;
+
+            case 'connect-quiz':
+                // Each connection is a separate question with its own score
+                const userConnections = slide.userConnections || [];
+                const leftColumn = c.leftColumn || [];
+
+                userConnections.forEach(conn => {
+                    const leftItem = leftColumn[conn.leftIndex];
+                    if (leftItem) {
+                        const itemScore = leftItem.score !== undefined ? leftItem.score : 1;
+                        maxScore += itemScore;
+
+                        const isConnectionCorrect = leftItem.correctIndex === conn.rightIndex;
+                        if (isConnectionCorrect) {
+                            earnedScore += itemScore;
+                        }
+                    }
+                });
+                break;
+
+            case 'drag-match-quiz':
+                // Each draggable item is a separate question with its own score
+                const userMatches = slide.userMatches || [];
+                const dragLeftColumn = c.leftColumn || [];
+
+                userMatches.forEach(match => {
+                    const leftItem = dragLeftColumn[match.leftIndex];
+                    if (leftItem) {
+                        const itemScore = leftItem.score !== undefined ? leftItem.score : 1;
+                        maxScore += itemScore;
+
+                        const isMatchCorrect = leftItem.correctIndex === match.rightIndex;
+                        if (isMatchCorrect) {
+                            earnedScore += itemScore;
+                        }
+                    }
+                });
+                break;
+
+            case 'image-pairs-quiz':
+                // Each item in both columns is a separate question with its own score
+                const userSelections = slide.userSelections || { left: [], right: [] };
+                const pairsLeftColumn = c.leftColumn || [];
+                const pairsRightColumn = c.rightColumn || [];
+
+                // Calculate scores for left column items
+                pairsLeftColumn.forEach((item, index) => {
+                    const itemScore = item.score !== undefined ? item.score : 1;
+                    maxScore += itemScore;
+
+                    const isSelected = userSelections.left.includes(index);
+                    const isCorrectSelection = isSelected === !!item.isCorrect;
+                    if (isCorrectSelection) {
+                        earnedScore += itemScore;
+                    }
+                });
+
+                // Calculate scores for right column items
+                pairsRightColumn.forEach((item, index) => {
+                    const itemScore = item.score !== undefined ? item.score : 1;
+                    maxScore += itemScore;
+
+                    const isSelected = userSelections.right.includes(index);
+                    const isCorrectSelection = isSelected === !!item.isCorrect;
+                    if (isCorrectSelection) {
+                        earnedScore += itemScore;
+                    }
+                });
+                break;
+
+            default:
+                // Fallback for unknown quiz types
+                const isCorrectFallback = this.isQuizAnswerCorrect(slide);
+                maxScore = 1;
+                earnedScore = isCorrectFallback ? 1 : 0;
+        }
+
+        return { earnedScore, maxScore };
     }
 
     // NEW: Check if a quiz slide has been answered
@@ -890,7 +1051,7 @@ export default class CourseEditor {
     }
 
     loadQuizStateFromScores() {
-        console.log('Loading quiz state from scores...', this.quizScores);
+        //console.log('Loading quiz state from scores...', this.quizScores);
 
         // Iterate through all lessons and their slides
         this.lessons.forEach(lesson => {
@@ -898,7 +1059,7 @@ export default class CourseEditor {
                 if (slide.type === 'quiz') {
                     const score = this.quizScores[slide.id];
                     if (score && score.content) {
-                        console.log(`Restoring quiz state for slide ${slide.id}`, score);
+                        //console.log(`Restoring quiz state for slide ${slide.id}`, score);
 
                         // Restore quiz state from saved content
                         slide.submitted = true;
@@ -908,19 +1069,19 @@ export default class CourseEditor {
                             case 'multiple-choice-carousel':
                             case 'categorize':
                                 slide.userChoice = score.content.userChoice;
-                                console.log(`Restored userChoice for slide ${slide.id}:`, slide.userChoice);
+                                //console.log(`Restored userChoice for slide ${slide.id}:`, slide.userChoice);
                                 break;
                             case 'connect-quiz':
                                 slide.userConnections = score.content.userConnections || [];
-                                console.log(`Restored userConnections for slide ${slide.id}:`, slide.userConnections);
+                                //console.log(`Restored userConnections for slide ${slide.id}:`, slide.userConnections);
                                 break;
                             case 'drag-match-quiz':
                                 slide.userMatches = score.content.userMatches || [];
-                                console.log(`Restored userMatches for slide ${slide.id}:`, slide.userMatches);
+                                //console.log(`Restored userMatches for slide ${slide.id}:`, slide.userMatches);
                                 break;
                             case 'image-pairs-quiz':
                                 slide.userSelections = score.content.userSelections || { left: [], right: [] };
-                                console.log(`Restored userSelections for slide ${slide.id}:`, slide.userSelections);
+                                //console.log(`Restored userSelections for slide ${slide.id}:`, slide.userSelections);
                                 break;
                         }
                     }
@@ -930,7 +1091,7 @@ export default class CourseEditor {
 
         // Save to localStorage to persist the restored states
         this.saveToLocalStorage();
-        console.log('Quiz state loading complete');
+        //console.log('Quiz state loading complete');
     }
 
     async initProgressAfterLessonsLoad() {
@@ -954,7 +1115,7 @@ export default class CourseEditor {
 
     async initializeProgressSystem() {
         try {
-            console.log('Starting progress initialization...');
+            //console.log('Starting progress initialization...');
             // Load progress map from API
             this.progressMap = await ApiService.getUserProgress();
 
@@ -966,7 +1127,7 @@ export default class CourseEditor {
 
             // Initialize current course progress if doesn't exist
             if (!this.progressMap[this.currentCourseId]) {
-                console.log('Initializing progress for course:', this.currentCourseId);
+                //console.log('Initializing progress for course:', this.currentCourseId);
                 this.progressMap[this.currentCourseId] = {};
             }
 
@@ -976,7 +1137,7 @@ export default class CourseEditor {
 
             // Set most recent slide
             await this.findAndSetMostRecentSlide();
-            console.log('Most recent slide:', this.mostRecentSlide);
+            //console.log('Most recent slide:', this.mostRecentSlide);
 
             // Re-render sidebar to show unlocked status
             this.renderLessonsSidebar();
@@ -995,7 +1156,6 @@ export default class CourseEditor {
             }
 
             // Start periodic saving
-            this.startProgressAutoSave();
 
         } catch (error) {
             console.error('Error initializing progress system:', error);
@@ -1154,18 +1314,15 @@ export default class CourseEditor {
             console.error('Failed to save progress:', error);
             // Store in localStorage as fallback
             localStorage.setItem('progressMapBackup', JSON.stringify(this.progressMap));
+            setTimeout(() => {
+                this.saveProgress();
+            }, 15000);
         }
     }
 
-    // NEW: Auto-save progress every 15 seconds
-    startProgressAutoSave() {
-        setInterval(() => {
-            this.saveProgress();
-        }, 15000);
-    }
 
     async updateProress(cid, lid, sid) {
-        // console.log(cid, lid, sid)
+        // //console.log(cid, lid, sid)
         await ApiService.saveUserProgress(cid, lid, sid);
         this.progress = await ApiService.getUserProgress(localStorage.getItem('C_id'))
         this.ui.renderLessonsSidebar();
@@ -1467,7 +1624,7 @@ export default class CourseEditor {
         if (this.isQuizAnswered(slideId)) {
             const quizResult = this.getQuizResult(slideId);
             if (quizResult && quizResult.content) {
-                console.log('Restoring quiz state for slide', slideId, quizResult);
+                //console.log('Restoring quiz state for slide', slideId, quizResult);
 
                 // Restore the quiz state from saved score
                 slide.submitted = true;
@@ -1477,19 +1634,19 @@ export default class CourseEditor {
                     case 'multiple-choice-carousel':
                     case 'categorize':
                         slide.userChoice = quizResult.content.userChoice;
-                        console.log('Restored userChoice:', slide.userChoice);
+                        //console.log('Restored userChoice:', slide.userChoice);
                         break;
                     case 'connect-quiz':
                         slide.userConnections = quizResult.content.userConnections || [];
-                        console.log('Restored userConnections:', slide.userConnections);
+                        //console.log('Restored userConnections:', slide.userConnections);
                         break;
                     case 'drag-match-quiz':
                         slide.userMatches = quizResult.content.userMatches || [];
-                        console.log('Restored userMatches:', slide.userMatches);
+                        //console.log('Restored userMatches:', slide.userMatches);
                         break;
                     case 'image-pairs-quiz':
                         slide.userSelections = quizResult.content.userSelections || { left: [], right: [] };
-                        console.log('Restored userSelections:', slide.userSelections);
+                        //console.log('Restored userSelections:', slide.userSelections);
                         break;
                 }
             }
@@ -1523,7 +1680,7 @@ export default class CourseEditor {
         // call updateLessonName function in api.js
         ApiService.updateLessonName(currentLesson.id, newTitle)
             .then(response => {
-                console.log('Lesson updated successfully:', response);
+                //console.log('Lesson updated successfully:', response);
                 // Optionally, update local storage or re-render UI based on response
             })
             .catch(error => {
@@ -1682,7 +1839,7 @@ export default class CourseEditor {
     }
 
     navigateMobileSlide(direction) {
-        console.log('navigateMobileSlide')
+        //console.log('navigateMobileSlide')
         const lesson = this.findLessonById(this.currentLessonId);
         if (!lesson) return;
         const slides = lesson.slides;
@@ -1991,11 +2148,13 @@ export default class CourseEditor {
             // Small delay to allow animation to play
             setTimeout(() => {
                 this.currentSlideId = newSlide.id;
+                this.markSlideVisited(this.currentLessonId, this.currentSlideId)
                 this.loadSlideEditContent(newSlide.id);
                 this.loadSlidePreview(newSlide.id);
                 this.updateNavigationButtons();
                 this.syncMobileActiveSlide();
                 this.setSlideCounter();
+                this.ui.renderLessonsSidebar();
             }, 150);
         }
     }

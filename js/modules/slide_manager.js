@@ -19,6 +19,7 @@ class SlideManager {
   }
 
   async loadFromLocalStorage() {
+   //console.log('loadFromLocalStorage')
     if (this.editor.page === 'preview') this.editor.progress = await ApiService.getUserProgress();
     try {
       const courseId = localStorage.getItem('C_id');
@@ -68,7 +69,7 @@ class SlideManager {
       subtype: 'undefined',
       content: {
         title: 'مرحباً بكم!',
-        subtitle: 'مرحبا بكم في الدرس الجديد قم باضافة بعد الشرائح للدرس',
+        subtitle: 'مرحبا بكم في الدرس الجديداضغط الزر لبدأ الدرس !',
         buttonText: 'ابدأ التعلم'
       },
       textStyle: {
@@ -202,7 +203,7 @@ class SlideManager {
     if (!lesson) return;
     const slide = new Slide({
       id: parseInt(`${this.editor.currentLessonId}${Math.floor(100000 + Math.random() * 900000)}`),
-      title: 'سلايد جديد',
+      title: 'شريحة جديدة',
       type,
       subtype,
       content: this.initializeNewSlideContent(type, subtype)
@@ -247,6 +248,14 @@ class SlideManager {
 
   initializeNewSlideContent(type, subtype) {
     if (type === 'text') {
+      if (subtype === 'welcome') {
+        return {
+          title: 'مرحباً!',
+          subtitle: '',
+          text: 'مرحبا بكم في الدرس الجديداضغط الزر لبدأ الدرس !',
+          buttonText: 'ابدأ التعلم'
+        };
+      }
       if (subtype === 'bulleted-list') {
         return { title: 'قائمة نقطية جديدة', subtitle: '', items: ['البند الأول', 'البند الثاني', 'البند الثالث'] };
       }

@@ -261,13 +261,13 @@ class CourseManager {
                 const courseTitle = card.querySelector('h3').textContent;
                 // console.log('Course card clicked:', courseTitle);
                 if (user.role === 'admin') {
-                    
-                // go to slides.php?name=courseTitle
-                window.location.href = `slides.html?name=${encodeURIComponent(courseTitle)}`;
+
+                    // go to slides.php?name=courseTitle
+                    window.location.href = `slides.html?name=${encodeURIComponent(courseTitle)}`;
                 } else {
-                    
-                // go to preview.php?name&ps=student
-                window.location.href = `preview.html?name=${encodeURIComponent(courseTitle)}&ps=student`;
+
+                    // go to preview.php?name&ps=student
+                    window.location.href = `preview.html?name=${encodeURIComponent(courseTitle)}&ps=student`;
                 }
             });
         });
@@ -1085,6 +1085,7 @@ class CourseManager {
     addNavigationListeners() {
         const navButtons = document.querySelectorAll('nav button');
         navButtons.forEach(button => {
+            if (button.getAttribute('data') === '#') button.classList.add('hidden')
             button.addEventListener('click', (e) => {
                 const navText = e.target.getAttribute('data');
                 // console.log('Navigation clicked:', navText);

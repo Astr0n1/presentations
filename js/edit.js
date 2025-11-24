@@ -210,11 +210,6 @@ window.handleImagePairsSelect = function (event, side, index) {
         currentSelections.push(index);
     }
 
-    console.log('Image Pairs Selection Updated:', {
-        side,
-        index,
-        userSelections: slide.userSelections
-    });
 
     editor.saveToLocalStorage();
 
@@ -230,45 +225,106 @@ window.handleDragMatchStart = function (event, side, index) {
     const editor = window.courseEditor || window.editor;
     if (!editor) return;
 
-    const slide = editor.getCurrentSlide();
+    const slide = editor.getCurrentSlide ? editor.getCurrentSlide() : null;
     if (!slide || slide.submitted) return;
 
-    event.dataTransfer.setData('text/plain', JSON.stringify({
-        side: side,
-        index: index,
-        slideId: slide.id
-    }));
+    const payload = { side: side, index: index, slideId: slide.id };
 
-    event.target.classList.add('scale-95', 'ring-2', 'ring-blue-400');
+    // If it's native drag (desktop)
+    if (event.dataTransfer && typeof event.dataTransfer.setData === 'function') {
+        try {
+            event.dataTransfer.setData('text/plain', JSON.stringify(payload));
+        } catch (err) {
+            // ignore setData errors
+        }
+        // Mark dragging for our other handlers
+        window.isDragging = true;
+    } else {
+        // Pointer / touch fallback
+        window.dragData = payload;
+        window.isDragging = true;
+
+        // Capture pointer so move/up events target this element (if supported)
+        try {
+            if (event.pointerId && event.target && event.target.setPointerCapture) {
+                event.target.setPointerCapture(event.pointerId);
+                window._dragPointerTarget = event.target;
+                window._dragPointerId = event.pointerId;
+            }
+        } catch (err) {
+            // ignore capture errors in older browsers
+        }
+    }
+
+    const el = event.target || event.currentTarget;
+    if (el && el.classList) el.classList.add('scale-95', 'ring-2', 'ring-blue-400');
 
     // Store original position for potential return
     window.dragOriginalPosition = {
-        element: event.target,
-        parent: event.target.parentNode,
+        element: el,
+        parent: el ? el.parentNode : null,
         side: side,
         index: index
     };
 };
 
 window.handleDragMatchOver = function (event) {
-    event.preventDefault();
-    event.currentTarget.classList.add('border-blue-400', 'bg-blue-500/10', 'scale-105');
+    // For pointer events we rely on window.isDragging
+    // For native drag events, window.isDragging may not be set — allow native drag by checking dataTransfer types
+    if (!window.isDragging) {
+        // allow native dragover if dataTransfer says text/plain is present (desktop)
+        if (!(event.dataTransfer && event.dataTransfer.types && (event.dataTransfer.types.includes ? event.dataTransfer.types.includes('text/plain') : event.dataTransfer.types.indexOf && event.dataTransfer.types.indexOf('text/plain') !== -1))) {
+            return;
+        }
+    }
+
+    // prevent default to allow drop
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+
+    const ct = event.currentTarget || event.target;
+    if (ct && ct.classList) ct.classList.add('border-blue-400', 'bg-blue-500/10', 'scale-105');
 };
 
 window.handleDragMatchLeave = function (event) {
-    event.currentTarget.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
+    const ct = event.currentTarget || event.target;
+    if (ct && ct.classList) ct.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
 };
 
 window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'right') {
-    event.preventDefault();
+    if (typeof event.preventDefault === 'function') event.preventDefault();
     const editor = window.courseEditor || window.editor;
     if (!editor) return;
 
-    const slide = editor.findSlide(editor.currentLessonId, parseInt(slideId));
+    const slide = editor.findSlide ? editor.findSlide(editor.currentLessonId, parseInt(slideId)) : null;
     if (!slide || slide.submitted) return;
 
+    let dragData = null;
+
+    // 1) try native dataTransfer first
     try {
-        const dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+        if (event.dataTransfer && typeof event.dataTransfer.getData === 'function') {
+            const txt = event.dataTransfer.getData('text/plain');
+            if (txt) dragData = JSON.parse(txt);
+        }
+    } catch (err) {
+        // ignore parse errors
+    }
+
+    // 2) fallback to window.dragData (pointer/touch)
+    if (!dragData && window.dragData) {
+        dragData = window.dragData;
+    }
+
+    if (!dragData) {
+        // nothing to do
+        // cleanup visuals
+        document.querySelectorAll('.quiz-drag-item').forEach(item => item.classList.remove('scale-95', 'ring-2', 'ring-blue-400'));
+        document.querySelectorAll('.quiz-drop-zone').forEach(zone => zone.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105'));
+        window.dragData = null; window.isDragging = false;
+        return;
+    }
+
+    try {
         const draggedSide = dragData.side;
         const draggedIndex = dragData.index;
 
@@ -280,50 +336,53 @@ window.handleDragMatchDrop = function (event, slideId, dropIndex, dropSide = 'ri
             zone.classList.remove('border-blue-400', 'bg-blue-500/10', 'scale-105');
         });
 
-        // Initialize user matches if not exists
-        if (!slide.userMatches) {
-            slide.userMatches = [];
-        }
+        // Initialize userMatches if missing
+        if (!slide.userMatches) slide.userMatches = [];
 
         if (draggedSide === 'left' && dropSide === 'right') {
-            // Moving from left to right
-            // Remove any existing match for this dragged item
+            // Move left -> right
             slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
-
-            // Also remove any match that uses the target right slot
             slide.userMatches = slide.userMatches.filter(match => match.rightIndex !== dropIndex);
-
-            // Add new match
-            slide.userMatches.push({
-                leftIndex: draggedIndex,
-                rightIndex: dropIndex
-            });
-
+            slide.userMatches.push({ leftIndex: draggedIndex, rightIndex: dropIndex });
         } else if (draggedSide === 'right' && dropSide === 'left') {
-            // Moving from right back to left - remove the match
+            // Remove match (right -> left)
             slide.userMatches = slide.userMatches.filter(match =>
                 !(match.leftIndex === draggedIndex && match.rightIndex === dropIndex)
             );
         } else if (draggedSide === 'left' && dropSide === 'left') {
-            // Moving within left column - remove any match for this item
+            // placing within left column -> remove matches for this left item
             slide.userMatches = slide.userMatches.filter(match => match.leftIndex !== draggedIndex);
         }
 
-        editor.saveToLocalStorage();
+        editor.saveToLocalStorage && editor.saveToLocalStorage();
 
-        // Force complete re-render by using the editor's render method
-        editor.renderSlidePreview(slide);
+        // Force UI refresh
+        if (editor.renderSlidePreview) {
+            editor.renderSlidePreview(slide);
+        } else if (editor.loadSlidePreview) {
+            editor.loadSlidePreview(slide.id);
+        }
 
         // Update submit button visibility
-        window.updateDragMatchSubmitButton(slide);
+        window.updateDragMatchSubmitButton && window.updateDragMatchSubmitButton(slide);
 
     } catch (err) {
         console.error('Error handling drag drop:', err);
     }
 
-    // Clean up
+    // Cleanup pointer capture and global state
+    if (window._dragPointerTarget && window._dragPointerTarget.releasePointerCapture && window._dragPointerId !== undefined) {
+        try {
+            window._dragPointerTarget.releasePointerCapture(window._dragPointerId);
+        } catch (e) { }
+    }
+    window._dragPointerTarget = null;
+    window._dragPointerId = null;
+    window.dragData = null;
+    window.isDragging = false;
     window.dragOriginalPosition = null;
 };
+
 
 window.updateDragMatchSubmitButton = function (slide) {
     const submitButton = document.getElementById(`quiz-${slide.id}-submit`);
@@ -605,7 +664,6 @@ async function checkForCourse() {
         if (courseId) {
             ApiService.getCourseDetails(courseId)
                 .then(courseDetails => {
-                    console.log('Course Details:', courseDetails.exists);
                     if (!courseDetails.exists) {
 
                         window.location.href = '404.html'
@@ -697,7 +755,7 @@ window.updateLoader = function (progress, message = null) {
 ////////////////////////////////////////////////////
 // CourseEditor — orchestrator
 ////////////////////////////////////////////////////
-export default class CourseEditor {
+class CourseEditor {
     constructor(options = {}) {
         this.preview = this.setInitialPreview();
         this.page = 'editor';
@@ -720,8 +778,10 @@ export default class CourseEditor {
         };
 
         // templates (same as before)
+        // TODO
         this.slideTemplates = options.slideTemplates || {
             text: [
+                { subtype: 'welcome', title: 'شريحة ترحيب', description: 'شريحة ترحيبية بسيطة', icon: 'fa-hand-sparkles' },
                 { subtype: 'bulleted-list', title: 'قائمة نقطية', description: 'عرض قائمة نقطية', icon: 'fa-list-ul' },
                 { subtype: 'comparison', title: 'مقارنة', description: 'مقارنة نصية', icon: 'fa-columns' },
                 { subtype: 'expandable-list', title: 'قائمة قابلة للتوسيع', description: 'قائمة قابلة للتوسيع', icon: 'fa-layer-group' },
@@ -750,7 +810,7 @@ export default class CourseEditor {
         this.ui = new UIRenderer(this);
 
         // Load/persist and initial state
-        this.loadFromLocalStorage();
+        // this.loadFromLocalStorage();
         // If current lesson exists, expand it by default
         if (this.currentLessonId) {
             this.expandedLessons.add(this.currentLessonId);
@@ -1078,8 +1138,6 @@ export default class CourseEditor {
         // call updateLessonName function in api.js
         ApiService.updateLessonName(currentLesson.id, newTitle)
             .then(response => {
-                console.log('Lesson updated successfully:', response);
-                // Optionally, update local storage or re-render UI based on response
             })
             .catch(error => {
                 console.error('Error updating lesson:', error);
@@ -1413,7 +1471,6 @@ export default class CourseEditor {
                 // Call API to update lesson order
                 ApiService.updateLessonOrder(updatedOrder)
                     .then(response => {
-                        console.log('Lesson order updated successfully:', response);
                         this.saveToLocalStorage();
                         this.renderLessonsSidebar();
                     })
@@ -1928,8 +1985,12 @@ if (typeof window !== 'undefined') {
             updateLoader(50, 'جاري تحميل المحتوى...');
 
             // Initialize editor
-            const editor = new CourseEditor();
-            window.courseEditor = editor;
+            setTimeout(() => {
+                const editor = new CourseEditor();
+                window.courseEditor = editor;
+                editor.loadFromLocalStorage()
+            }, 800)
+            updateLoader(70, 'جاري تحميل المحتوى...');
 
             // Hide loader when everything is ready
             setTimeout(() => {

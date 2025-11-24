@@ -27,8 +27,9 @@
 .quiz-drag-item,
 .quiz-connect-item,
 .quiz-pairs-item {
-    width: 100% !important;
-    height: 100% !important;
+    width: unset !important;
+    aspect-ratio: 1/1 !important;
+    height: min(calc(var(--slide-unit) * 30),30dvh) !important;
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain !important;
@@ -47,15 +48,26 @@
     height: auto !important;
 }
 
+.mobile-preview .quiz-drop-zone,
+.mobile-preview .quiz-connect-item,
+.mobile-preview .quiz-pairs-item {
+    min-width: unset !important;
+    min-height: unset !important;
+    max-width: unset !important;
+    max-height: unset !important;
+    width: calc( var(--slide-unit) * 40) !important;
+    height: unset !important;
+}
+
 .pc-preview .quiz-drop-zone,
 .pc-preview .quiz-connect-item,
 .pc-preview .quiz-pairs-item {
-    min-width: calc(0.65 * var(--slide-unit) * 28) !important;
-    min-height: calc(0.65 * var(--slide-unit) * 28) !important;
-    max-width: calc(0.65 * var(--slide-unit) * 35) !important;
-    max-height: calc(0.65 * var(--slide-unit) * 35) !important;
-    width: calc(0.65 * var(--slide-unit) * 30) !important;
-    height: calc(0.65 * var(--slide-unit) * 30) !important;
+    min-width: calc( var(--slide-unit) * 20) !important;
+    min-height: calc( var(--slide-unit) * 20) !important;
+    max-width: calc( var(--slide-unit) * 30) !important;
+    max-height: calc( var(--slide-unit) * 30) !important;
+    width: calc( var(--slide-unit) * 25) !important;
+    height: calc( var(--slide-unit) * 25) !important;
 }
 
 /* ==============================================
@@ -72,15 +84,15 @@
 
 .preview-page .comparison-wrapper,
 body:not(.edit-page) .comparison-wrapper {
-    width: min(85%, calc(var(--slide-unit) * 140)) !important;
+    width: min(100%, calc(var(--slide-unit) * 140)) !important;
     min-height: calc(var(--slide-unit) * 70) !important;
     max-height: calc(var(--slide-unit) * 95) !important;
 }
 
 .pc-preview .comparison-wrapper {
-    width: min(75%, calc(0.65 * var(--slide-unit) * 120)) !important;
-    min-height: calc(0.65 * var(--slide-unit) * 60) !important;
-    max-height: calc(0.65 * var(--slide-unit) * 80) !important;
+    width: min(75%, calc( var(--slide-unit) * 120)) !important;
+    min-height: calc( var(--slide-unit) * 60) !important;
+    max-height: calc( var(--slide-unit) * 80) !important;
 }
 
 /* ==============================================
@@ -96,8 +108,8 @@ body:not(.edit-page) .comparison-wrapper {
 }
 
 .pc-preview .pdf-container {
-    width: min(75%, calc(0.65 * var(--slide-unit) * 100)) !important;
-    max-height: calc(0.65 * var(--slide-unit) * 65) !important;
+    width: min(75%, calc( var(--slide-unit) * 100)) !important;
+    max-height: calc( var(--slide-unit) * 65) !important;
 }
 
 .preview-page .pdf-container,
@@ -111,22 +123,20 @@ body:not(.edit-page) .pdf-container {
    ============================================== */
 
 .video-container {
-    width: min(85%, calc(var(--slide-unit) * 110)) !important;
-    max-width: calc(var(--slide-unit) * 120) !important;
-    max-height: calc(var(--slide-unit) * 70) !important;
+    width: 100% !important;
     margin: calc(var(--slide-unit) * 3) auto !important;
     aspect-ratio: 16 / 9 !important;
 }
 
 .pc-preview .video-container {
-    width: min(75%, calc(0.65 * var(--slide-unit) * 100)) !important;
-    max-height: calc(0.65 * var(--slide-unit) * 65) !important;
+    width: 70% !important;
+    max-height: calc( var(--slide-unit) * 90) !important;
 }
 
-.preview-page .video-container,
-body:not(.edit-page) .video-container {
-    width: min(70%, calc(var(--slide-unit) * 100)) !important;
-    max-height: calc(var(--slide-unit) * 65) !important;
+.preview-page .video-container {
+    width:calc(var(--slide-unit) * 160) !important;
+    max-width: 90vw !important;
+    max-height: calc(var(--slide-unit) * 90) !important;
 }
 
 /* ==============================================
@@ -143,11 +153,11 @@ body:not(.edit-page) .video-container {
 }
 
 .pc-preview .quiz-submit-button {
-    padding: calc(0.65 * var(--slide-unit) * 3) calc(0.65 * var(--slide-unit) * 6) !important;
-    border-radius: calc(0.65 * var(--slide-unit) * 3) !important;
-    font-size: calc(0.65 * var(--slide-unit) * 5) !important;
-    min-width: calc(0.65 * var(--slide-unit) * 30) !important;
-    max-width: calc(0.65 * var(--slide-unit) * 50) !important;
+    padding: calc( var(--slide-unit) * 3) calc( var(--slide-unit) * 6) !important;
+    border-radius: calc( var(--slide-unit) * 3) !important;
+    font-size: calc( var(--slide-unit) * 5) !important;
+    min-width: calc( var(--slide-unit) * 30) !important;
+    max-width: calc( var(--slide-unit) * 50) !important;
 }
 
 .preview-page .quiz-submit-button,
@@ -189,8 +199,8 @@ body:not(.edit-page) .quiz-submit-button {
 }
 
 .pc-preview .quiz-pairs-item .text-center {
-    font-size: calc(0.65 * var(--slide-unit) * 4) !important;
-    padding: calc(0.65 * var(--slide-unit) * 2) !important;
+    font-size: calc( var(--slide-unit) * 4) !important;
+    padding: calc( var(--slide-unit) * 2) !important;
 }
 
 /* ==============================================
@@ -208,7 +218,7 @@ body:not(.edit-page) .quiz-submit-button {
 }
 
 .pc-preview .slide-content {
-    padding: calc(0.65 * var(--slide-unit) * 8) !important;
+    padding: calc( var(--slide-unit) * 8) !important;
 }
 
 .slide-body {
@@ -255,4 +265,39 @@ body:not(.edit-page) .quiz-submit-button {
         padding: calc(var(--slide-unit) * 2) calc(var(--slide-unit) * 4) !important;
         font-size: calc(var(--slide-unit) * 4) !important;
     }
+}
+
+/* ********************************************************* */
+/* Expandable List Responsive Constraints */
+.expandable-list-container {
+    max-height: calc(var(--slide-unit) * 90) !important;
+}
+
+.mobile-preview .expandable-list-container {
+    max-height: calc(var(--slide-unit) * 160) !important;
+}
+
+
+.expandable-item.expanded .expandable-content{
+    max-height: 30% !important;
+}
+
+
+@media (max-width: 768px) {
+    .expandable-list-container {
+        max-height: calc(var(--slide-unit) * 60) !important;
+    }
+    
+    .expandable-item.expanded .expandable-content {
+        max-height: min(30vh, 150px) !important;
+    }
+}
+
+.free-aspect{
+    aspect-ratio: unset !important;
+}
+
+
+.\!text-blue-600.\!text-blue-600{
+  color :rgb(37 99 235 / var(--tw-text-opacity, 1)) !important;
 }

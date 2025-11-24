@@ -244,10 +244,10 @@ class ApiService {
 
     static async uploadImage(formData) {
         // Enhanced logging
-        console.log('📤 Uploading image...');
-        console.log('FormData entries:');
+       //console.logog('📤 Uploading image...');
+       //console.logog('FormData entries:');
         for (let [key, value] of formData.entries()) {
-            console.log(`${key}:`, value);
+           //console.logog(`${key}:`, value);
         }
 
         try {
@@ -258,7 +258,7 @@ class ApiService {
 
             // Get the raw response text first
             const responseText = await response.text();
-            console.log('📥 Raw server response:', responseText);
+           //console.logog('📥 Raw server response:', responseText);
 
             let result;
             try {
@@ -272,7 +272,7 @@ class ApiService {
                 throw new Error(result.message || `HTTP error! status: ${response.status}`);
             }
 
-            console.log('✅ Upload successful:', result);
+           //console.logog('✅ Upload successful:', result);
             return result;
 
         } catch (error) {
@@ -290,7 +290,7 @@ class ApiService {
 
             // Get raw response first
             const responseText = await response.text();
-            console.log('📥 Raw server response (video):', responseText);
+           //console.logog('📥 Raw server response (video):', responseText);
 
             let result;
             try {
@@ -304,7 +304,7 @@ class ApiService {
                 throw new Error(result.message || `HTTP error! status: ${response.status}`);
             }
 
-            console.log('✅ Video upload successful:', result);
+           //console.logog('✅ Video upload successful:', result);
             return result;
 
         } catch (error) {
@@ -354,7 +354,7 @@ class ApiService {
             if (result.data && result.data.seen) {
                 try {
                     const parsedProgress = JSON.parse(result.data.seen);
-                    console.log(parsedProgress, typeof parsedProgress)
+                   //console.logog(parsedProgress, typeof parsedProgress)
                     // Ensure it's a valid object
                     if (parsedProgress && typeof parsedProgress === 'object') {
                         return parsedProgress;
@@ -365,7 +365,7 @@ class ApiService {
             }
 
             // Return empty progress object structure
-            console.log('No valid progress found, returning empty object');
+           //console.logog('No valid progress found, returning empty object');
             return {};
 
         } catch (error) {

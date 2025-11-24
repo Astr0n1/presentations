@@ -1123,9 +1123,6 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-	.image-collection-item {
-		width: 90% !important;
-	}
 
 	.image-collection-detail {
 		padding: 0.5rem;
@@ -1952,6 +1949,7 @@ body {
 .image-collection-item {
 	aspect-ratio: 1/1; /* Make items square */
 	min-height: 0;
+	
 }
 
 .image-collection-item .image-container {
@@ -1968,14 +1966,6 @@ body {
 	height: auto !important;
 }
 
-/* Ensure quiz items maintain their sizing */
-.quiz-connect-item,
-.quiz-drag-item,
-.quiz-pairs-item {
-	width: 120px !important;
-	height: 120px !important;
-	flex-shrink: 0;
-}
 
 /* Image collection items square aspect ratio */
 .image-collection-item {
@@ -2002,12 +1992,6 @@ body {
 .quiz-drop-zone {
 	width: 140px;
 	min-width: 140px;
-}
-
-.quiz-drag-item {
-	width: 120px !important;
-	height: 120px !important;
-	flex-shrink: 0;
 }
 
 /* ----------------------------------------
@@ -2622,7 +2606,7 @@ body {
 }
 
 .expandable-content.expanded {
-  max-height: 500px; /* Adjust based on your content needs */
+  max-height: calc(var(--slide-unit) * 30);
   opacity: 1;
 }
 
@@ -2680,3 +2664,55 @@ body {
         font-size: 0.75rem;
     }
 }
+
+/* Enhanced Expandable List Styles */
+.expandable-list-container {
+    max-height: calc(100% - 100px);
+    overflow: hidden;
+}
+
+.expandable-item.expanded .expandable-content {
+    max-height: min(40vh, 200px) !important;
+    opacity: 1;
+}
+
+.expandable-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.expandable-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.expandable-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.expandable-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.expandable-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Ensure proper spacing within slide constraints */
+.slide-content .expandable-list-container {
+    flex: 1;
+    min-height: 0;
+}
+
+.expandable-item .expandable-content p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+}
+

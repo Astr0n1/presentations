@@ -467,6 +467,15 @@ strong {
 4. Correct the odd `em` font sizing in all browsers.
 */
 
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+.no-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+
 code,
 kbd,
 samp,
